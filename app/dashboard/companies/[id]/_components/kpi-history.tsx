@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   BarChart3,
@@ -8,6 +8,9 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,17 +26,93 @@ import {
   Area,
 } from "recharts";
 import { getSignalColor } from "@/lib/presenteeism-calculator";
+import { ExportButtons } from "./export-buttons";
+
+interface CompanyExportData {
+  id: string;
+  name: string;
+  sector: string;
+  employees: number;
+  averageSalary: number;
+  absenteeismRate: number;
+}
 
 interface KpiHistoryProps {
   kpis: any[];
   settings: any;
+  company?: CompanyExportData;
 }
 
 const COLORS = ['#60B5FF', '#FF9149', '#80D8C3', '#FF90BB'];
 
-export default function KpiHistory({ kpis, settings }: KpiHistoryProps) {
+type SortField = 'periodDate' | 'employees' | 'absenteeismRate' | 'presRate' | 'presCost';
+type SortDirection = 'asc' | 'desc';
+
+export default function KpiHistory({ kpis, settings, company }: KpiHistoryProps) {
   const safeKpis = kpis ?? [];
   const safeSettings = settings ?? {};
+  const [sortField, setSortField] = useState<SortField>('periodDate');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  // Prepare KPI data for export
+  const exportKpis = useMemo(() => {
+    return safeKpis.map(k => ({
+      id: k?.id ?? '',
+      periodDate: k?.periodDate,
+      employees: k?.employeesCount ?? 0,
+      absenteeismRate: k?.absenteeismRate ?? 0,
+      presenteeismRate: k?.presRateCalculated ?? 0,
+      presenteeismCost: k?.presCostCalculated ?? 0,
+    }));
+  }, [safeKpis]);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-50" />;
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="h-3 w-3 ml-1" /> 
+      : <ArrowDown className="h-3 w-3 ml-1" />;
+  };
+
+  const sortedKpis = useMemo(() => {
+    return [...safeKpis].sort((a, b) => {
+      let aVal: number, bVal: number;
+      switch (sortField) {
+        case 'periodDate':
+          aVal = new Date(a?.periodDate ?? 0).getTime();
+          bVal = new Date(b?.periodDate ?? 0).getTime();
+          break;
+        case 'employees':
+          aVal = a?.employeesCount ?? 0;
+          bVal = b?.employeesCount ?? 0;
+          break;
+        case 'absenteeismRate':
+          aVal = a?.absenteeismRate ?? 0;
+          bVal = b?.absenteeismRate ?? 0;
+          break;
+        case 'presRate':
+          aVal = a?.presRateCalculated ?? 0;
+          bVal = b?.presRateCalculated ?? 0;
+          break;
+        case 'presCost':
+          aVal = a?.presCostCalculated ?? 0;
+          bVal = b?.presCostCalculated ?? 0;
+          break;
+        default:
+          aVal = 0;
+          bVal = 0;
+      }
+      return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+    });
+  }, [safeKpis, sortField, sortDirection]);
 
   const chartData = useMemo(() => {
     return [...safeKpis]
@@ -204,27 +283,59 @@ export default function KpiHistory({ kpis, settings }: KpiHistoryProps) {
 
       {/* Data Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>Détail par période</CardTitle>
-          <CardDescription>Historique complet des KPI importés</CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between">
+          <div>
+            <CardTitle>Détail par période</CardTitle>
+            <CardDescription>Historique complet des KPI importés</CardDescription>
+          </div>
+          {company && (
+            <ExportButtons
+              company={company}
+              kpis={exportKpis}
+              type="history"
+            />
+          )}
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b bg-gray-50">
-                  <th className="px-4 py-3 text-left font-medium">Période</th>
-                  <th className="px-4 py-3 text-left font-medium">Effectif</th>
-                  <th className="px-4 py-3 text-left font-medium">Absent.</th>
-                  <th className="px-4 py-3 text-left font-medium">Présent.</th>
-                  <th className="px-4 py-3 text-left font-medium">Coût</th>
+                <tr className="border-b bg-gray-50 dark:bg-gray-800">
+                  <th 
+                    className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    onClick={() => handleSort('periodDate')}
+                  >
+                    <span className="flex items-center">Période {getSortIcon('periodDate')}</span>
+                  </th>
+                  <th 
+                    className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    onClick={() => handleSort('employees')}
+                  >
+                    <span className="flex items-center">Effectif {getSortIcon('employees')}</span>
+                  </th>
+                  <th 
+                    className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    onClick={() => handleSort('absenteeismRate')}
+                  >
+                    <span className="flex items-center">Absent. {getSortIcon('absenteeismRate')}</span>
+                  </th>
+                  <th 
+                    className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    onClick={() => handleSort('presRate')}
+                  >
+                    <span className="flex items-center">Présent. {getSortIcon('presRate')}</span>
+                  </th>
+                  <th 
+                    className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    onClick={() => handleSort('presCost')}
+                  >
+                    <span className="flex items-center">Coût {getSortIcon('presCost')}</span>
+                  </th>
                   <th className="px-4 py-3 text-left font-medium">Signal</th>
                 </tr>
               </thead>
               <tbody>
-                {[...safeKpis]
-                  .sort((a, b) => new Date(b?.periodDate ?? 0).getTime() - new Date(a?.periodDate ?? 0).getTime())
-                  .map((kpi, index) => {
+                {sortedKpis.map((kpi, index) => {
                     const signal = getSignalColor(
                       kpi?.absenteeismRate ?? 0,
                       safeSettings?.absenteeismGreenMax ?? 4,
@@ -237,7 +348,7 @@ export default function KpiHistory({ kpis, settings }: KpiHistoryProps) {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: index * 0.05 }}
-                        className="border-b hover:bg-gray-50"
+                        className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                       >
                         <td className="px-4 py-3">
                           {new Date(kpi?.periodDate ?? new Date()).toLocaleDateString('fr-FR', {

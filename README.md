@@ -1,9 +1,9 @@
 # AlterValue - Application de Calcul du Présentéisme
 
-> **MVP v1.0** - Application d'évaluation et de suivi du coût du présentéisme en entreprise
+> **v1.1** - Application d'évaluation et de suivi du coût du présentéisme en entreprise
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
-![Status](https://img.shields.io/badge/status-MVP-green)
+![Version](https://img.shields.io/badge/version-1.1.0-blue)
+![Status](https://img.shields.io/badge/status-Production-green)
 ![Méthode](https://img.shields.io/badge/méthode-A%20(Macro)-orange)
 
 ---
@@ -97,6 +97,42 @@ Le présentéisme désigne le fait d'être présent au travail mais avec une pro
 | Seuils des signaux couleurs | ✅ |
 | Benchmarks sectoriels | ✅ |
 | Réinitialisation aux défauts | ✅ |
+
+---
+
+## ✅ Fonctionnalités v1.1 (Améliorations UX)
+
+### 1. Export des Rapports
+| Fonctionnalité | Statut |
+|---------------|--------|
+| Export PDF du rapport de présentéisme | ✅ |
+| Export PDF de l'historique KPI | ✅ |
+| Templates PDF stylisés et professionnels | ✅ |
+| Export Excel/CSV des données | ✅ |
+| Format CSV compatible Excel français | ✅ |
+
+### 2. Mode Sombre (Dark Mode)
+| Fonctionnalité | Statut |
+|---------------|--------|
+| Toggle mode clair/sombre | ✅ |
+| Détection automatique du système | ✅ |
+| Persistence de la préférence | ✅ |
+| Styling adapté pour tous les composants | ✅ |
+
+### 3. Tableaux Triables
+| Fonctionnalité | Statut |
+|---------------|--------|
+| Tri par colonnes (période, effectif, taux, coût) | ✅ |
+| Indicateurs de tri (ascendant/descendant) | ✅ |
+| Tri persistant pendant la session | ✅ |
+
+### 4. Notifications Email
+| Fonctionnalité | Statut |
+|---------------|--------|
+| Alerte email pour présentéisme critique | ✅ |
+| Templates email HTML professionnels | ✅ |
+| Bouton d'envoi d'alerte dans le dashboard | ✅ |
+| Intégration API Abacus.AI | ✅ |
 
 ---
 

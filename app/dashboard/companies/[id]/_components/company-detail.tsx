@@ -22,6 +22,8 @@ import {
   Calendar,
   BarChart3,
   Shield,
+  Bell,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,9 +31,11 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getSectorLabel } from "@/lib/sectors";
 import { calculatePresenteeism, getSignalColor } from "@/lib/presenteeism-calculator";
+import { useToast } from "@/hooks/use-toast";
 import CsvImport from "./csv-import";
 import KpiHistory from "./kpi-history";
 import PresenteeismCalculator from "./presenteeism-calculator";
+import { ExportButtons } from "./export-buttons";
 
 interface CompanyDetailProps {
   company: any;
@@ -41,11 +45,50 @@ interface CompanyDetailProps {
 
 export default function CompanyDetail({ company, settings, benchmarks }: CompanyDetailProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
+  const [sendingAlert, setSendingAlert] = useState(false);
 
   const safeCompany = company ?? {};
   const safeSettings = settings ?? {};
   const safeBenchmarks = benchmarks ?? [];
+
+  const handleSendAlert = async () => {
+    setSendingAlert(true);
+    try {
+      const response = await fetch('/api/notifications/alert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyId: safeCompany?.id,
+          companyName: safeCompany?.name,
+          presenteeismRate: result?.presRate ?? 0,
+          presenteeismCost: result?.presCost ?? 0,
+          threshold: safeSettings?.presCostOrangeMaxPct ?? 8,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: 'Alerte envoyée',
+          description: 'La notification a été envoyée par email.',
+        });
+      } else {
+        throw new Error(data.error || 'Erreur lors de l\'envoi');
+      }
+    } catch (error) {
+      console.error('Erreur envoi alerte:', error);
+      toast({
+        title: 'Erreur',
+        description: error instanceof Error ? error.message : 'Erreur lors de l\'envoi de l\'alerte',
+        variant: 'destructive',
+      });
+    } finally {
+      setSendingAlert(false);
+    }
+  };
 
   const result = calculatePresenteeism({
     employeesCount: safeCompany?.employeesCount ?? 0,
@@ -70,6 +113,27 @@ export default function CompanyDetail({ company, settings, benchmarks }: Company
   );
 
   const benchmark = safeBenchmarks.find(b => b?.sector === safeCompany?.sector);
+
+  // Prepare data for export
+  const exportCompanyData = {
+    id: safeCompany?.id ?? '',
+    name: safeCompany?.name ?? 'Entreprise',
+    sector: getSectorLabel(safeCompany?.sector ?? ''),
+    employees: safeCompany?.employeesCount ?? 0,
+    averageSalary: safeCompany?.avgGrossSalary ?? 0,
+    absenteeismRate: safeCompany?.absenteeismRate ?? 0,
+  };
+
+  const exportResult = result ? {
+    presenteeismRate: result.presRate ?? 0,
+    presenteeismDays: result.presDays ?? 0,
+    productivityLoss: result.productivityLoss ?? 0,
+    presenteeismCost: result.presCost ?? 0,
+    costPerEmployee: result.presCostPerEmployee ?? 0,
+    percentOfPayroll: result.presCostPctPayroll ?? 0,
+    signal: presSignal as 'green' | 'orange' | 'red',
+    trend: 'stable' as 'improving' | 'stable' | 'degrading',
+  } : null;
 
   return (
     <motion.div
@@ -98,6 +162,26 @@ export default function CompanyDetail({ company, settings, benchmarks }: Company
               Modifier
             </Button>
           </Link>
+          <ExportButtons
+            company={exportCompanyData}
+            result={exportResult}
+            type="report"
+          />
+          {presSignal === 'red' && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleSendAlert}
+              disabled={sendingAlert}
+            >
+              {sendingAlert ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Bell className="h-4 w-4 mr-2" />
+              )}
+              Envoyer Alerte
+            </Button>
+          )}
         </div>
       </div>
 
@@ -361,6 +445,7 @@ export default function CompanyDetail({ company, settings, benchmarks }: Company
           <KpiHistory
             kpis={safeCompany?.kpis ?? []}
             settings={safeSettings}
+            company={exportCompanyData}
           />
         </TabsContent>
       </Tabs>
