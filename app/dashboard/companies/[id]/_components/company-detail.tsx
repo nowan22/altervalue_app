@@ -21,6 +21,7 @@ import {
   Clock,
   Calendar,
   BarChart3,
+  Shield,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -85,6 +86,12 @@ export default function CompanyDetail({ company, settings, benchmarks }: Company
           </Button>
         </div>
         <div className="flex gap-2">
+          <Link href={`/dashboard/companies/${safeCompany?.id ?? ''}/bnq`}>
+            <Button variant="default" className="bg-blue-600 hover:bg-blue-700">
+              <Shield className="h-4 w-4 mr-2" />
+              BNQ 9700-800
+            </Button>
+          </Link>
           <Link href={`/dashboard/companies/${safeCompany?.id ?? ''}/edit`}>
             <Button variant="outline">
               <Edit className="h-4 w-4 mr-2" />

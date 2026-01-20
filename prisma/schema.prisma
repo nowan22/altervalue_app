@@ -40,6 +40,11 @@ model Company {
   user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   kpis                    KpiSnapshot[]
   isDemo                  Boolean   @default(false)
+  // BNQ Module relations
+  documents               Document[]
+  workflowSteps           WorkflowStep[]
+  checklistItems          BnqChecklistItem[]
+  bnqProgress             CompanyBnqProgress?
 }
 
 model KpiSnapshot {
@@ -98,4 +103,157 @@ model SectorBenchmark {
   avgSeniorityYears     Float
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+}
+
+// ==================== BNQ 9700-800 MODULE ====================
+
+enum BnqLevel {
+  ES      // Entreprise en santé (Basic)
+  ESE     // Entreprise en santé - Élite
+  ESE_PLUS // Entreprise en santé - Élite plus
+}
+
+enum DocumentStatus {
+  DRAFT
+  PENDING_VALIDATION
+  APPROVED
+  ARCHIVED
+  EXPIRED
+}
+
+enum DocumentCategory {
+  ENGAGEMENT_DIRECTION
+  POLITIQUE_GOUVERNANCE
+  SST_RISQUES
+  MESURES_RH
+  CONFIDENTIALITE
+  COLLECTE_RAPPORTS
+}
+
+// Document types required for BNQ certification
+model DocumentType {
+  id                  String            @id @default(cuid())
+  code                String            @unique
+  name                String
+  description         String?
+  category            DocumentCategory
+  bnqArticle          String?           // e.g., "Art. 5.1"
+  requiredForLevel    BnqLevel          @default(ES)
+  isOptional          Boolean           @default(false)
+  revisionFrequency   String?           // e.g., "3 years", "annual", "continuous"
+  templateUrl         String?
+  sortOrder           Int               @default(0)
+  documents           Document[]
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+}
+
+// Actual documents uploaded by companies
+model Document {
+  id                  String            @id @default(cuid())
+  companyId           String
+  company             Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  documentTypeId      String
+  documentType        DocumentType      @relation(fields: [documentTypeId], references: [id])
+  fileName            String
+  fileUrl             String?
+  cloudStoragePath    String?
+  version             Int               @default(1)
+  status              DocumentStatus    @default(DRAFT)
+  validatedBy         String?
+  validatedAt         DateTime?
+  validationSignature String?
+  expiresAt           DateTime?
+  notes               String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([companyId, documentTypeId])
+}
+
+// Workflow steps for management adherence
+enum WorkflowStepStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+}
+
+model WorkflowStep {
+  id                  String              @id @default(cuid())
+  companyId           String
+  company             Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  stepNumber          Int
+  stepCode            String              // e.g., "ENGAGEMENT_INITIAL", "POLITIQUE_SME"
+  stepName            String
+  description         String?
+  status              WorkflowStepStatus  @default(NOT_STARTED)
+  completedBy         String?
+  completedAt         DateTime?
+  signature           String?
+  signatureTimestamp  DateTime?
+  notes               String?
+  dueDate             DateTime?
+  tasks               WorkflowTask[]
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@unique([companyId, stepNumber])
+  @@index([companyId])
+}
+
+model WorkflowTask {
+  id                  String              @id @default(cuid())
+  workflowStepId      String
+  workflowStep        WorkflowStep        @relation(fields: [workflowStepId], references: [id], onDelete: Cascade)
+  taskCode            String
+  taskName            String
+  isRequired          Boolean             @default(true)
+  isCompleted         Boolean             @default(false)
+  completedAt         DateTime?
+  completedBy         String?
+  notes               String?
+  sortOrder           Int                 @default(0)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@index([workflowStepId])
+}
+
+// BNQ Checklist items
+model BnqChecklistItem {
+  id                  String              @id @default(cuid())
+  companyId           String
+  company             Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  chapter             Int                 // BNQ chapter (5-9)
+  articleRef          String              // e.g., "5.1", "7.4.5.e"
+  requirement         String
+  requiredForLevel    BnqLevel            @default(ES)
+  isCompliant         Boolean?            // null = not evaluated, true = compliant, false = non-compliant
+  evaluatedAt         DateTime?
+  evaluatedBy         String?
+  evidence            String?             // Description of evidence
+  documentId          String?             // Link to uploaded document
+  notes               String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@index([companyId, chapter])
+}
+
+// Company BNQ Progress tracking
+model CompanyBnqProgress {
+  id                  String              @id @default(cuid())
+  companyId           String              @unique
+  company             Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  targetLevel         BnqLevel            @default(ES)
+  currentProgress     Float               @default(0)  // 0-100%
+  documentsProgress   Float               @default(0)
+  checklistProgress   Float               @default(0)
+  workflowProgress    Float               @default(0)
+  lastEvaluatedAt     DateTime?
+  certificationDate   DateTime?
+  certificationExpiry DateTime?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
 }
