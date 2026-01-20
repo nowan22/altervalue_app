@@ -1,0 +1,101 @@
+generator client {
+    provider = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+    output = "/home/ubuntu/altervalue/nextjs_space/node_modules/.prisma/client"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String?
+  role          Role      @default(CONSULTANT)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  companies     Company[]
+}
+
+enum Role {
+  ADMIN
+  CONSULTANT
+}
+
+model Company {
+  id                      String    @id @default(cuid())
+  name                    String
+  sector                  String
+  country                 String    @default("France")
+  employeesCount          Int
+  avgGrossSalary          Float
+  employerContributionRate Float
+  absenteeismRate         Float
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  userId                  String
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kpis                    KpiSnapshot[]
+  isDemo                  Boolean   @default(false)
+}
+
+model KpiSnapshot {
+  id                      String    @id @default(cuid())
+  companyId               String
+  company                 Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  periodDate              DateTime
+  periodType              String    @default("MONTHLY")  // MONTHLY or QUARTERLY
+  // KPI data
+  employeesCount          Int?
+  avgGrossSalary          Float?
+  employerContributionRate Float?
+  absenteeismRate         Float?
+  turnoverRate            Float?
+  avgSeniorityYears       Float?
+  atMpGravityRate         Float?
+  engagementScore         Float?
+  // Calculated presenteeism values
+  presRateCalculated      Float?
+  presDaysCalculated      Float?
+  productivityLoss        Float?
+  presCostCalculated      Float?
+  presCostPerEmployee     Float?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  @@index([companyId, periodDate])
+}
+
+model Settings {
+  id                        String    @id @default(cuid())
+  // Coefficient values
+  presAbsCoefficient        Float     @default(1.3)
+  productivityLossCoeff     Float     @default(0.33)
+  workingDaysPerYear        Int       @default(220)
+  // Color thresholds for signals
+  absenteeismGreenMax       Float     @default(4.0)
+  absenteeismOrangeMax      Float     @default(6.0)
+  turnoverGreenMax          Float     @default(10.0)
+  turnoverOrangeMax         Float     @default(15.0)
+  presCostGreenMaxPct       Float     @default(5.0)
+  presCostOrangeMaxPct      Float     @default(8.0)
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+}
+
+model SectorBenchmark {
+  id                    String    @id @default(cuid())
+  sector                String    @unique
+  absenteeismAvg        Float
+  absenteeismMin        Float
+  absenteeismMax        Float
+  turnoverAvg           Float
+  turnoverMin           Float
+  turnoverMax           Float
+  avgSeniorityYears     Float
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
