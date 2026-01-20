@@ -1,10 +1,11 @@
 # AlterValue - Application de Calcul du Présentéisme
 
-> **v1.1** - Application d'évaluation et de suivi du coût du présentéisme en entreprise
+> **v1.2** - Application d'évaluation et de suivi du coût du présentéisme en entreprise + Module BNQ 9700-800
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue)
+![Version](https://img.shields.io/badge/version-1.2.0-blue)
 ![Status](https://img.shields.io/badge/status-Production-green)
 ![Méthode](https://img.shields.io/badge/méthode-A%20(Macro)-orange)
+![BNQ](https://img.shields.io/badge/BNQ-9700--800-purple)
 
 ---
 
@@ -133,6 +134,66 @@ Le présentéisme désigne le fait d'être présent au travail mais avec une pro
 | Templates email HTML professionnels | ✅ |
 | Bouton d'envoi d'alerte dans le dashboard | ✅ |
 | Intégration API Abacus.AI | ✅ |
+
+---
+
+## ✅ Fonctionnalités v1.2 (Module BNQ 9700-800)
+
+### 1. Dashboard BNQ
+| Fonctionnalité | Statut |
+|---------------|--------|
+| Vue d'ensemble de la progression | ✅ |
+| Progression globale avec pourcentage | ✅ |
+| Progression documents | ✅ |
+| Progression workflow | ✅ |
+| Indicateur de statut | ✅ |
+| Alerte documents manquants | ✅ |
+| Badge objectif certification (Es/EsE/EsE+) | ✅ |
+
+### 2. Coffre-fort Documentaire
+| Fonctionnalité | Statut |
+|---------------|--------|
+| Liste des documents par catégorie | ✅ |
+| Catégories BNQ (6 catégories) | ✅ |
+| Ajout de documents | ✅ |
+| Validation des documents | ✅ |
+| Gestion des versions | ✅ |
+| Signature électronique | ✅ |
+| Horodatage | ✅ |
+| Archivage automatique | ✅ |
+| Badge statut par document | ✅ |
+| Article BNQ référencé | ✅ |
+
+### 3. Workflow Validation Direction
+| Fonctionnalité | Statut |
+|---------------|--------|
+| 5 étapes de validation | ✅ |
+| Tâches par étape | ✅ |
+| Complétion des tâches | ✅ |
+| Signature direction | ✅ |
+| Notes et commentaires | ✅ |
+| Progression automatique | ✅ |
+| Indicateurs visuels | ✅ |
+
+### 4. API Routes BNQ
+| Route | Méthodes | Description |
+|-------|----------|-------------|
+| `/api/bnq/document-types` | GET | Types de documents BNQ |
+| `/api/bnq/companies/[id]/documents` | GET, POST | Gestion documents |
+| `/api/bnq/companies/[id]/documents/[docId]` | GET, PUT, DELETE | Document spécifique |
+| `/api/bnq/companies/[id]/workflow` | GET | Workflow de validation |
+| `/api/bnq/companies/[id]/workflow/[stepId]` | PUT | Mise à jour étape |
+| `/api/bnq/companies/[id]/workflow/tasks/[taskId]` | PUT | Complétion tâche |
+| `/api/bnq/companies/[id]/progress` | GET, PUT | Progression BNQ |
+
+### 5. Données BNQ
+| Élément | Nombre |
+|---------|--------|
+| Types de documents | 24 |
+| Catégories | 6 |
+| Niveaux certification | 3 (Es, EsE, EsE+) |
+| Étapes workflow | 5 |
+| Articles BNQ référencés | 15+ |
 
 ---
 
