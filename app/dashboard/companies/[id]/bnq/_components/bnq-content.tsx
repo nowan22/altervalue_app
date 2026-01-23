@@ -14,7 +14,10 @@ import {
   AlertCircle,
   CheckCircle2,
   Clock,
-  FileText
+  FileText,
+  ListChecks,
+  Target,
+  Bell,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +26,9 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { DocumentVault } from './document-vault';
 import { WorkflowValidation } from './workflow-validation';
+import { RequirementsChecklist } from './requirements-checklist';
+import { ActionPlanManager } from './action-plan-manager';
+import { AlertsManager } from './alerts-manager';
 import { BNQ_LEVEL_LABELS } from '@/lib/bnq-data';
 import type { BnqLevel } from '@prisma/client';
 
@@ -30,6 +36,7 @@ interface BnqContentProps {
   company: {
     id: string;
     name: string;
+    employeesCount: number;
     documents: Array<{
       id: string;
       fileName: string;
@@ -65,11 +72,22 @@ interface BnqContentProps {
         isCompleted: boolean;
       }>;
     }>;
+    checklistItems: Array<{
+      id: string;
+      articleRef: string;
+      requirement: string;
+      isCompliant: boolean | null;
+      evaluatedAt: string | null;
+      evidence: string | null;
+      notes: string | null;
+    }>;
     bnqProgress: {
       targetLevel: string;
       currentProgress: number;
       documentsProgress: number;
+      checklistProgress: number;
       workflowProgress: number;
+      actionsProgress: number;
     } | null;
   };
   documentTypes: Array<{
@@ -270,16 +288,41 @@ export function BnqContent({ company, documentTypes }: BnqContentProps) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="checklist" className="flex items-center gap-2">
+            <ListChecks className="h-4 w-4" />
+            <span className="hidden sm:inline">Exigences</span>
+          </TabsTrigger>
           <TabsTrigger value="documents" className="flex items-center gap-2">
             <FileCheck className="h-4 w-4" />
-            Coffre-fort Documentaire
+            <span className="hidden sm:inline">Documents</span>
           </TabsTrigger>
           <TabsTrigger value="workflow" className="flex items-center gap-2">
             <ClipboardCheck className="h-4 w-4" />
-            Workflow Validation
+            <span className="hidden sm:inline">Workflow</span>
+          </TabsTrigger>
+          <TabsTrigger value="actions" className="flex items-center gap-2">
+            <Target className="h-4 w-4" />
+            <span className="hidden sm:inline">Plan d'action</span>
+          </TabsTrigger>
+          <TabsTrigger value="alerts" className="flex items-center gap-2">
+            <Bell className="h-4 w-4" />
+            <span className="hidden sm:inline">Alertes</span>
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="checklist" className="mt-6">
+          <RequirementsChecklist
+            companyId={company.id}
+            targetLevel={targetLevel}
+            checklistItems={company.checklistItems || []}
+            linkedDocuments={company.documents.map(d => ({
+              id: d.id,
+              documentType: { code: d.documentType.code, name: d.documentType.name },
+              status: d.status,
+            }))}
+          />
+        </TabsContent>
 
         <TabsContent value="documents" className="mt-6">
           <DocumentVault
@@ -296,6 +339,18 @@ export function BnqContent({ company, documentTypes }: BnqContentProps) {
             workflowSteps={company.workflowSteps}
             onRefresh={() => router.refresh()}
           />
+        </TabsContent>
+
+        <TabsContent value="actions" className="mt-6">
+          <ActionPlanManager
+            companyId={company.id}
+            companyName={company.name}
+            targetLevel={targetLevel}
+          />
+        </TabsContent>
+
+        <TabsContent value="alerts" className="mt-6">
+          <AlertsManager companyId={company.id} />
         </TabsContent>
       </Tabs>
     </div>

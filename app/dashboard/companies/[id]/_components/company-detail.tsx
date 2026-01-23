@@ -24,6 +24,7 @@ import {
   Shield,
   Bell,
   Loader2,
+  ClipboardList,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ import CsvImport from "./csv-import";
 import KpiHistory from "./kpi-history";
 import PresenteeismCalculator from "./presenteeism-calculator";
 import { ExportButtons } from "./export-buttons";
+import { SurveyManagement } from "./survey-management";
 
 interface CompanyDetailProps {
   company: any;
@@ -231,9 +233,13 @@ export default function CompanyDetail({ company, settings, benchmarks }: Company
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-4 w-full max-w-xl">
+        <TabsList className="grid grid-cols-5 w-full max-w-2xl">
           <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
           <TabsTrigger value="calculator">Calculateur</TabsTrigger>
+          <TabsTrigger value="survey" className="flex items-center gap-1">
+            <ClipboardList className="h-4 w-4" />
+            Enquête
+          </TabsTrigger>
           <TabsTrigger value="import">Import CSV</TabsTrigger>
           <TabsTrigger value="history">Historique</TabsTrigger>
         </TabsList>
@@ -434,6 +440,14 @@ export default function CompanyDetail({ company, settings, benchmarks }: Company
           <PresenteeismCalculator
             company={safeCompany}
             settings={safeSettings}
+          />
+        </TabsContent>
+
+        <TabsContent value="survey" className="mt-6">
+          <SurveyManagement
+            companyId={safeCompany?.id ?? ''}
+            companyName={safeCompany?.name ?? ''}
+            employeesCount={safeCompany?.employeesCount ?? 0}
           />
         </TabsContent>
 

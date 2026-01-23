@@ -34,6 +34,8 @@ model Company {
   avgGrossSalary          Float
   employerContributionRate Float
   absenteeismRate         Float
+  hoursPerYear            Int       @default(1600)
+  annualValueAdded        Float?    // Optional: annual value added or revenue
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
   userId                  String
@@ -45,6 +47,11 @@ model Company {
   workflowSteps           WorkflowStep[]
   checklistItems          BnqChecklistItem[]
   bnqProgress             CompanyBnqProgress?
+  // BNQ v3.0 - Plan d'action & Alertes
+  actionPlans             ActionPlan[]
+  alerts                  BnqAlert[]
+  // Survey Module relations (Method B)
+  surveys                 Survey[]
 }
 
 model KpiSnapshot {
@@ -251,9 +258,281 @@ model CompanyBnqProgress {
   documentsProgress   Float               @default(0)
   checklistProgress   Float               @default(0)
   workflowProgress    Float               @default(0)
+  actionsProgress     Float               @default(0)  // v3.0: Plan d'action progress
   lastEvaluatedAt     DateTime?
   certificationDate   DateTime?
   certificationExpiry DateTime?
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
+}
+
+// =====================================================
+// BNQ v3.0 - PLAN D'ACTION & INTERVENTIONS
+// =====================================================
+
+// 4 Spheres of activity (BNQ Art. 7.4.1)
+enum ActivitySphere {
+  HABITUDES_VIE           // Lifestyle habits
+  CONCILIATION_TRAVAIL    // Work-life balance
+  ENVIRONNEMENT_TRAVAIL   // Work environment
+  PRATIQUES_GESTION       // Management practices
+}
+
+// Intervention status
+enum InterventionStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  POSTPONED
+}
+
+// Priority levels
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// Annual Action Plan
+model ActionPlan {
+  id                  String              @id @default(cuid())
+  companyId           String
+  company             Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  year                Int                 // e.g., 2026
+  title               String              @default("Plan d'action santé mieux-être")
+  description         String?
+  status              String              @default("DRAFT")  // DRAFT, ACTIVE, COMPLETED, ARCHIVED
+  targetLevel         BnqLevel            @default(ES)
+  // Minimum requirements tracking (depends on level)
+  minInterventions    Int                 @default(2)   // [Es]: 2, [EsE]: 4, [EsE+]: 6
+  minPriorities       Int                 @default(1)   // [Es]: 1, [EsE]: 2, [EsE+]: 3
+  minPratiquesGestion Int                 @default(0)   // [Es]: 0, [EsE]: 1, [EsE+]: 2
+  // Approval tracking
+  approvedBy          String?
+  approvedAt          DateTime?
+  // Relations
+  interventions       Intervention[]
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@unique([companyId, year])
+  @@index([companyId])
+}
+
+// Individual interventions within an action plan
+model Intervention {
+  id                  String              @id @default(cuid())
+  actionPlanId        String
+  actionPlan          ActionPlan          @relation(fields: [actionPlanId], references: [id], onDelete: Cascade)
+  // Basic info
+  title               String
+  description         String?
+  sphere              ActivitySphere
+  priority            Priority            @default(MEDIUM)
+  status              InterventionStatus  @default(PLANNED)
+  // BNQ alignment
+  addressesPriority   Boolean             @default(false)  // Addresses identified priority need
+  bnqArticleRef       String?             // e.g., "7.4.1.a"
+  // Planning
+  responsiblePerson   String?             // Name of responsible person
+  responsibleRole     String?             // Role/function
+  startDate           DateTime?
+  targetEndDate       DateTime?
+  actualEndDate       DateTime?
+  budget              Float?              // Estimated budget
+  actualCost          Float?              // Actual cost
+  // Evaluation metrics (BNQ Art. 9)
+  targetParticipation Float?              // Target % of employees
+  actualParticipation Float?              // Actual % participation
+  satisfactionScore   Float?              // Satisfaction score (0-10)
+  expectedOutcome     String?             // Expected measurable outcome
+  actualOutcome       String?             // Actual outcome achieved
+  // Progress
+  progressNotes       String?
+  completedAt         DateTime?
+  completedBy         String?
+  // Relations
+  alerts              BnqAlert[]
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@index([actionPlanId])
+  @@index([sphere])
+}
+
+// =====================================================
+// BNQ v3.0 - ALERTES & RAPPELS
+// =====================================================
+
+enum AlertType {
+  DOCUMENT_EXPIRY           // Document about to expire
+  DOCUMENT_MISSING          // Required document missing
+  DOCUMENT_REVISION         // Document needs revision (3 years)
+  WORKFLOW_OVERDUE          // Workflow step overdue
+  INTERVENTION_DEADLINE     // Intervention deadline approaching
+  INTERVENTION_OVERDUE      // Intervention past due
+  DATA_COLLECTION           // Time for data collection (2-3 years)
+  ANNUAL_REVIEW             // Annual review reminder
+  CERTIFICATION_EXPIRY      // Certification expiring
+  DUERP_UPDATE              // DUERP annual update required
+  COMMITTEE_MEETING         // Minimum 4 meetings/year
+  CUSTOM                    // Custom reminder
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  URGENT
+  CRITICAL
+}
+
+model BnqAlert {
+  id                  String              @id @default(cuid())
+  companyId           String
+  company             Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  type                AlertType
+  severity            AlertSeverity       @default(WARNING)
+  title               String
+  message             String
+  // Related entities (optional)
+  documentId          String?
+  workflowStepId      String?
+  interventionId      String?
+  intervention        Intervention?       @relation(fields: [interventionId], references: [id], onDelete: SetNull)
+  // Scheduling
+  triggerDate         DateTime            // When the alert becomes active
+  dueDate             DateTime?           // Deadline for the alert
+  // Status
+  isRead              Boolean             @default(false)
+  readAt              DateTime?
+  isDismissed         Boolean             @default(false)
+  dismissedAt         DateTime?
+  dismissedBy         String?
+  isResolved          Boolean             @default(false)
+  resolvedAt          DateTime?
+  resolvedBy          String?
+  // Recurrence
+  isRecurring         Boolean             @default(false)
+  recurrencePattern   String?             // "ANNUAL", "QUARTERLY", "MONTHLY"
+  nextOccurrence      DateTime?
+  // Email notification
+  emailSent           Boolean             @default(false)
+  emailSentAt         DateTime?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@index([companyId, isResolved])
+  @@index([triggerDate])
+}
+
+// =====================================================
+// BNQ v3.0 - EXIGENCES DÉTAILLÉES (REQUIREMENTS)
+// =====================================================
+
+// Static reference table for BNQ requirements
+model BnqRequirement {
+  id                  String              @id @default(cuid())
+  chapter             Int                 // 5, 6, 7, 8, or 9
+  section             String              // e.g., "5.1", "7.4.5.e"
+  title               String
+  description         String
+  requirement         String              // Full requirement text
+  requiredForLevel    BnqLevel            @default(ES)
+  isOptional          Boolean             @default(false)
+  category            String?             // Grouping category
+  linkedDocumentCode  String?             // Link to DocumentType.code
+  linkedWorkflowStep  String?             // Link to WorkflowStep.stepCode
+  verificationMethod  String?             // How to verify compliance
+  evidence            String?             // What evidence is needed
+  frequency           String?             // Verification frequency
+  sortOrder           Int                 @default(0)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@unique([chapter, section])
+  @@index([chapter])
+}
+
+// =====================================================
+// SURVEY MODULE (Method B - Micro approach)
+// =====================================================
+
+enum SurveyStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+  ARCHIVED
+}
+
+model Survey {
+  id                  String              @id @default(cuid())
+  companyId           String
+  company             Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  type                String              @default("PRESENTEEISM_V1")
+  title               String              @default("Enquête Présentéisme")
+  description         String?
+  status              SurveyStatus        @default(DRAFT)
+  surveyToken         String              @unique @default(cuid())  // Public token for anonymous access
+  startDate           DateTime?
+  endDate             DateTime?
+  closedAt            DateTime?
+  responses           SurveyResponse[]
+  aggregate           SurveyAggregate?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@index([companyId])
+  @@index([surveyToken])
+}
+
+// Anonymous survey response (no user identification)
+model SurveyResponse {
+  id                  String              @id @default(cuid())
+  surveyId            String
+  survey              Survey              @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  // Q1: Prevalence - worked while efficiency reduced
+  q1Prevalence        String              // "NEVER" | "OCCASIONALLY" | "REGULARLY" | "VERY_FREQUENTLY"
+  // Q2: Perceived efficiency (100%, 90%, 80%, 70%, 60%, 50% or less)
+  q2EfficiencyPercent Int                 // 100, 90, 80, 70, 60, 50
+  // Q3: Factors (multiple choice, stored as JSON array)
+  q3Factors           String?             // JSON array: ["FATIGUE", "STRESS", "PAIN", "CONCENTRATION", "OTHER"]
+  q3OtherText         String?             // Free text if "OTHER" selected
+  // Q4: Impact (multiple choice, stored as JSON array)
+  q4Impact            String?             // JSON array: ["QUALITY", "DELAYS", "COLLEAGUES", "ERRORS"]
+  // Q5: Working hours per week
+  q5WorkingHours      String              // "<35" | "35-39" | "40-44" | "45-49" | ">=50"
+  // Metadata
+  submittedAt         DateTime            @default(now())
+  userAgent           String?             // Browser info for fraud detection (anonymous)
+
+  @@index([surveyId])
+}
+
+// Aggregated survey results (calculated after survey closes)
+model SurveyAggregate {
+  id                      String          @id @default(cuid())
+  surveyId                String          @unique
+  survey                  Survey          @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  // Core metrics for Method B calculation
+  respondentsCount        Int             @default(0)
+  prevalence              Float           @default(0)  // % of respondents affected (not "NEVER")
+  avgEfficiencyScore      Float           @default(1)  // Average efficiency among affected (0-1)
+  // Quality indicators
+  responseRate            Float?          // If company provides expected respondent count
+  qualityFlag             String          @default("LOW")  // "LOW" | "MEDIUM" | "HIGH"
+  // Factor distribution (stored as JSON)
+  factorDistribution      String?         // JSON: { "FATIGUE": 45, "STRESS": 62, ... }
+  impactDistribution      String?         // JSON: { "QUALITY": 34, "DELAYS": 28, ... }
+  // Working hours distribution
+  workingHoursDistribution String?        // JSON: { "<35": 5, "35-39": 40, ... }
+  // Calculated Method B results
+  presCostB               Float?          // Presenteeism cost (€/year)
+  presCostBPct            Float?          // As % of payroll
+  presCostBPerEmployee    Float?          // Per employee cost
+  // Timestamps
+  calculatedAt            DateTime?
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
 }

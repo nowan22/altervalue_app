@@ -1,10 +1,10 @@
 # AlterValue - Application de Calcul du Présentéisme
 
-> **v1.2** - Application d'évaluation et de suivi du coût du présentéisme en entreprise + Module BNQ 9700-800
+> **v2.0** - Application d'évaluation et de suivi du coût du présentéisme avec Méthode A (Macro) + Méthode B (Micro - Enquête)
 
-![Version](https://img.shields.io/badge/version-1.2.0-blue)
+![Version](https://img.shields.io/badge/version-2.0.0-blue)
 ![Status](https://img.shields.io/badge/status-Production-green)
-![Méthode](https://img.shields.io/badge/méthode-A%20(Macro)-orange)
+![Méthode](https://img.shields.io/badge/méthode-A%20%2B%20B-orange)
 ![BNQ](https://img.shields.io/badge/BNQ-9700--800-purple)
 
 ---
@@ -194,6 +194,65 @@ Le présentéisme désigne le fait d'être présent au travail mais avec une pro
 | Niveaux certification | 3 (Es, EsE, EsE+) |
 | Étapes workflow | 5 |
 | Articles BNQ référencés | 15+ |
+
+---
+
+## ✅ Fonctionnalités v2.0 (Méthode B - Enquête Interne)
+
+### 1. Système d'Enquêtes Anonymes
+| Fonctionnalité | Statut |
+|---------------|--------|
+| Création d'enquêtes par entreprise | ✅ |
+| Lien public anonyme (token unique) | ✅ |
+| Questionnaire 5 étapes avec progression | ✅ |
+| Validation RGPD (aucun identifiant) | ✅ |
+| Statuts : Brouillon / Active / Clôturée | ✅ |
+| Lancement et clôture des enquêtes | ✅ |
+| Copie du lien de partage | ✅ |
+
+### 2. Questionnaire Présentéisme (5 questions)
+| Question | Type |
+|----------|------|
+| Q1 - Prévalence (fréquence du présentéisme) | Choix unique |
+| Q2 - Efficacité perçue (100% à 50%) | Choix unique |
+| Q3 - Facteurs (fatigue, stress, douleurs...) | Multi-choix |
+| Q4 - Impact (qualité, délais, erreurs...) | Multi-choix |
+| Q5 - Temps de travail hebdomadaire | Choix unique |
+
+### 3. Calcul Méthode B
+| Formule | Description |
+|---------|-------------|
+| L = 1 - avg_efficiency_score | Perte de productivité moyenne |
+| N_c = N × p | Nombre de salariés concernés |
+| H_d = N_c × hours × L | Heures dégradées |
+| V_h = salary / hours | Valeur par heure |
+| pres_cost_B = H_d × V_h × c_e | Coût du présentéisme |
+
+### 4. Agrégation & Indicateurs
+| Indicateur | Description |
+|------------|-------------|
+| respondentsCount | Nombre de répondants |
+| prevalence | % de salariés concernés |
+| avgEfficiencyScore | Efficacité moyenne |
+| qualityFlag | LOW / MEDIUM / HIGH |
+| factorDistribution | Distribution des facteurs |
+| impactDistribution | Distribution des impacts |
+
+### 5. API Routes Enquêtes
+| Route | Méthodes | Description |
+|-------|----------|-------------|
+| `/api/companies/[id]/surveys` | GET, POST | Liste et création |
+| `/api/surveys/[surveyId]` | GET, PUT, DELETE | Gestion enquête |
+| `/api/surveys/[surveyId]/respond` | POST | Soumission anonyme |
+| `/survey/[token]` | Page publique | Questionnaire anonyme |
+
+### 6. Contraintes RGPD
+| Règle | Implémentation |
+|-------|----------------|
+| Anonymat total | Aucun identifiant collecté |
+| Minimum 10 répondants | Validation avant calcul |
+| Qualité "haute" si ≥30% participation | Indicateur qualityFlag |
+| Pas de segmentation < 10 | Non implémenté (confidentialité) |
 
 ---
 

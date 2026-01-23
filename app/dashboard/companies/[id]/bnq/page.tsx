@@ -23,6 +23,9 @@ export default async function BnqPage({ params }: { params: Promise<{ id: string
         include: { tasks: { orderBy: { sortOrder: 'asc' } } },
         orderBy: { stepNumber: 'asc' },
       },
+      checklistItems: {
+        orderBy: [{ chapter: 'asc' }, { articleRef: 'asc' }],
+      },
       bnqProgress: true,
     },
   });
