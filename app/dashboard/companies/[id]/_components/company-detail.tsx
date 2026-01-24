@@ -25,6 +25,8 @@ import {
   Bell,
   Loader2,
   ClipboardList,
+  Scale,
+  PieChart,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,6 +40,8 @@ import KpiHistory from "./kpi-history";
 import PresenteeismCalculator from "./presenteeism-calculator";
 import { ExportButtons } from "./export-buttons";
 import { SurveyManagement } from "./survey-management";
+import { MethodComparison } from "./method-comparison";
+import { SurveyResults } from "./survey-results";
 
 interface CompanyDetailProps {
   company: any;
@@ -233,12 +237,20 @@ export default function CompanyDetail({ company, settings, benchmarks }: Company
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-5 w-full max-w-2xl">
-          <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
+        <TabsList className="grid grid-cols-4 md:grid-cols-7 w-full max-w-4xl">
+          <TabsTrigger value="overview">Vue d&apos;ensemble</TabsTrigger>
           <TabsTrigger value="calculator">Calculateur</TabsTrigger>
           <TabsTrigger value="survey" className="flex items-center gap-1">
-            <ClipboardList className="h-4 w-4" />
+            <ClipboardList className="h-3 w-3" />
             Enquête
+          </TabsTrigger>
+          <TabsTrigger value="comparison" className="flex items-center gap-1">
+            <Scale className="h-3 w-3" />
+            A vs B
+          </TabsTrigger>
+          <TabsTrigger value="results" className="flex items-center gap-1">
+            <PieChart className="h-3 w-3" />
+            Résultats
           </TabsTrigger>
           <TabsTrigger value="import">Import CSV</TabsTrigger>
           <TabsTrigger value="history">Historique</TabsTrigger>
@@ -445,6 +457,24 @@ export default function CompanyDetail({ company, settings, benchmarks }: Company
 
         <TabsContent value="survey" className="mt-6">
           <SurveyManagement
+            companyId={safeCompany?.id ?? ''}
+            companyName={safeCompany?.name ?? ''}
+            employeesCount={safeCompany?.employeesCount ?? 0}
+          />
+        </TabsContent>
+
+        <TabsContent value="comparison" className="mt-6">
+          <MethodComparison
+            companyId={safeCompany?.id ?? ''}
+            companyName={safeCompany?.name ?? ''}
+            methodAResult={result}
+            employeesCount={safeCompany?.employeesCount ?? 0}
+            payroll={(safeCompany?.avgGrossSalary ?? 0) * (1 + (safeCompany?.employerContributionRate ?? 0)) * (safeCompany?.employeesCount ?? 0)}
+          />
+        </TabsContent>
+
+        <TabsContent value="results" className="mt-6">
+          <SurveyResults
             companyId={safeCompany?.id ?? ''}
             companyName={safeCompany?.name ?? ''}
             employeesCount={safeCompany?.employeesCount ?? 0}

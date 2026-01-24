@@ -36,6 +36,11 @@ model Company {
   absenteeismRate         Float
   hoursPerYear            Int       @default(1600)
   annualValueAdded        Float?    // Optional: annual value added or revenue
+  // v3.1: Company details for document templates
+  siret                   String?
+  address                 String?
+  directorName            String?
+  directorTitle           String?   @default("Directeur général")
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
   userId                  String

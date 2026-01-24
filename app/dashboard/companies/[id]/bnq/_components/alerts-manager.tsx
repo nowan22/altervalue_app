@@ -187,12 +187,42 @@ export function AlertsManager({ companyId }: AlertsManagerProps) {
     }
   };
 
-  // Generate automatic alerts based on documents and deadlines
+  // Scan and generate automatic alerts
+  const [scanning, setScanning] = useState(false);
+  
   const generateAutomaticAlerts = async () => {
-    // This would typically be called from a cron job or triggered manually
-    toast({ title: 'Vérification en cours', description: 'Analyse des échéances...' });
-    // TODO: Implement automatic alert generation based on document expiry, DUERP updates, etc.
-    fetchAlerts();
+    setScanning(true);
+    try {
+      const response = await fetch(`/api/bnq/companies/${companyId}/alerts/scan`, {
+        method: 'POST',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.alertsCreated > 0) {
+          toast({
+            title: `${data.alertsCreated} alerte(s) générée(s)`,
+            description: `Documents: ${data.summary.documentExpiry + data.summary.missingDocuments}, Workflow: ${data.summary.workflowOverdue}, Interventions: ${data.summary.interventionDeadline}`,
+          });
+        } else {
+          toast({
+            title: 'Scan terminé',
+            description: 'Aucune nouvelle alerte détectée.',
+          });
+        }
+        fetchAlerts();
+      } else {
+        throw new Error('Erreur lors du scan');
+      }
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de scanner les alertes',
+        variant: 'destructive',
+      });
+    } finally {
+      setScanning(false);
+    }
   };
 
   // Filter alerts
@@ -235,9 +265,13 @@ export function AlertsManager({ companyId }: AlertsManagerProps) {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={generateAutomaticAlerts}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Vérifier
+          <Button variant="outline" onClick={generateAutomaticAlerts} disabled={scanning}>
+            {scanning ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-2" />
+            )}
+            {scanning ? 'Scan...' : 'Scanner'}
           </Button>
           <Button onClick={() => setIsCreateOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />

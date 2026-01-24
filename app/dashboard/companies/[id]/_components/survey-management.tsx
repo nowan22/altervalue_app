@@ -19,6 +19,7 @@ import {
   Loader2,
   BarChart3,
   ExternalLink,
+  FileDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -71,6 +72,25 @@ interface Survey {
   } | null;
 }
 
+interface IndicativeResult {
+  isIndicative: boolean;
+  calculatedAt: string;
+  surveyStatus: string;
+  respondentsCount: number;
+  prevalence: number;
+  avgEfficiencyScore: number;
+  responseRate: number;
+  qualityFlag: string;
+  presCostB: number;
+  presCostBPct: number;
+  presCostBPerEmployee: number;
+  productivityLoss: number;
+  affectedEmployees: number;
+  degradedHours: number;
+  valuePerHour: number;
+  payroll: number;
+}
+
 interface SurveyManagementProps {
   companyId: string;
   companyName: string;
@@ -96,6 +116,9 @@ export function SurveyManagement({ companyId, companyName, employeesCount }: Sur
   const [newSurveyDescription, setNewSurveyDescription] = useState('');
   const [creating, setCreating] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [indicativeResults, setIndicativeResults] = useState<Record<string, IndicativeResult>>({});
+  const [calculatingPreview, setCalculatingPreview] = useState<string | null>(null);
+  const [exportingPdf, setExportingPdf] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSurveys();
@@ -190,6 +213,66 @@ export function SurveyManagement({ companyId, companyName, employeesCount }: Sur
   const openSurveyLink = (token: string) => {
     const url = `${window.location.origin}/survey/${token}`;
     window.open(url, '_blank');
+  };
+
+  const calculateIndicativePreview = async (surveyId: string) => {
+    setCalculatingPreview(surveyId);
+    try {
+      const response = await fetch(`/api/surveys/${surveyId}/calculate-preview`, {
+        method: 'POST',
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setIndicativeResults(prev => ({ ...prev, [surveyId]: result }));
+        toast({ 
+          title: 'Calcul effectué', 
+          description: 'Résultat indicatif généré avec succès.' 
+        });
+      } else {
+        const error = await response.json();
+        toast({ 
+          title: 'Erreur', 
+          description: error.error || 'Erreur lors du calcul.', 
+          variant: 'destructive' 
+        });
+      }
+    } catch (error) {
+      toast({ title: 'Erreur', description: 'Erreur lors du calcul.', variant: 'destructive' });
+    } finally {
+      setCalculatingPreview(null);
+    }
+  };
+
+  const exportPdf = async (surveyId: string) => {
+    setExportingPdf(surveyId);
+    try {
+      const response = await fetch(`/api/surveys/${surveyId}/export-pdf`);
+      if (response.ok) {
+        const data = await response.json();
+        // Open print dialog with HTML content
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(data.html);
+          printWindow.document.close();
+          printWindow.onload = () => {
+            printWindow.print();
+          };
+        }
+        toast({ title: 'Export prêt', description: 'Le rapport PDF est prêt à imprimer.' });
+      } else {
+        const error = await response.json();
+        toast({ 
+          title: 'Erreur', 
+          description: error.error || 'Erreur lors de l\'export.', 
+          variant: 'destructive' 
+        });
+      }
+    } catch (error) {
+      toast({ title: 'Erreur', description: 'Erreur lors de l\'export.', variant: 'destructive' });
+    } finally {
+      setExportingPdf(null);
+    }
   };
 
   if (loading) {
@@ -314,6 +397,23 @@ export function SurveyManagement({ companyId, companyName, employeesCount }: Sur
                             >
                               <ExternalLink className="h-4 w-4" />
                             </Button>
+                            {hasEnoughResponses && (
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => calculateIndicativePreview(survey.id)}
+                                disabled={calculatingPreview === survey.id}
+                              >
+                                {calculatingPreview === survey.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <>
+                                    <BarChart3 className="h-4 w-4 mr-1" />
+                                    Calculer (indicatif)
+                                  </>
+                                )}
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="destructive"
@@ -330,6 +430,23 @@ export function SurveyManagement({ companyId, companyName, employeesCount }: Sur
                               )}
                             </Button>
                           </>
+                        )}
+                        {survey.status === 'CLOSED' && survey.aggregate && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => exportPdf(survey.id)}
+                            disabled={exportingPdf === survey.id}
+                          >
+                            {exportingPdf === survey.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <FileDown className="h-4 w-4 mr-1" />
+                                Export PDF
+                              </>
+                            )}
+                          </Button>
                         )}
                         {(survey.status === 'DRAFT' || survey.status === 'CLOSED') && (
                           <Button
@@ -405,6 +522,34 @@ export function SurveyManagement({ companyId, companyName, employeesCount }: Sur
                           </div>
                         </>
                       )}
+
+                      {/* Indicative Results for active surveys */}
+                      {survey.status === 'ACTIVE' && indicativeResults[survey.id] && (
+                        <>
+                          <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              <AlertCircle className="h-3 w-3 text-amber-500" />
+                              Prévalence (indicatif)
+                            </p>
+                            <p className="text-lg font-semibold text-purple-600">
+                              {(indicativeResults[survey.id].prevalence * 100).toFixed(1)}%
+                            </p>
+                            <p className="text-xs text-muted-foreground">des salariés concernés</p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              <AlertCircle className="h-3 w-3 text-amber-500" />
+                              Coût (indicatif)
+                            </p>
+                            <p className="text-lg font-semibold text-amber-600">
+                              {indicativeResults[survey.id].presCostB.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {indicativeResults[survey.id].presCostBPct.toFixed(1)}% de la masse salariale
+                            </p>
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     {/* Survey link for active surveys */}
@@ -415,6 +560,25 @@ export function SurveyManagement({ companyId, companyName, employeesCount }: Sur
                           <code className="text-xs text-muted-foreground flex-1 truncate">
                             {typeof window !== 'undefined' && `${window.location.origin}/survey/${survey.surveyToken}`}
                           </code>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Indicative results warning banner */}
+                    {survey.status === 'ACTIVE' && indicativeResults[survey.id] && (
+                      <div className="mt-4 p-3 bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                          <div className="text-xs text-amber-800 dark:text-amber-300">
+                            <p className="font-medium">Résultat indicatif - Enquête en cours</p>
+                            <p className="mt-1 text-amber-700 dark:text-amber-400">
+                              Ce calcul est basé sur les {indicativeResults[survey.id].respondentsCount} réponses actuelles 
+                              et peut évoluer. Les résultats définitifs seront disponibles après clôture de l&apos;enquête.
+                            </p>
+                            <p className="mt-1 text-amber-600 dark:text-amber-500 text-[10px]">
+                              Calculé le {new Date(indicativeResults[survey.id].calculatedAt).toLocaleString('fr-FR')}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     )}

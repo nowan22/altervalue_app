@@ -18,6 +18,7 @@ import {
   ListChecks,
   Target,
   Bell,
+  FileOutput,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +30,7 @@ import { WorkflowValidation } from './workflow-validation';
 import { RequirementsChecklist } from './requirements-checklist';
 import { ActionPlanManager } from './action-plan-manager';
 import { AlertsManager } from './alerts-manager';
+import { TemplateGenerator } from './template-generator';
 import { BNQ_LEVEL_LABELS } from '@/lib/bnq-data';
 import type { BnqLevel } from '@prisma/client';
 
@@ -288,7 +290,7 @@ export function BnqContent({ company, documentTypes }: BnqContentProps) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="checklist" className="flex items-center gap-2">
             <ListChecks className="h-4 w-4" />
             <span className="hidden sm:inline">Exigences</span>
@@ -308,6 +310,10 @@ export function BnqContent({ company, documentTypes }: BnqContentProps) {
           <TabsTrigger value="alerts" className="flex items-center gap-2">
             <Bell className="h-4 w-4" />
             <span className="hidden sm:inline">Alertes</span>
+          </TabsTrigger>
+          <TabsTrigger value="templates" className="flex items-center gap-2">
+            <FileOutput className="h-4 w-4" />
+            <span className="hidden sm:inline">Templates</span>
           </TabsTrigger>
         </TabsList>
 
@@ -351,6 +357,13 @@ export function BnqContent({ company, documentTypes }: BnqContentProps) {
 
         <TabsContent value="alerts" className="mt-6">
           <AlertsManager companyId={company.id} />
+        </TabsContent>
+
+        <TabsContent value="templates" className="mt-6">
+          <TemplateGenerator
+            companyId={company.id}
+            companyName={company.name}
+          />
         </TabsContent>
       </Tabs>
     </div>
