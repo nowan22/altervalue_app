@@ -196,14 +196,14 @@ export default function CompanyDetail({ company, settings, benchmarks }: Company
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+              <div className="w-16 h-16 bg-card/20 rounded-2xl flex items-center justify-center">
                 <Building2 className="h-8 w-8" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-2xl font-bold">{safeCompany?.name ?? 'Entreprise'}</h1>
                   {safeCompany?.isDemo && (
-                    <Badge variant="secondary" className="bg-white/20 text-white border-0">
+                    <Badge variant="secondary" className="bg-card/20 text-white border-0">
                       Démo
                     </Badge>
                   )}
@@ -266,10 +266,10 @@ export default function CompanyDetail({ company, settings, benchmarks }: Company
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500">Taux d'absentéisme</p>
+                    <p className="text-sm text-muted-foreground">Taux d'absentéisme</p>
                     <p className="text-2xl font-bold">{(safeCompany?.absenteeismRate ?? 0).toFixed(1)}%</p>
                     {benchmark && (
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         Benchmark: {benchmark?.absenteeismMin ?? 0}-{benchmark?.absenteeismMax ?? 0}%
                       </p>
                     )}
@@ -292,9 +292,9 @@ export default function CompanyDetail({ company, settings, benchmarks }: Company
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500">Taux de présentéisme</p>
+                    <p className="text-sm text-muted-foreground">Taux de présentéisme</p>
                     <p className="text-2xl font-bold">{(result?.presRate ?? 0).toFixed(1)}%</p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       {(result?.presCostPctPayroll ?? 0).toFixed(1)}% de la masse salariale
                     </p>
                   </div>
@@ -307,9 +307,9 @@ export default function CompanyDetail({ company, settings, benchmarks }: Company
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500">Jours de présentéisme</p>
+                    <p className="text-sm text-muted-foreground">Jours de présentéisme</p>
                     <p className="text-2xl font-bold">{(result?.presDays ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })}</p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Perte productivité: {(result?.productivityLoss ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} jours
                     </p>
                   </div>
@@ -322,9 +322,9 @@ export default function CompanyDetail({ company, settings, benchmarks }: Company
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500">Masse salariale</p>
+                    <p className="text-sm text-muted-foreground">Masse salariale</p>
                     <p className="text-2xl font-bold">{((result?.payroll ?? 0) / 1000000).toFixed(1)}M€</p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Salaire chargé: {(result?.avgTotalSalary ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €
                     </p>
                   </div>
@@ -342,34 +342,34 @@ export default function CompanyDetail({ company, settings, benchmarks }: Company
                 <CardDescription>Formules appliquées avec les coefficients actuels</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="p-4 bg-gray-50 rounded-lg space-y-3">
+                <div className="p-4 bg-muted rounded-lg space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">1. Taux de présentéisme</span>
+                    <span className="text-muted-foreground">1. Taux de présentéisme</span>
                     <span className="font-mono">
                       {(safeCompany?.absenteeismRate ?? 0).toFixed(1)}% × {result?.presAbsCoefficient ?? 1.3} = <strong>{(result?.presRate ?? 0).toFixed(2)}%</strong>
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">2. Jours de présentéisme</span>
+                    <span className="text-muted-foreground">2. Jours de présentéisme</span>
                     <span className="font-mono">
                       {(result?.presRate ?? 0).toFixed(2)}% × {safeCompany?.employeesCount ?? 0} × {result?.workingDaysPerYear ?? 220} = <strong>{(result?.presDays ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })}</strong>
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">3. Perte de productivité</span>
+                    <span className="text-muted-foreground">3. Perte de productivité</span>
                     <span className="font-mono">
                       {(result?.presDays ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} × {result?.productivityLossCoeff ?? 0.33} = <strong>{(result?.productivityLoss ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} jours</strong>
                     </span>
                   </div>
                   <div className="flex justify-between text-sm pt-2 border-t">
-                    <span className="text-gray-600">4. Coût du présentéisme</span>
+                    <span className="text-muted-foreground">4. Coût du présentéisme</span>
                     <span className="font-mono text-blue-600 font-bold">
                       {(result?.presCost ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €/an
                     </span>
                   </div>
                 </div>
 
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-muted-foreground">
                   <p>Coefficients utilisés :</p>
                   <ul className="mt-1 space-y-1">
                     <li>• Coefficient présentéisme/absentéisme : {result?.presAbsCoefficient ?? 1.3}</li>
@@ -421,8 +421,8 @@ export default function CompanyDetail({ company, settings, benchmarks }: Company
                 </div>
 
                 <div className="space-y-2">
-                  <h4 className="font-medium text-gray-900">Points clés :</h4>
-                  <ul className="space-y-2 text-sm text-gray-600">
+                  <h4 className="font-medium text-foreground">Points clés :</h4>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
                     <li className="flex items-start gap-2">
                       <span className="text-blue-500 mt-1">•</span>
                       <span>

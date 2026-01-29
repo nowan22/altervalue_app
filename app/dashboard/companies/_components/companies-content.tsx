@@ -93,8 +93,8 @@ export default function CompaniesContent({ companies, settings }: CompaniesConte
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dossiers Entreprises</h1>
-          <p className="text-gray-600 mt-1">Gérez et analysez vos dossiers clients</p>
+          <h1 className="text-3xl font-bold text-foreground">Dossiers Entreprises</h1>
+          <p className="text-muted-foreground mt-1">Gérez et analysez vos dossiers clients</p>
         </div>
         <Link href="/dashboard/companies/new">
           <Button className="gradient-primary text-white">
@@ -109,7 +109,7 @@ export default function CompaniesContent({ companies, settings }: CompaniesConte
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Rechercher une entreprise..."
                 value={search}
@@ -145,9 +145,9 @@ export default function CompaniesContent({ companies, settings }: CompaniesConte
       {filteredCompanies.length === 0 ? (
         <Card className="p-12">
           <div className="text-center">
-            <Building2 className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Aucun dossier trouvé</h3>
-            <p className="text-gray-500 mb-6">
+            <Building2 className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-xl font-semibold text-foreground mb-2">Aucun dossier trouvé</h3>
+            <p className="text-muted-foreground mb-6">
               {search || sectorFilter !== "all"
                 ? "Aucun dossier ne correspond à vos critères de recherche"
                 : "Commencez par créer votre premier dossier entreprise"}
@@ -202,7 +202,7 @@ export default function CompaniesContent({ companies, settings }: CompaniesConte
                         </div>
                         <div>
                           <CardTitle className="text-lg">{company?.name ?? 'Entreprise'}</CardTitle>
-                          <p className="text-sm text-gray-500">{getSectorLabel(company?.sector ?? '')}</p>
+                          <p className="text-sm text-muted-foreground">{getSectorLabel(company?.sector ?? '')}</p>
                         </div>
                       </div>
                       {company?.isDemo && (
@@ -213,17 +213,17 @@ export default function CompaniesContent({ companies, settings }: CompaniesConte
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-3 text-sm">
                       <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-gray-400" />
-                        <span className="text-gray-600">{company?.employeesCount ?? 0} salariés</span>
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">{company?.employeesCount ?? 0} salariés</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Percent className="h-4 w-4 text-gray-400" />
-                        <span className="text-gray-600">{(company?.absenteeismRate ?? 0).toFixed(1)}% absent.</span>
+                        <Percent className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">{(company?.absenteeismRate ?? 0).toFixed(1)}% absent.</span>
                       </div>
                       <div className="col-span-2 flex items-center gap-2">
-                        <Euro className="h-4 w-4 text-gray-400" />
-                        <span className="text-gray-600">
-                          Coût présent.: <strong className="text-gray-900">{(result?.presCost ?? 0).toLocaleString('fr-FR')} €</strong>
+                        <Euro className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">
+                          Coût présent.: <strong className="text-foreground">{(result?.presCost ?? 0).toLocaleString('fr-FR')} €</strong>
                         </span>
                       </div>
                     </div>

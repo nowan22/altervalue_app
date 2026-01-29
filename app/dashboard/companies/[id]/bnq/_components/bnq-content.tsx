@@ -144,8 +144,8 @@ export function BnqContent({ company, documentTypes }: BnqContentProps) {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-3">
-              <Shield className="h-7 w-7 text-blue-600" />
+            <h1 className="text-2xl font-display font-bold flex items-center gap-3">
+              <Shield className="h-7 w-7 text-secondary" />
               Conformité BNQ 9700-800
             </h1>
             <p className="text-muted-foreground">{company.name}</p>
@@ -161,10 +161,10 @@ export function BnqContent({ company, documentTypes }: BnqContentProps) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <Card className="glass-card border-secondary/20 bg-gradient-to-r from-secondary/10 to-secondary/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Award className="h-5 w-5 text-blue-600" />
+              <Award className="h-5 w-5 text-primary" />
               Progression vers la certification {levelInfo.badge}
             </CardTitle>
           </CardHeader>
@@ -173,7 +173,7 @@ export function BnqContent({ company, documentTypes }: BnqContentProps) {
               <div>
                 <div className="flex justify-between mb-2">
                   <span className="text-sm font-medium">Progression globale</span>
-                  <span className="text-sm font-bold text-blue-600">
+                  <span className="text-sm font-bold text-primary">
                     {Math.round(progress.currentProgress)}%
                   </span>
                 </div>
@@ -182,11 +182,11 @@ export function BnqContent({ company, documentTypes }: BnqContentProps) {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Documents Progress */}
-                <Card>
+                <Card className="glass-card">
                   <CardContent className="pt-4">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-green-100 rounded-lg">
-                        <FileText className="h-5 w-5 text-green-600" />
+                      <div className="p-2 bg-success/20 rounded-lg">
+                        <FileText className="h-5 w-5 text-success" />
                       </div>
                       <div className="flex-1">
                         <p className="text-sm text-muted-foreground">Documents</p>
@@ -203,11 +203,11 @@ export function BnqContent({ company, documentTypes }: BnqContentProps) {
                 </Card>
 
                 {/* Workflow Progress */}
-                <Card>
+                <Card className="glass-card">
                   <CardContent className="pt-4">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-purple-100 rounded-lg">
-                        <ClipboardCheck className="h-5 w-5 text-purple-600" />
+                      <div className="p-2 bg-secondary/20 rounded-lg">
+                        <ClipboardCheck className="h-5 w-5 text-secondary" />
                       </div>
                       <div className="flex-1">
                         <p className="text-sm text-muted-foreground">Workflow</p>
@@ -224,22 +224,22 @@ export function BnqContent({ company, documentTypes }: BnqContentProps) {
                 </Card>
 
                 {/* Status */}
-                <Card>
+                <Card className="glass-card">
                   <CardContent className="pt-4">
                     <div className="flex items-center gap-3">
                       <div className={`p-2 rounded-lg ${
                         progress.currentProgress >= 100 
-                          ? 'bg-green-100' 
+                          ? 'bg-success/20' 
                           : progress.currentProgress >= 50 
-                            ? 'bg-yellow-100' 
-                            : 'bg-red-100'
+                            ? 'bg-warning/20' 
+                            : 'bg-error/20'
                       }`}>
                         {progress.currentProgress >= 100 ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-600" />
+                          <CheckCircle2 className="h-5 w-5 text-success" />
                         ) : progress.currentProgress >= 50 ? (
-                          <Clock className="h-5 w-5 text-yellow-600" />
+                          <Clock className="h-5 w-5 text-warning" />
                         ) : (
-                          <AlertCircle className="h-5 w-5 text-red-600" />
+                          <AlertCircle className="h-5 w-5 text-error" />
                         )}
                       </div>
                       <div className="flex-1">
@@ -259,22 +259,22 @@ export function BnqContent({ company, documentTypes }: BnqContentProps) {
 
               {/* Missing Documents Alert */}
               {missingDocs.length > 0 && (
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="p-4 bg-warning/10 border border-warning/30 rounded-lg">
                   <div className="flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
+                    <AlertCircle className="h-5 w-5 text-warning mt-0.5" />
                     <div>
-                      <p className="font-medium text-amber-800">
+                      <p className="font-medium text-foreground">
                         {missingDocs.length} document(s) obligatoire(s) manquant(s)
                       </p>
                       <ul className="mt-2 space-y-1">
                         {missingDocs.slice(0, 3).map(doc => (
-                          <li key={doc.id} className="text-sm text-amber-700 flex items-center gap-2">
+                          <li key={doc.id} className="text-sm text-muted-foreground flex items-center gap-2">
                             <ChevronRight className="h-3 w-3" />
                             {doc.name} ({doc.bnqArticle})
                           </li>
                         ))}
                         {missingDocs.length > 3 && (
-                          <li className="text-sm text-amber-700">
+                          <li className="text-sm text-muted-foreground">
                             ... et {missingDocs.length - 3} autre(s)
                           </li>
                         )}

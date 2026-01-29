@@ -147,7 +147,7 @@ export default function CompanyForm({ company, isEdit = false }: CompanyFormProp
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Basic Info */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <h3 className="font-semibold text-foreground flex items-center gap-2">
                 <Building2 className="h-4 w-4" />
                 Informations générales
               </h3>
@@ -214,7 +214,7 @@ export default function CompanyForm({ company, isEdit = false }: CompanyFormProp
 
             {/* Financial Info */}
             <div className="space-y-4 pt-4 border-t">
-              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <h3 className="font-semibold text-foreground flex items-center gap-2">
                 <Euro className="h-4 w-4" />
                 Données financières
               </h3>
@@ -232,7 +232,7 @@ export default function CompanyForm({ company, isEdit = false }: CompanyFormProp
                     onChange={(e) => handleChange('avgGrossSalary', e.target.value)}
                     required
                   />
-                  <p className="text-xs text-gray-500">Salaire brut annuel moyen par salarié</p>
+                  <p className="text-xs text-muted-foreground">Salaire brut annuel moyen par salarié</p>
                 </div>
 
                 <div className="space-y-2">
@@ -248,14 +248,14 @@ export default function CompanyForm({ company, isEdit = false }: CompanyFormProp
                     onChange={(e) => handleChange('employerContributionRate', e.target.value)}
                     required
                   />
-                  <p className="text-xs text-gray-500">Généralement entre 40% et 50%</p>
+                  <p className="text-xs text-muted-foreground">Généralement entre 40% et 50%</p>
                 </div>
               </div>
             </div>
 
             {/* KPI Info */}
             <div className="space-y-4 pt-4 border-t">
-              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <h3 className="font-semibold text-foreground flex items-center gap-2">
                 <Percent className="h-4 w-4" />
                 Indicateurs RH
               </h3>
@@ -274,7 +274,7 @@ export default function CompanyForm({ company, isEdit = false }: CompanyFormProp
                     onChange={(e) => handleChange('absenteeismRate', e.target.value)}
                     required
                   />
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     Moyenne nationale : 5-6%. Auto-rempli selon le secteur.
                   </p>
                 </div>

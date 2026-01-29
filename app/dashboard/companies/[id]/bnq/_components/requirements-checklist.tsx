@@ -155,27 +155,31 @@ export function RequirementsChecklist({
     setSaving(section);
     
     // Optimistic update
+    const previousValue = localChecklist.get(section);
     setLocalChecklist(prev => new Map(prev).set(section, isCompliant));
     
     try {
-      // Find or create checklist item
-      const existingItem = checklistItems.find(item => item.articleRef === section);
-      const requirement = BNQ_REQUIREMENTS.find(r => r.section === section);
-      
-      if (!requirement) return;
-      
-      // TODO: API call to save compliance status
-      // For now, just show success
+      const response = await fetch('/api/bnq/requirements', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyId,
+          articleRef: section,
+          isCompliant,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('API error');
+      }
+
       toast({
         title: isCompliant === true ? 'Conforme' : isCompliant === false ? 'Non conforme' : 'Non évalué',
         description: `Exigence ${section} mise à jour`,
       });
     } catch (error) {
       // Revert on error
-      setLocalChecklist(prev => {
-        const existingItem = checklistItems.find(item => item.articleRef === section);
-        return new Map(prev).set(section, existingItem?.isCompliant ?? null);
-      });
+      setLocalChecklist(prev => new Map(prev).set(section, previousValue ?? null));
       toast({
         title: 'Erreur',
         description: 'Impossible de mettre à jour le statut',
@@ -250,8 +254,8 @@ export function RequirementsChecklist({
                 <div className="text-2xl font-bold text-red-600">{progress.nonCompliant}</div>
                 <div className="text-xs text-muted-foreground">Non conformes</div>
               </div>
-              <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                <div className="text-2xl font-bold text-gray-600">{progress.notEvaluated}</div>
+              <div className="p-3 rounded-lg bg-muted dark:bg-card">
+                <div className="text-2xl font-bold text-muted-foreground">{progress.notEvaluated}</div>
                 <div className="text-xs text-muted-foreground">Non évalués</div>
               </div>
             </div>

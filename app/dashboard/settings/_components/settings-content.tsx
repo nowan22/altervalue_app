@@ -129,8 +129,8 @@ export default function SettingsContent({ settings, benchmarks }: SettingsConten
       className="space-y-6"
     >
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Paramètres</h1>
-        <p className="text-gray-600 mt-1">Configurez les coefficients et seuils de calcul</p>
+        <h1 className="text-3xl font-bold text-foreground">Paramètres</h1>
+        <p className="text-muted-foreground mt-1">Configurez les coefficients et seuils de calcul</p>
       </div>
 
       <Tabs defaultValue="coefficients">
@@ -177,7 +177,7 @@ export default function SettingsContent({ settings, benchmarks }: SettingsConten
                     value={coefficients.presAbsCoefficient}
                     onChange={(e) => setCoefficients(prev => ({ ...prev, presAbsCoefficient: e.target.value }))}
                   />
-                  <p className="text-xs text-gray-500">Défaut : 1.3 (présentéisme = 1.3 × absentéisme)</p>
+                  <p className="text-xs text-muted-foreground">Défaut : 1.3 (présentéisme = 1.3 × absentéisme)</p>
                 </div>
 
                 <div className="space-y-2">
@@ -193,7 +193,7 @@ export default function SettingsContent({ settings, benchmarks }: SettingsConten
                     value={coefficients.productivityLossCoeff}
                     onChange={(e) => setCoefficients(prev => ({ ...prev, productivityLossCoeff: e.target.value }))}
                   />
-                  <p className="text-xs text-gray-500">Défaut : 0.33 (33% de perte de productivité)</p>
+                  <p className="text-xs text-muted-foreground">Défaut : 0.33 (33% de perte de productivité)</p>
                 </div>
 
                 <div className="space-y-2">
@@ -208,7 +208,7 @@ export default function SettingsContent({ settings, benchmarks }: SettingsConten
                     value={coefficients.workingDaysPerYear}
                     onChange={(e) => setCoefficients(prev => ({ ...prev, workingDaysPerYear: e.target.value }))}
                   />
-                  <p className="text-xs text-gray-500">Défaut : 220 jours</p>
+                  <p className="text-xs text-muted-foreground">Défaut : 220 jours</p>
                 </div>
               </div>
 
@@ -245,7 +245,7 @@ export default function SettingsContent({ settings, benchmarks }: SettingsConten
             <CardContent className="space-y-6">
               {/* Absenteeism */}
               <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">Absentéisme (%)</h4>
+                <h4 className="font-medium text-foreground">Absentéisme (%)</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="absenteeismGreenMax" className="flex items-center gap-2">
@@ -274,14 +274,14 @@ export default function SettingsContent({ settings, benchmarks }: SettingsConten
                     />
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   🟢 Vert : ≤ {thresholds.absenteeismGreenMax}% | 🟠 Orange : {thresholds.absenteeismGreenMax}-{thresholds.absenteeismOrangeMax}% | 🔴 Rouge : &gt; {thresholds.absenteeismOrangeMax}%
                 </p>
               </div>
 
               {/* Turnover */}
               <div className="space-y-4 pt-4 border-t">
-                <h4 className="font-medium text-gray-900">Turnover (%)</h4>
+                <h4 className="font-medium text-foreground">Turnover (%)</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="turnoverGreenMax" className="flex items-center gap-2">
@@ -314,7 +314,7 @@ export default function SettingsContent({ settings, benchmarks }: SettingsConten
 
               {/* Presenteeism Cost */}
               <div className="space-y-4 pt-4 border-t">
-                <h4 className="font-medium text-gray-900">Coût présentéisme (% masse salariale)</h4>
+                <h4 className="font-medium text-foreground">Coût présentéisme (% masse salariale)</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="presCostGreenMaxPct" className="flex items-center gap-2">
@@ -379,7 +379,7 @@ export default function SettingsContent({ settings, benchmarks }: SettingsConten
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b bg-gray-50">
+                    <tr className="border-b bg-muted">
                       <th className="px-4 py-3 text-left font-medium">Secteur</th>
                       <th className="px-4 py-3 text-left font-medium">Absentéisme (%)</th>
                       <th className="px-4 py-3 text-left font-medium">Turnover (%)</th>
@@ -390,7 +390,7 @@ export default function SettingsContent({ settings, benchmarks }: SettingsConten
                     {SECTORS.map((sector) => {
                       const benchmark = safeBenchmarks.find(b => b?.sector === sector.value);
                       return (
-                        <tr key={sector.value} className="border-b hover:bg-gray-50">
+                        <tr key={sector.value} className="border-b hover:bg-muted">
                           <td className="px-4 py-3 font-medium">{sector.label}</td>
                           <td className="px-4 py-3">
                             {benchmark ? `${benchmark.absenteeismMin}-${benchmark.absenteeismMax}%` : '-'}
@@ -407,7 +407,7 @@ export default function SettingsContent({ settings, benchmarks }: SettingsConten
                   </tbody>
                 </table>
               </div>
-              <p className="text-sm text-gray-500 mt-4">
+              <p className="text-sm text-muted-foreground mt-4">
                 Les benchmarks sont utilisés pour comparer les KPI des entreprises aux moyennes sectorielles.
               </p>
             </CardContent>

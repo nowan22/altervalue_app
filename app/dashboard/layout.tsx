@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
-import { DashboardNav } from "./_components/dashboard-nav";
+import { prisma } from "@/lib/db";
+import { DashboardLayoutClient } from "./_components/dashboard-layout-client";
 
 export default async function DashboardLayout({
   children,
@@ -14,12 +15,60 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  // Get current user with role
+  const currentUser = await prisma.user.findUnique({
+    where: { email: session.user?.email || '' },
+    select: { id: true, role: true },
+  });
+
+  if (!currentUser) {
+    redirect("/login");
+  }
+
+  // Fetch companies/missions based on user role
+  let companies;
+  
+  if (currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'EXPERT') {
+    // Super-Admin and Expert see all their created companies + demo companies
+    companies = await prisma.company.findMany({
+      where: {
+        OR: [
+          { userId: currentUser.id },
+          { isDemo: true },
+        ],
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+  } else {
+    // Pilote and Observateur only see their assigned missions
+    const assignments = await prisma.missionAssignment.findMany({
+      where: { userId: currentUser.id },
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        company: {
+          name: 'asc',
+        },
+      },
+    });
+    companies = assignments.map(a => a.company);
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-      <DashboardNav user={session.user} />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {children}
-      </main>
-    </div>
+    <DashboardLayoutClient companies={companies}>
+      {children}
+    </DashboardLayoutClient>
   );
 }

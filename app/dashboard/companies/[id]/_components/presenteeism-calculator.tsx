@@ -86,7 +86,7 @@ export default function PresenteeismCalculator({ company, settings }: Presenteei
           <CardContent className="space-y-6">
             {/* Company Data */}
             <div className="space-y-4">
-              <h4 className="font-medium text-gray-900">Données entreprise</h4>
+              <h4 className="font-medium text-foreground">Données entreprise</h4>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="employeesCount">Effectif</Label>
@@ -130,12 +130,12 @@ export default function PresenteeismCalculator({ company, settings }: Presenteei
 
             {/* Coefficients */}
             <div className="space-y-4 pt-4 border-t">
-              <h4 className="font-medium text-gray-900">Coefficients de calcul</h4>
+              <h4 className="font-medium text-foreground">Coefficients de calcul</h4>
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="presAbsCoefficient" className="flex items-center gap-2">
                     Coefficient présentéisme/absentéisme
-                    <span className="text-xs text-gray-500">(défaut: 1.3)</span>
+                    <span className="text-xs text-muted-foreground">(défaut: 1.3)</span>
                   </Label>
                   <Input
                     id="presAbsCoefficient"
@@ -148,7 +148,7 @@ export default function PresenteeismCalculator({ company, settings }: Presenteei
                 <div className="space-y-2">
                   <Label htmlFor="productivityLossCoeff" className="flex items-center gap-2">
                     Coefficient perte de productivité
-                    <span className="text-xs text-gray-500">(défaut: 0.33)</span>
+                    <span className="text-xs text-muted-foreground">(défaut: 0.33)</span>
                   </Label>
                   <Input
                     id="productivityLossCoeff"
@@ -161,7 +161,7 @@ export default function PresenteeismCalculator({ company, settings }: Presenteei
                 <div className="space-y-2">
                   <Label htmlFor="workingDaysPerYear" className="flex items-center gap-2">
                     Jours travaillés par an
-                    <span className="text-xs text-gray-500">(défaut: 220)</span>
+                    <span className="text-xs text-muted-foreground">(défaut: 220)</span>
                   </Label>
                   <Input
                     id="workingDaysPerYear"
@@ -212,20 +212,20 @@ export default function PresenteeismCalculator({ company, settings }: Presenteei
 
                 {/* Intermediate Results */}
                 <div className="space-y-3">
-                  <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
-                    <span className="text-gray-600">Taux de présentéisme</span>
+                  <div className="flex justify-between p-3 bg-muted rounded-lg">
+                    <span className="text-muted-foreground">Taux de présentéisme</span>
                     <span className="font-semibold">{(result?.presRate ?? 0).toFixed(2)}%</span>
                   </div>
-                  <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
-                    <span className="text-gray-600">Jours de présentéisme</span>
+                  <div className="flex justify-between p-3 bg-muted rounded-lg">
+                    <span className="text-muted-foreground">Jours de présentéisme</span>
                     <span className="font-semibold">{(result?.presDays ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} jours</span>
                   </div>
-                  <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
-                    <span className="text-gray-600">Perte de productivité</span>
+                  <div className="flex justify-between p-3 bg-muted rounded-lg">
+                    <span className="text-muted-foreground">Perte de productivité</span>
                     <span className="font-semibold">{(result?.productivityLoss ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} jours</span>
                   </div>
-                  <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
-                    <span className="text-gray-600">Coût par salarié</span>
+                  <div className="flex justify-between p-3 bg-muted rounded-lg">
+                    <span className="text-muted-foreground">Coût par salarié</span>
                     <span className="font-semibold">{(result?.presCostPerEmployee ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €/an</span>
                   </div>
                 </div>
@@ -259,38 +259,38 @@ export default function PresenteeismCalculator({ company, settings }: Presenteei
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 border rounded-lg">
-              <h4 className="font-semibold text-gray-900 mb-2">1. Taux de présentéisme</h4>
-              <p className="text-sm text-gray-600 font-mono bg-gray-50 p-2 rounded">
+              <h4 className="font-semibold text-foreground mb-2">1. Taux de présentéisme</h4>
+              <p className="text-sm text-muted-foreground font-mono bg-muted p-2 rounded">
                 Taux absentéisme × Coefficient prés./abs.
               </p>
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 Le coefficient de 1.3 signifie que le présentéisme est estimé à 1.3× l'absentéisme.
               </p>
             </div>
             <div className="p-4 border rounded-lg">
-              <h4 className="font-semibold text-gray-900 mb-2">2. Jours de présentéisme</h4>
-              <p className="text-sm text-gray-600 font-mono bg-gray-50 p-2 rounded">
+              <h4 className="font-semibold text-foreground mb-2">2. Jours de présentéisme</h4>
+              <p className="text-sm text-muted-foreground font-mono bg-muted p-2 rounded">
                 Taux présentéisme × Effectif × 220 jours
               </p>
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 Nombre total de jours où des salariés sont présents mais à productivité réduite.
               </p>
             </div>
             <div className="p-4 border rounded-lg">
-              <h4 className="font-semibold text-gray-900 mb-2">3. Perte de productivité</h4>
-              <p className="text-sm text-gray-600 font-mono bg-gray-50 p-2 rounded">
+              <h4 className="font-semibold text-foreground mb-2">3. Perte de productivité</h4>
+              <p className="text-sm text-muted-foreground font-mono bg-muted p-2 rounded">
                 Jours présentéisme × Coeff. perte productivité
               </p>
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 Le coefficient de 0.33 signifie 33% de perte de productivité en moyenne.
               </p>
             </div>
             <div className="p-4 border rounded-lg">
-              <h4 className="font-semibold text-gray-900 mb-2">4. Coût du présentéisme</h4>
-              <p className="text-sm text-gray-600 font-mono bg-gray-50 p-2 rounded">
+              <h4 className="font-semibold text-foreground mb-2">4. Coût du présentéisme</h4>
+              <p className="text-sm text-muted-foreground font-mono bg-muted p-2 rounded">
                 Perte productivité × Salaire chargé / 220
               </p>
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 Coût économique annuel de la perte de productivité liée au présentéisme.
               </p>
             </div>

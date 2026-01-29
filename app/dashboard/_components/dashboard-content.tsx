@@ -19,18 +19,25 @@ import {
   FolderKanban,
   BarChart3,
   PieChart,
+  ClipboardList,
+  CalendarClock,
+  ShieldCheck,
+  Bell,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getSectorLabel } from "@/lib/sectors";
 import { calculatePresenteeism, getSignalColor } from "@/lib/presenteeism-calculator";
-import KpiChart from "./kpi-chart";
+import PerformanceChart from "./performance-chart";
+import ActivityFeed from "./activity-feed";
 
 interface DashboardContentProps {
   companies: any[];
   settings: any;
   benchmarks: any[];
+  activityLogs?: any[];
 }
 
 function AnimatedNumber({ value, prefix = "", suffix = "", decimals = 0 }: {
@@ -85,14 +92,73 @@ function SignalBadge({ signal }: { signal: 'green' | 'orange' | 'red' }) {
   );
 }
 
-export default function DashboardContent({ companies, settings, benchmarks }: DashboardContentProps) {
+// KPI Card Component with V4.0 styling
+interface KpiCardProps {
+  title: string;
+  value: number;
+  suffix?: string;
+  decimals?: number;
+  icon: React.ReactNode;
+  trend?: { value: number; isPositive: boolean };
+  variant: 'gold' | 'teal' | 'accent' | 'muted';
+  subtitle?: string;
+}
+
+function KpiCard({ title, value, suffix = "", decimals = 0, icon, trend, variant, subtitle }: KpiCardProps) {
+  const variantStyles = {
+    gold: "bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border-primary/30 hover:border-primary/50",
+    teal: "bg-gradient-to-br from-secondary/20 via-secondary/10 to-transparent border-secondary/30 hover:border-secondary/50",
+    accent: "bg-gradient-to-br from-success/20 via-success/10 to-transparent border-success/30 hover:border-success/50",
+    muted: "bg-gradient-to-br from-warning/20 via-warning/10 to-transparent border-warning/30 hover:border-warning/50",
+  };
+
+  const iconStyles = {
+    gold: "bg-primary/20 text-primary",
+    teal: "bg-secondary/20 text-secondary",
+    accent: "bg-success/20 text-success",
+    muted: "bg-warning/20 text-warning",
+  };
+
+  return (
+    <Card className={`border transition-all duration-300 ${variantStyles[variant]}`}>
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+            <p className="text-3xl font-bold mt-2 text-foreground">
+              <AnimatedNumber value={value} suffix={suffix} decimals={decimals} />
+            </p>
+            {subtitle && (
+              <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+            )}
+            {trend && (
+              <div className={`flex items-center gap-1 mt-2 text-sm ${trend.isPositive ? 'text-success' : 'text-error'}`}>
+                {trend.isPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                <span>{trend.value > 0 ? '+' : ''}{trend.value}%</span>
+              </div>
+            )}
+          </div>
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${iconStyles[variant]}`}>
+            {icon}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function DashboardContent({ companies, settings, benchmarks, activityLogs }: DashboardContentProps) {
   const safeCompanies = companies ?? [];
   const safeSettings = settings ?? {};
 
   // Calculate aggregated statistics
   const totalCompanies = safeCompanies.length;
   let totalEmployees = 0;
-  let totalPresCost = 0;
+  let totalPresCostA = 0;
+  let totalPresCostB = 0;
+  let companiesWithMethodB = 0;
+  let totalBnqProgress = 0;
+  let companiesWithBnq = 0;
   const signals: Array<{ company: string; message: string; signal: 'green' | 'orange' | 'red' }> = [];
 
   safeCompanies.forEach((company) => {
@@ -107,7 +173,20 @@ export default function DashboardContent({ companies, settings, benchmarks }: Da
       productivityLossCoeff: safeSettings?.productivityLossCoeff ?? 0.33,
     });
 
-    totalPresCost += result?.presCost ?? 0;
+    totalPresCostA += result?.presCost ?? 0;
+
+    // Add Method B cost if available
+    const latestSurvey = company?.surveys?.[0];
+    if (latestSurvey?.aggregate?.presCostB) {
+      totalPresCostB += latestSurvey.aggregate.presCostB;
+      companiesWithMethodB++;
+    }
+
+    // Add BNQ progress if available
+    if (company?.bnqProgress?.currentProgress != null) {
+      totalBnqProgress += company.bnqProgress.currentProgress;
+      companiesWithBnq++;
+    }
 
     // Generate signals
     const absSignal = getSignalColor(
@@ -145,6 +224,15 @@ export default function DashboardContent({ companies, settings, benchmarks }: Da
     }
   });
 
+  // Total cost: prefer Method B when available
+  const totalPresCost = companiesWithMethodB > 0 ? totalPresCostA + totalPresCostB - (totalPresCostA * companiesWithMethodB / safeCompanies.length) : totalPresCostA;
+
+  // Average BNQ progress
+  const avgBnqProgress = companiesWithBnq > 0 ? Math.round(totalBnqProgress / companiesWithBnq) : 0;
+
+  // Count active alerts (red signals)
+  const activeAlerts = signals.filter(s => s.signal === 'red').length;
+
   // Sort signals by severity
   signals.sort((a, b) => {
     const order = { red: 0, orange: 1, green: 2 };
@@ -174,84 +262,54 @@ export default function DashboardContent({ companies, settings, benchmarks }: Da
       {/* Header */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Tableau de bord</h1>
-          <p className="text-gray-600 mt-1">Vue d'ensemble de vos indicateurs QVCT</p>
+          <h1 className="text-3xl font-bold text-foreground">Tableau de bord</h1>
+          <p className="text-muted-foreground mt-1">Vue d'ensemble de vos indicateurs QVCT</p>
         </div>
         <div className="flex gap-3">
           <Link href="/dashboard/companies/new">
-            <Button className="gradient-primary text-white">
+            <Button className="bg-gradient-to-r from-primary to-primary-light text-primary-foreground hover:opacity-90 shadow-lg">
               <FolderKanban className="h-4 w-4 mr-2" />
-              Nouveau dossier
+              Nouvelle mission
             </Button>
           </Link>
         </div>
       </motion.div>
 
-      {/* Key Metrics */}
+      {/* V4.0 KPI Cards */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-blue-100 text-sm font-medium">Dossiers</p>
-                <p className="text-3xl font-bold mt-1">
-                  <AnimatedNumber value={totalCompanies} />
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                <Building2 className="h-6 w-6" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <KpiCard
+          title="Missions suivies"
+          value={totalCompanies}
+          icon={<FolderKanban className="h-6 w-6" />}
+          variant="gold"
+          subtitle={`${totalEmployees.toLocaleString('fr-FR')} salariés`}
+        />
 
-        <Card className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white border-0 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-indigo-100 text-sm font-medium">Effectif total</p>
-                <p className="text-3xl font-bold mt-1">
-                  <AnimatedNumber value={totalEmployees} />
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                <Users className="h-6 w-6" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <KpiCard
+          title="Coût présentéisme"
+          value={Math.round(totalPresCost)}
+          suffix=" €"
+          icon={<Euro className="h-6 w-6" />}
+          variant="teal"
+          subtitle={companiesWithMethodB > 0 ? `${companiesWithMethodB} avec Méthode B` : "Méthode A"}
+        />
 
-        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-orange-100 text-sm font-medium">Coût présentéisme</p>
-                <p className="text-3xl font-bold mt-1">
-                  <AnimatedNumber value={totalPresCost} suffix=" €" />
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                <Euro className="h-6 w-6" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <KpiCard
+          title="Alertes actives"
+          value={activeAlerts}
+          icon={<Bell className="h-6 w-6" />}
+          variant="muted"
+          subtitle={signals.length > activeAlerts ? `+${signals.length - activeAlerts} avertissements` : "Aucun avertissement"}
+        />
 
-        <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-red-100 text-sm font-medium">Alertes actives</p>
-                <p className="text-3xl font-bold mt-1">
-                  <AnimatedNumber value={signals.filter(s => s.signal === 'red').length} />
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                <AlertTriangle className="h-6 w-6" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <KpiCard
+          title="Conformité BNQ"
+          value={avgBnqProgress}
+          suffix="%"
+          icon={<ShieldCheck className="h-6 w-6" />}
+          variant="accent"
+          subtitle={companiesWithBnq > 0 ? `${companiesWithBnq} mission(s) en cours` : "Aucune démarche"}
+        />
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -259,16 +317,16 @@ export default function DashboardContent({ companies, settings, benchmarks }: Da
         <motion.div variants={itemVariants} className="lg:col-span-1">
           <Card className="h-full">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-orange-500" />
+              <CardTitle className="flex items-center gap-2 text-foreground">
+                <AlertTriangle className="h-5 w-5 text-warning" />
                 Signaux prioritaires
               </CardTitle>
               <CardDescription>Alertes nécessitant votre attention</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {signals.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <CheckCircle className="h-12 w-12 mx-auto text-green-500 mb-3" />
+                <div className="text-center py-8 text-muted-foreground">
+                  <CheckCircle className="h-12 w-12 mx-auto text-success mb-3" />
                   <p>Aucune alerte active</p>
                   <p className="text-sm">Tous les indicateurs sont au vert</p>
                 </div>
@@ -281,16 +339,16 @@ export default function DashboardContent({ companies, settings, benchmarks }: Da
                     transition={{ delay: index * 0.1 }}
                     className={`p-3 rounded-lg border-l-4 ${
                       signal.signal === 'red'
-                        ? 'bg-red-50 border-red-500'
+                        ? 'bg-error/10 border-error dark:bg-error/20'
                         : signal.signal === 'orange'
-                        ? 'bg-orange-50 border-orange-500'
-                        : 'bg-green-50 border-green-500'
+                        ? 'bg-warning/10 border-warning dark:bg-warning/20'
+                        : 'bg-success/10 border-success dark:bg-success/20'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-medium text-gray-900 text-sm">{signal.company}</p>
-                        <p className="text-gray-600 text-xs mt-1">{signal.message}</p>
+                        <p className="font-medium text-foreground text-sm">{signal.company}</p>
+                        <p className="text-muted-foreground text-xs mt-1">{signal.message}</p>
                       </div>
                       <SignalBadge signal={signal.signal} />
                     </div>
@@ -301,14 +359,14 @@ export default function DashboardContent({ companies, settings, benchmarks }: Da
           </Card>
         </motion.div>
 
-        {/* Recent Companies */}
+        {/* Recent Companies / Missions */}
         <motion.div variants={itemVariants} className="lg:col-span-2">
           <Card className="h-full">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="flex items-center gap-2">
-                  <FolderKanban className="h-5 w-5 text-blue-500" />
-                  Dossiers récents
+                <CardTitle className="flex items-center gap-2 text-foreground">
+                  <FolderKanban className="h-5 w-5 text-primary" />
+                  Missions récentes
                 </CardTitle>
                 <CardDescription>Vos dernières entreprises analysées</CardDescription>
               </div>
@@ -321,94 +379,150 @@ export default function DashboardContent({ companies, settings, benchmarks }: Da
             <CardContent>
               {safeCompanies.length === 0 ? (
                 <div className="text-center py-12">
-                  <FolderKanban className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-                  <p className="text-gray-500 mb-4">Aucun dossier pour le moment</p>
+                  <FolderKanban className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground mb-4">Aucune mission pour le moment</p>
                   <Link href="/dashboard/companies/new">
-                    <Button className="gradient-primary text-white">
-                      Créer votre premier dossier
+                    <Button className="bg-gradient-to-r from-primary to-primary-light text-primary-foreground hover:opacity-90">
+                      Créer votre première mission
                     </Button>
                   </Link>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {safeCompanies.slice(0, 4).map((company, index) => {
-                    const result = calculatePresenteeism({
-                      employeesCount: company?.employeesCount ?? 0,
-                      avgGrossSalary: company?.avgGrossSalary ?? 0,
-                      employerContributionRate: company?.employerContributionRate ?? 0,
-                      absenteeismRate: company?.absenteeismRate ?? 0,
-                      presAbsCoefficient: safeSettings?.presAbsCoefficient ?? 1.3,
-                      productivityLossCoeff: safeSettings?.productivityLossCoeff ?? 0.33,
-                    });
+                <TooltipProvider>
+                  <div className="space-y-3">
+                    {safeCompanies.slice(0, 4).map((company, index) => {
+                      const result = calculatePresenteeism({
+                        employeesCount: company?.employeesCount ?? 0,
+                        avgGrossSalary: company?.avgGrossSalary ?? 0,
+                        employerContributionRate: company?.employerContributionRate ?? 0,
+                        absenteeismRate: company?.absenteeismRate ?? 0,
+                        presAbsCoefficient: safeSettings?.presAbsCoefficient ?? 1.3,
+                        productivityLossCoeff: safeSettings?.productivityLossCoeff ?? 0.33,
+                      });
 
-                    const signal = getSignalColor(
-                      company?.absenteeismRate ?? 0,
-                      safeSettings?.absenteeismGreenMax ?? 4,
-                      safeSettings?.absenteeismOrangeMax ?? 6
-                    );
+                      const signal = getSignalColor(
+                        company?.absenteeismRate ?? 0,
+                        safeSettings?.absenteeismGreenMax ?? 4,
+                        safeSettings?.absenteeismOrangeMax ?? 6
+                      );
 
-                    return (
-                      <Link key={company?.id ?? index} href={`/dashboard/companies/${company?.id ?? ''}`}>
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                          className="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer group"
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
-                              <Building2 className="h-6 w-6 text-blue-600" />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-semibold text-gray-900">{company?.name ?? 'Entreprise'}</h3>
-                                {company?.isDemo && (
-                                  <Badge variant="secondary" className="text-xs">Démo</Badge>
-                                )}
+                      // Get latest survey info
+                      const latestSurvey = company?.surveys?.[0];
+                      const hasMethodB = latestSurvey?.aggregate?.presCostB != null;
+                      const methodBCost = latestSurvey?.aggregate?.presCostB ?? 0;
+
+                      // Check if survey is recommended (no survey or > 12 months old)
+                      const surveyRecommended = !latestSurvey || 
+                        (latestSurvey.closedAt && new Date(latestSurvey.closedAt) < new Date(Date.now() - 365 * 24 * 60 * 60 * 1000));
+
+                      return (
+                        <Link key={company?.id ?? index} href={`/dashboard/companies/${company?.id ?? ''}`}>
+                          <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            className="flex items-center justify-between p-4 bg-muted hover:bg-muted dark:bg-card dark:hover:bg-card-hover rounded-xl transition-colors cursor-pointer group"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                <Building2 className="h-6 w-6 text-blue-600" />
                               </div>
-                              <p className="text-sm text-gray-500">
-                                {getSectorLabel(company?.sector ?? '')} • {company?.employeesCount ?? 0} salariés
-                              </p>
+                              <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h3 className="font-semibold text-foreground dark:text-white">{company?.name ?? 'Entreprise'}</h3>
+                                  {company?.isDemo && (
+                                    <Badge variant="secondary" className="text-xs">Démo</Badge>
+                                  )}
+                                  {surveyRecommended && !company?.isDemo && (
+                                    <Tooltip>
+                                      <TooltipTrigger>
+                                        <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">
+                                          <ClipboardList className="h-3 w-3 mr-1" />
+                                          Enquête recommandée
+                                        </Badge>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Aucune enquête depuis plus de 12 mois</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  )}
+                                </div>
+                                <p className="text-sm text-muted-foreground dark:text-muted-foreground">
+                                  {getSectorLabel(company?.sector ?? '')} • {company?.employeesCount ?? 0} salariés
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <div className="text-right">
-                              <p className="text-sm font-medium text-gray-900">
-                                {(result?.presCost ?? 0).toLocaleString('fr-FR')} €
-                              </p>
-                              <p className="text-xs text-gray-500">Coût présentéisme</p>
+                            <div className="flex items-center gap-4">
+                              {/* Survey info */}
+                              {latestSurvey && (
+                                <div className="text-right hidden md:block">
+                                  <p className="text-xs text-muted-foreground dark:text-muted-foreground flex items-center gap-1 justify-end">
+                                    <CalendarClock className="h-3 w-3" />
+                                    {latestSurvey.closedAt 
+                                      ? new Date(latestSurvey.closedAt).toLocaleDateString('fr-FR')
+                                      : latestSurvey.status === 'ACTIVE' ? 'En cours' : 'Brouillon'
+                                    }
+                                  </p>
+                                </div>
+                              )}
+                              {/* Costs */}
+                              <div className="text-right">
+                                <div className="flex items-center gap-2">
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <p className="text-sm font-medium text-blue-600">
+                                        {(result?.presCost ?? 0).toLocaleString('fr-FR')} €
+                                      </p>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Méthode A (Ratios sectoriels)</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                  {hasMethodB && (
+                                    <>
+                                      <span className="text-muted-foreground">/</span>
+                                      <Tooltip>
+                                        <TooltipTrigger>
+                                          <p className="text-sm font-medium text-purple-600">
+                                            {methodBCost.toLocaleString('fr-FR')} €
+                                          </p>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Méthode B (Enquête)</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </>
+                                  )}
+                                </div>
+                                <p className="text-xs text-muted-foreground dark:text-muted-foreground">Coût présentéisme</p>
+                              </div>
+                              <SignalBadge signal={signal} />
+                              <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-blue-500 transition-colors" />
                             </div>
-                            <SignalBadge signal={signal} />
-                            <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
-                          </div>
-                        </motion.div>
-                      </Link>
-                    );
-                  })}
-                </div>
+                          </motion.div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </TooltipProvider>
               )}
             </CardContent>
           </Card>
         </motion.div>
       </div>
 
-      {/* Charts Section */}
-      {safeCompanies.length > 0 && safeCompanies.some(c => (c?.kpis?.length ?? 0) > 0) && (
-        <motion.div variants={itemVariants}>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-blue-500" />
-                Évolution des KPI
-              </CardTitle>
-              <CardDescription>Tendances sur les 12 derniers mois</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <KpiChart companies={safeCompanies} />
-            </CardContent>
-          </Card>
+      {/* Performance Chart & Activity Feed */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Performance Trajectory Chart */}
+        <motion.div variants={itemVariants} className="lg:col-span-2">
+          <PerformanceChart companies={safeCompanies} />
         </motion.div>
-      )}
+
+        {/* Activity Feed */}
+        <motion.div variants={itemVariants} className="lg:col-span-1">
+          <ActivityFeed initialLogs={activityLogs} limit={8} />
+        </motion.div>
+      </div>
     </motion.div>
   );
 }

@@ -289,7 +289,7 @@ export function AlertsManager({ companyId }: AlertsManagerProps) {
                 <p className="text-sm text-muted-foreground">Critiques</p>
                 <p className="text-2xl font-bold text-red-600">{criticalAlerts.length}</p>
               </div>
-              <XCircle className={`h-8 w-8 ${criticalAlerts.length > 0 ? 'text-red-500' : 'text-gray-300'}`} />
+              <XCircle className={`h-8 w-8 ${criticalAlerts.length > 0 ? 'text-red-500' : 'text-muted-foreground'}`} />
             </div>
           </CardContent>
         </Card>
@@ -300,7 +300,7 @@ export function AlertsManager({ companyId }: AlertsManagerProps) {
                 <p className="text-sm text-muted-foreground">Urgentes</p>
                 <p className="text-2xl font-bold text-orange-600">{urgentAlerts.length}</p>
               </div>
-              <AlertCircle className={`h-8 w-8 ${urgentAlerts.length > 0 ? 'text-orange-500' : 'text-gray-300'}`} />
+              <AlertCircle className={`h-8 w-8 ${urgentAlerts.length > 0 ? 'text-orange-500' : 'text-muted-foreground'}`} />
             </div>
           </CardContent>
         </Card>
@@ -311,7 +311,7 @@ export function AlertsManager({ companyId }: AlertsManagerProps) {
                 <p className="text-sm text-muted-foreground">Attention</p>
                 <p className="text-2xl font-bold text-amber-600">{warningAlerts.length}</p>
               </div>
-              <AlertTriangle className={`h-8 w-8 ${warningAlerts.length > 0 ? 'text-amber-500' : 'text-gray-300'}`} />
+              <AlertTriangle className={`h-8 w-8 ${warningAlerts.length > 0 ? 'text-amber-500' : 'text-muted-foreground'}`} />
             </div>
           </CardContent>
         </Card>
@@ -322,7 +322,7 @@ export function AlertsManager({ companyId }: AlertsManagerProps) {
                 <p className="text-sm text-muted-foreground">Infos</p>
                 <p className="text-2xl font-bold text-blue-600">{infoAlerts.length}</p>
               </div>
-              <Info className="h-8 w-8 text-gray-300" />
+              <Info className="h-8 w-8 text-muted-foreground" />
             </div>
           </CardContent>
         </Card>

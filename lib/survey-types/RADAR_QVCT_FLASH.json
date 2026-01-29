@@ -1,0 +1,252 @@
+{
+  "survey_type_id": "RADAR_QVCT_FLASH",
+  "survey_metadata": {
+    "name": "Radar QVCT - Diagnostic Flash",
+    "version": "1.0",
+    "framework": ["BNQ 9700-800 - 4 sphères"],
+    "target_audience": "PME/ETI 50-2000 salariés",
+    "decision_makers": ["DRH", "CEO", "COMEX"],
+    "estimated_duration_minutes": 8,
+    "primary_objective": "Cartographier rapidement les 4 sphères BNQ et identifier les priorités d'action",
+    "secondary_objectives": [
+      "Préparer une feuille de route QVCT",
+      "Objectiver les perceptions terrain"
+    ]
+  },
+
+  "data_governance": {
+    "anonymity_threshold": 15,
+    "rgpd_compliant": true,
+    "sensitive_data": false,
+    "data_retention_days": 730
+  },
+
+  "questionnaire_structure": {
+    "modules": [
+      {
+        "id": "MOD_CONSENT",
+        "title": "Cadre et Confidentialité",
+        "questions": [
+          {
+            "id": "CONSENT",
+            "type": "consent",
+            "text": "J'ai compris que mes réponses sont anonymes et agrégées.",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": "MOD_GESTION",
+        "title": "Sphère 1 : Pratiques de Gestion",
+        "bnq_reference": "BNQ 9700-800 § 5.5",
+        "questions": [
+          {"id": "G1", "type": "scale", "scale": "0-10", "text": "Mon manager me donne des feedbacks réguliers et constructifs.", "required": true},
+          {"id": "G2", "type": "scale", "scale": "0-10", "text": "Les objectifs fixés sont clairs et j'ai les ressources pour les atteindre.", "required": true},
+          {"id": "G3", "type": "scale", "scale": "0-10", "text": "Je participe aux décisions qui concernent mon travail quotidien.", "required": true},
+          {"id": "G4", "type": "scale", "scale": "0-10", "text": "La reconnaissance (monétaire ou non) est équitable dans l'entreprise.", "required": true}
+        ]
+      },
+      {
+        "id": "MOD_CONCILIATION",
+        "title": "Sphère 2 : Conciliation Vie Pro / Vie Perso",
+        "bnq_reference": "BNQ 9700-800 § 5.3",
+        "questions": [
+          {"id": "C1", "type": "scale", "scale": "0-10", "text": "Mes horaires de travail me permettent de répondre à mes obligations personnelles.", "required": true},
+          {"id": "C2", "type": "scale", "scale": "0-10", "text": "Je parviens à me déconnecter mentalement du travail le soir et le week-end.", "required": true},
+          {"id": "C3", "type": "scale", "scale": "0-10", "text": "L'entreprise fait preuve de flexibilité en cas d'imprévus familiaux.", "required": true}
+        ]
+      },
+      {
+        "id": "MOD_ENVIRONNEMENT",
+        "title": "Sphère 3 : Environnement de Travail",
+        "bnq_reference": "BNQ 9700-800 § 5.4",
+        "questions": [
+          {"id": "E1", "type": "scale", "scale": "0-10", "text": "Mon poste de travail (ergonomie, matériel) est adapté à mes besoins.", "required": true},
+          {"id": "E2", "type": "scale", "scale": "0-10", "text": "Le niveau de bruit et d'interruptions me permet de rester concentré.", "required": true},
+          {"id": "E3", "type": "scale", "scale": "0-10", "text": "L'aménagement des locaux favorise à la fois la collaboration et le calme.", "required": true}
+        ]
+      },
+      {
+        "id": "MOD_HABITUDES",
+        "title": "Sphère 4 : Habitudes de Vie",
+        "bnq_reference": "BNQ 9700-800 § 5.2",
+        "questions": [
+          {"id": "H1", "type": "scale", "scale": "0-10", "text": "L'entreprise encourage activement une hygiène de vie saine (alimentation, mouvement).", "required": true},
+          {"id": "H2", "type": "scale", "scale": "0-10", "text": "Je me sens soutenu par l'entreprise pour gérer mon niveau de stress.", "required": true}
+        ]
+      },
+      {
+        "id": "MOD_PRIORITY",
+        "title": "Priorisation",
+        "questions": [
+          {
+            "id": "PR1",
+            "type": "rank",
+            "text": "Classez les 4 sphères par ordre de priorité d'amélioration (1 = plus urgent).",
+            "required": true,
+            "options": ["Pratiques de gestion", "Conciliation vie pro/perso", "Environnement de travail", "Habitudes de vie"]
+          },
+          {
+            "id": "PR2",
+            "type": "open_ended",
+            "text": "Si vous aviez une baguette magique, quelle est la SEULE action concrète que vous mettriez en place demain ?",
+            "required": false,
+            "max_length": 500
+          }
+        ]
+      }
+    ]
+  },
+
+  "calculation_engine": {
+    "scoring_dimensions": [
+      {
+        "id": "GESTION",
+        "name": "Pratiques de Gestion",
+        "questions": ["G1", "G2", "G3", "G4"],
+        "aggregation": "mean",
+        "weight": 0.35,
+        "alert_threshold": 6,
+        "color": "#d4af37"
+      },
+      {
+        "id": "CONCILIATION",
+        "name": "Conciliation Vie Pro/Perso",
+        "questions": ["C1", "C2", "C3"],
+        "aggregation": "mean",
+        "weight": 0.20,
+        "alert_threshold": 6,
+        "color": "#20b2aa"
+      },
+      {
+        "id": "ENVIRONNEMENT",
+        "name": "Environnement de Travail",
+        "questions": ["E1", "E2", "E3"],
+        "aggregation": "mean",
+        "weight": 0.25,
+        "alert_threshold": 6,
+        "color": "#8b5cf6"
+      },
+      {
+        "id": "HABITUDES",
+        "name": "Habitudes de Vie",
+        "questions": ["H1", "H2"],
+        "aggregation": "mean",
+        "weight": 0.20,
+        "alert_threshold": 6,
+        "color": "#f59e0b"
+      }
+    ],
+
+    "global_score": {
+      "id": "QVCT_GLOBAL",
+      "formula": "weighted_mean",
+      "dimensions": ["GESTION", "CONCILIATION", "ENVIRONNEMENT", "HABITUDES"]
+    },
+
+    "critical_indicators": [
+      {
+        "id": "management_risk",
+        "condition": "GESTION < 6",
+        "severity": "high",
+        "message": "Risque managérial direct sur engagement et performance",
+        "recommendation": "Former les managers aux feedbacks constructifs et à la reconnaissance"
+      },
+      {
+        "id": "burnout_risk",
+        "condition": "CONCILIATION < 5",
+        "severity": "critical",
+        "message": "Risque d'épuisement professionnel détecté",
+        "recommendation": "Audit urgent de la charge de travail et du droit à la déconnexion"
+      },
+      {
+        "id": "environment_issue",
+        "condition": "ENVIRONNEMENT < 6",
+        "severity": "warning",
+        "message": "Conditions de travail à améliorer",
+        "recommendation": "Audit ergonomique et acoustique des espaces de travail"
+      }
+    ],
+
+    "qualitative_aggregations": [
+      {
+        "id": "priority_ranking",
+        "source": "PR1",
+        "type": "rank_aggregation",
+        "method": "borda_count"
+      },
+      {
+        "id": "verbatims",
+        "source": "PR2",
+        "type": "text_collection",
+        "anonymize": true
+      }
+    ]
+  },
+
+  "output_engine": {
+    "deliverables": [
+      {
+        "id": "radar_executive",
+        "type": "pdf",
+        "template": "qvct_radar_executive_report.html",
+        "target": "COMEX",
+        "title": "Radar QVCT - Rapport Exécutif",
+        "pages": "3-4"
+      },
+      {
+        "id": "action_roadmap",
+        "type": "pdf",
+        "template": "qvct_action_roadmap.html",
+        "target": "Pilote QVCT",
+        "title": "Feuille de Route QVCT",
+        "pages": "5-6"
+      }
+    ],
+
+    "visualizations": [
+      {
+        "id": "radar_chart",
+        "type": "radar_chart",
+        "dimensions": ["GESTION", "CONCILIATION", "ENVIRONNEMENT", "HABITUDES"],
+        "max_value": 10,
+        "threshold_line": 6,
+        "colors": {
+          "fill": "rgba(32, 178, 170, 0.3)",
+          "stroke": "#20b2aa",
+          "threshold": "#ffc107"
+        }
+      },
+      {
+        "id": "priority_matrix",
+        "type": "bar_chart",
+        "data": "priority_ranking",
+        "title": "Priorisation terrain"
+      },
+      {
+        "id": "traffic_lights",
+        "type": "traffic_light",
+        "dimensions": ["GESTION", "CONCILIATION", "ENVIRONNEMENT", "HABITUDES"],
+        "rules": {
+          "green": "> 7",
+          "orange": "6-7",
+          "red": "< 6"
+        }
+      }
+    ],
+
+    "narrative_templates": {
+      "opening": "Sur la base de {response_count} réponses ({participation_rate}% de participation), voici la cartographie QVCT de {company_name}.",
+      "global_insight": "Le score QVCT global est de {global_score}/10, ce qui correspond à un niveau {global_interpretation}.",
+      "global_interpretations": {
+        "excellent": "excellent (>8)",
+        "good": "satisfaisant (7-8)",
+        "moderate": "modéré (6-7)",
+        "concerning": "préoccupant (<6)"
+      },
+      "dimension_insight": "La sphère la plus critique est : {lowest_dimension} (score {lowest_score}/10).",
+      "priority_insight": "Les collaborateurs priorisent : {top_priority}.",
+      "recommendation": "Recommandation prioritaire : {top_recommendation}."
+    }
+  }
+}

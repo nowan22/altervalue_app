@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/db";
+import { logActivityServer } from "@/lib/activity-logger";
 
 export async function GET(request: Request) {
   try {
@@ -86,6 +87,9 @@ export async function POST(request: Request) {
 
     const userId = (session.user as any).id;
 
+    // Get full user for logging
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    
     const company = await prisma.company.create({
       data: {
         name,
@@ -98,6 +102,24 @@ export async function POST(request: Request) {
         userId,
       },
     });
+
+    // Log activity
+    if (user) {
+      await logActivityServer(prisma, {
+        userId: user.id,
+        userEmail: user.email,
+        userName: user.name || user.email,
+        userRole: user.role,
+        type: 'MISSION_CREATED',
+        action: `Création de la mission "${name}"`,
+        description: `Secteur: ${sector}, ${employeesCount} employés`,
+        companyId: company.id,
+        companyName: company.name,
+        entityType: 'company',
+        entityId: company.id,
+        entityName: company.name,
+      });
+    }
 
     return NextResponse.json(company, { status: 201 });
   } catch (error) {

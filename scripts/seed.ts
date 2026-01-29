@@ -1,25 +1,66 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Role } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
-async function main() {
-  console.log('Starting seed...');
+// Demo users configuration - v4.0
+const DEMO_USERS = [
+  {
+    email: 'superadmin@altervalue.ca',
+    name: 'Sophie Admin',
+    role: 'SUPER_ADMIN' as Role,
+    password: 'altervalue2026',
+  },
+  {
+    email: 'expert@altervalue.ca',
+    name: 'Eric Expert',
+    role: 'EXPERT' as Role,
+    password: 'altervalue2026',
+  },
+  {
+    email: 'pilote@demo.com',
+    name: 'Pierre Pilote',
+    role: 'PILOTE_QVCT' as Role,
+    password: 'altervalue2026',
+  },
+  {
+    email: 'observateur@demo.com',
+    name: 'Olivia Observateur',
+    role: 'OBSERVATEUR' as Role,
+    password: 'altervalue2026',
+  },
+];
 
-  // Create test user
-  const hashedPassword = await bcrypt.hash('johndoe123', 10);
+async function main() {
+  console.log('Starting seed v4.0...');
+
+  // Create demo users for each role
+  const hashedPassword = await bcrypt.hash('altervalue2026', 10);
   
-  const user = await prisma.user.upsert({
-    where: { email: 'john@doe.com' },
-    update: {},
-    create: {
-      email: 'john@doe.com',
-      password: hashedPassword,
-      name: 'Jean Consultant',
-      role: 'ADMIN',
-    },
-  });
-  console.log('Created user:', user.email);
+  const users: any[] = [];
+  for (const userData of DEMO_USERS) {
+    const user = await prisma.user.upsert({
+      where: { email: userData.email },
+      update: {
+        name: userData.name,
+        role: userData.role,
+        password: hashedPassword,
+      },
+      create: {
+        email: userData.email,
+        password: hashedPassword,
+        name: userData.name,
+        role: userData.role,
+      },
+    });
+    users.push(user);
+    console.log(`Created/updated user: ${user.email} (${user.role})`);
+  }
+
+  // Use the Expert user for demo companies
+  const expertUser = users.find(u => u.role === 'EXPERT');
+  const user = expertUser || users[0];
+  console.log('Using user for demo companies:', user.email);
 
   // Create settings
   const settings = await prisma.settings.upsert({
@@ -99,6 +140,8 @@ async function main() {
     },
   ];
 
+  const createdCompanies: any[] = [];
+  
   for (const companyData of demoCompanies) {
     const { kpis, ...company } = companyData;
     
@@ -110,6 +153,7 @@ async function main() {
     const createdCompany = await prisma.company.create({
       data: company,
     });
+    createdCompanies.push(createdCompany);
 
     // Create KPIs
     for (const kpi of kpis) {
@@ -122,6 +166,41 @@ async function main() {
     }
 
     console.log('Created demo company:', createdCompany.name, 'with', kpis.length, 'KPI periods');
+  }
+
+  // v4.0-epsilon: Assign demo missions to Pilote and Observateur users
+  const piloteUser = users.find(u => u.role === 'PILOTE_QVCT');
+  const observateurUser = users.find(u => u.role === 'OBSERVATEUR');
+  
+  // Clear existing assignments for demo users
+  await prisma.missionAssignment.deleteMany({
+    where: {
+      userId: { in: [piloteUser?.id, observateurUser?.id].filter(Boolean) },
+    },
+  });
+
+  // Assign first demo company to Pilote
+  if (piloteUser && createdCompanies.length > 0) {
+    await prisma.missionAssignment.create({
+      data: {
+        userId: piloteUser.id,
+        companyId: createdCompanies[0].id,
+        assignedBy: expertUser?.id || user.id,
+      },
+    });
+    console.log(`Assigned mission "${createdCompanies[0].name}" to ${piloteUser.email}`);
+  }
+
+  // Assign first demo company to Observateur as well
+  if (observateurUser && createdCompanies.length > 0) {
+    await prisma.missionAssignment.create({
+      data: {
+        userId: observateurUser.id,
+        companyId: createdCompanies[0].id,
+        assignedBy: expertUser?.id || user.id,
+      },
+    });
+    console.log(`Assigned mission "${createdCompanies[0].name}" to ${observateurUser.email}`);
   }
 
   console.log('Seed completed!');

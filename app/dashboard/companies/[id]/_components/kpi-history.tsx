@@ -130,9 +130,9 @@ export default function KpiHistory({ kpis, settings, company }: KpiHistoryProps)
     return (
       <Card className="p-12">
         <div className="text-center">
-          <BarChart3 className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Aucun historique</h3>
-          <p className="text-gray-500">
+          <BarChart3 className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-xl font-semibold text-foreground mb-2">Aucun historique</h3>
+          <p className="text-muted-foreground">
             Importez des données CSV pour voir l'évolution des KPI dans le temps
           </p>
         </div>
@@ -148,7 +148,7 @@ export default function KpiHistory({ kpis, settings, company }: KpiHistoryProps)
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Périodes importées</p>
+                <p className="text-sm text-muted-foreground">Périodes importées</p>
                 <p className="text-2xl font-bold">{safeKpis.length}</p>
               </div>
               <Calendar className="h-8 w-8 text-blue-500" />
@@ -160,7 +160,7 @@ export default function KpiHistory({ kpis, settings, company }: KpiHistoryProps)
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Absentéisme moyen</p>
+                <p className="text-sm text-muted-foreground">Absentéisme moyen</p>
                 <p className="text-2xl font-bold">
                   {(safeKpis.reduce((sum, k) => sum + (k?.absenteeismRate ?? 0), 0) / (safeKpis.length || 1)).toFixed(1)}%
                 </p>
@@ -168,7 +168,7 @@ export default function KpiHistory({ kpis, settings, company }: KpiHistoryProps)
               {(() => {
                 const values = safeKpis.map(k => k?.absenteeismRate ?? 0);
                 const trend = values.length > 1 ? values[values.length - 1] - values[0] : 0;
-                if (Math.abs(trend) < 0.5) return <Minus className="h-8 w-8 text-gray-500" />;
+                if (Math.abs(trend) < 0.5) return <Minus className="h-8 w-8 text-muted-foreground" />;
                 return trend > 0 
                   ? <TrendingUp className="h-8 w-8 text-red-500" />
                   : <TrendingDown className="h-8 w-8 text-green-500" />;
@@ -181,7 +181,7 @@ export default function KpiHistory({ kpis, settings, company }: KpiHistoryProps)
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Coût présentéisme moyen</p>
+                <p className="text-sm text-muted-foreground">Coût présentéisme moyen</p>
                 <p className="text-2xl font-bold">
                   {(safeKpis.reduce((sum, k) => sum + (k?.presCostCalculated ?? 0), 0) / (safeKpis.length || 1) / 1000).toFixed(0)}k€
                 </p>
@@ -189,7 +189,7 @@ export default function KpiHistory({ kpis, settings, company }: KpiHistoryProps)
               {(() => {
                 const values = safeKpis.map(k => k?.presCostCalculated ?? 0);
                 const trend = values.length > 1 ? values[values.length - 1] - values[0] : 0;
-                if (Math.abs(trend) < 1000) return <Minus className="h-8 w-8 text-gray-500" />;
+                if (Math.abs(trend) < 1000) return <Minus className="h-8 w-8 text-muted-foreground" />;
                 return trend > 0 
                   ? <TrendingUp className="h-8 w-8 text-red-500" />
                   : <TrendingDown className="h-8 w-8 text-green-500" />;
@@ -300,33 +300,33 @@ export default function KpiHistory({ kpis, settings, company }: KpiHistoryProps)
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b bg-gray-50 dark:bg-gray-800">
+                <tr className="border-b bg-muted dark:bg-card">
                   <th 
-                    className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-muted dark:hover:bg-card-hover transition-colors"
                     onClick={() => handleSort('periodDate')}
                   >
                     <span className="flex items-center">Période {getSortIcon('periodDate')}</span>
                   </th>
                   <th 
-                    className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-muted dark:hover:bg-card-hover transition-colors"
                     onClick={() => handleSort('employees')}
                   >
                     <span className="flex items-center">Effectif {getSortIcon('employees')}</span>
                   </th>
                   <th 
-                    className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-muted dark:hover:bg-card-hover transition-colors"
                     onClick={() => handleSort('absenteeismRate')}
                   >
                     <span className="flex items-center">Absent. {getSortIcon('absenteeismRate')}</span>
                   </th>
                   <th 
-                    className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-muted dark:hover:bg-card-hover transition-colors"
                     onClick={() => handleSort('presRate')}
                   >
                     <span className="flex items-center">Présent. {getSortIcon('presRate')}</span>
                   </th>
                   <th 
-                    className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="px-4 py-3 text-left font-medium cursor-pointer hover:bg-muted dark:hover:bg-card-hover transition-colors"
                     onClick={() => handleSort('presCost')}
                   >
                     <span className="flex items-center">Coût {getSortIcon('presCost')}</span>
@@ -348,7 +348,7 @@ export default function KpiHistory({ kpis, settings, company }: KpiHistoryProps)
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: index * 0.05 }}
-                        className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        className="border-b dark:border-border hover:bg-muted dark:hover:bg-card"
                       >
                         <td className="px-4 py-3">
                           {new Date(kpi?.periodDate ?? new Date()).toLocaleDateString('fr-FR', {

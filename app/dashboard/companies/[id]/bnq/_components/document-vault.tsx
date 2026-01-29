@@ -247,13 +247,13 @@ export function DocumentVault({ companyId, documents, documentTypes, onRefresh }
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'APPROVED':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
+        return <CheckCircle className="h-4 w-4 text-success" />;
       case 'PENDING_VALIDATION':
-        return <Clock className="h-4 w-4 text-yellow-600" />;
+        return <Clock className="h-4 w-4 text-warning" />;
       case 'DRAFT':
-        return <FileText className="h-4 w-4 text-gray-600" />;
+        return <FileText className="h-4 w-4 text-muted-foreground" />;
       case 'EXPIRED':
-        return <XCircle className="h-4 w-4 text-red-600" />;
+        return <XCircle className="h-4 w-4 text-error" />;
       default:
         return <FileText className="h-4 w-4" />;
     }
@@ -265,7 +265,7 @@ export function DocumentVault({ companyId, documents, documentTypes, onRefresh }
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold flex items-center gap-2">
-            <FolderOpen className="h-5 w-5 text-blue-600" />
+            <FolderOpen className="h-5 w-5 text-secondary" />
             Coffre-fort Documentaire
           </h2>
           <p className="text-sm text-muted-foreground">
@@ -325,18 +325,18 @@ export function DocumentVault({ companyId, documents, documentTypes, onRefresh }
                             className={`flex items-center justify-between p-3 rounded-lg border ${
                               doc
                                 ? doc.status === 'APPROVED'
-                                  ? 'bg-green-50 border-green-200'
+                                  ? 'bg-success/10 border-success/30'
                                   : doc.status === 'PENDING_VALIDATION'
-                                    ? 'bg-yellow-50 border-yellow-200'
-                                    : 'bg-gray-50 border-gray-200'
-                                : 'bg-red-50 border-red-200'
+                                    ? 'bg-warning/10 border-warning/30'
+                                    : 'bg-muted border-border'
+                                : 'bg-error/10 border-error/30'
                             }`}
                           >
                             <div className="flex items-center gap-3">
                               {doc ? (
                                 getStatusIcon(doc.status)
                               ) : (
-                                <AlertCircle className="h-4 w-4 text-red-500" />
+                                <AlertCircle className="h-4 w-4 text-error" />
                               )}
                               <div>
                                 <p className="font-medium text-sm">
@@ -347,7 +347,7 @@ export function DocumentVault({ companyId, documents, documentTypes, onRefresh }
                                 </p>
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                   {docType.bnqArticle && (
-                                    <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+                                    <span className="bg-info/20 text-info px-1.5 py-0.5 rounded">
                                       {docType.bnqArticle}
                                     </span>
                                   )}
@@ -367,7 +367,7 @@ export function DocumentVault({ companyId, documents, documentTypes, onRefresh }
                             <div className="flex items-center gap-2">
                               {doc ? (
                                 <>
-                                  <Badge className={STATUS_LABELS[doc.status]?.color || 'bg-gray-500'}>
+                                  <Badge className={STATUS_LABELS[doc.status]?.color || 'bg-muted0'}>
                                     {STATUS_LABELS[doc.status]?.label}
                                   </Badge>
                                   <span className="text-xs text-muted-foreground">
@@ -387,7 +387,7 @@ export function DocumentVault({ companyId, documents, documentTypes, onRefresh }
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="text-red-600 hover:text-red-700"
+                                    className="text-error hover:text-red-700"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setSelectedDoc(doc);

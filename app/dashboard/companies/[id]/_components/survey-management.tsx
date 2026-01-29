@@ -13,6 +13,7 @@ import {
   Trash2,
   Users,
   TrendingUp,
+  TrendingDown,
   AlertCircle,
   CheckCircle,
   Clock,
@@ -20,7 +21,19 @@ import {
   BarChart3,
   ExternalLink,
   FileDown,
+  Mail,
+  AlertTriangle,
 } from 'lucide-react';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -98,7 +111,7 @@ interface SurveyManagementProps {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof Clock }> = {
-  DRAFT: { label: 'Brouillon', color: 'bg-gray-500', icon: Clock },
+  DRAFT: { label: 'Brouillon', color: 'bg-muted0', icon: Clock },
   ACTIVE: { label: 'En cours', color: 'bg-green-500', icon: Play },
   CLOSED: { label: 'Clôturée', color: 'bg-blue-500', icon: CheckCircle },
   ARCHIVED: { label: 'Archivée', color: 'bg-gray-400', icon: Square },
@@ -119,6 +132,8 @@ export function SurveyManagement({ companyId, companyName, employeesCount }: Sur
   const [indicativeResults, setIndicativeResults] = useState<Record<string, IndicativeResult>>({});
   const [calculatingPreview, setCalculatingPreview] = useState<string | null>(null);
   const [exportingPdf, setExportingPdf] = useState<string | null>(null);
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [emailSurvey, setEmailSurvey] = useState<Survey | null>(null);
 
   useEffect(() => {
     fetchSurveys();
@@ -275,6 +290,75 @@ export function SurveyManagement({ companyId, companyName, employeesCount }: Sur
     }
   };
 
+  const generateEmailContent = (survey: Survey) => {
+    const surveyUrl = typeof window !== 'undefined' 
+      ? `${window.location.origin}/survey/${survey.surveyToken}` 
+      : `/survey/${survey.surveyToken}`;
+    
+    return `Bonjour,
+
+Nous menons actuellement une enquête anonyme sur le bien-être au travail et vous invitons à y participer.
+
+📋 **${survey.title}**
+
+Cette enquête est totalement anonyme et ne prend que 2-3 minutes. Vos réponses nous aideront à mieux comprendre les conditions de travail et à identifier les axes d'amélioration.
+
+👉 **Accéder à l'enquête** : ${surveyUrl}
+
+Votre participation est précieuse. Nous vous remercions par avance de votre contribution.
+
+Bien cordialement,
+L'équipe QVCT de ${companyName}
+
+---
+💡 Rappel : Cette enquête est confidentielle et anonyme. Aucune donnée personnelle n'est collectée.`;
+  };
+
+  const copyEmailToClipboard = () => {
+    if (!emailSurvey) return;
+    navigator.clipboard.writeText(generateEmailContent(emailSurvey));
+    toast({ 
+      title: 'Email copié', 
+      description: 'Le texte a été copié dans le presse-papiers.' 
+    });
+  };
+
+  // Get closed surveys for trends
+  const closedSurveys = surveys
+    .filter(s => s.status === 'CLOSED' && s.aggregate)
+    .sort((a, b) => new Date(a.closedAt || 0).getTime() - new Date(b.closedAt || 0).getTime());
+
+  // Check for trends (comparing last 2 surveys)
+  const getTrendData = () => {
+    if (closedSurveys.length < 2) return null;
+    const prev = closedSurveys[closedSurveys.length - 2];
+    const current = closedSurveys[closedSurveys.length - 1];
+    if (!prev.aggregate || !current.aggregate) return null;
+
+    const prevalenceDiff = (current.aggregate.prevalence - prev.aggregate.prevalence) * 100;
+    const costDiff = current.aggregate.presCostB && prev.aggregate.presCostB
+      ? ((current.aggregate.presCostB - prev.aggregate.presCostB) / prev.aggregate.presCostB) * 100
+      : null;
+    const efficiencyDiff = (current.aggregate.avgEfficiencyScore - prev.aggregate.avgEfficiencyScore) * 100;
+
+    return {
+      prevalenceDiff,
+      costDiff,
+      efficiencyDiff,
+      isWorsening: prevalenceDiff > 10,
+    };
+  };
+
+  const trendData = getTrendData();
+
+  // Chart data for evolution
+  const chartData = closedSurveys.map(s => ({
+    name: s.closedAt ? new Date(s.closedAt).toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' }) : '',
+    prevalence: (s.aggregate?.prevalence ?? 0) * 100,
+    efficacite: (s.aggregate?.avgEfficiencyScore ?? 0) * 100,
+    cout: (s.aggregate?.presCostB ?? 0) / 1000,
+  }));
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -318,6 +402,143 @@ export function SurveyManagement({ companyId, companyName, employeesCount }: Sur
           </div>
         </CardContent>
       </Card>
+
+      {/* Trends Section - only if multiple closed surveys */}
+      {closedSurveys.length >= 2 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-indigo-600" />
+              Historique et tendances
+            </CardTitle>
+            <CardDescription>
+              Évolution des indicateurs sur les {closedSurveys.length} enquêtes clôturées
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {/* Alert if worsening */}
+            {trendData?.isWorsening && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 dark:bg-red-950/20 dark:border-red-800 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-medium text-red-800 dark:text-red-300">Alerte : Dégradation détectée</p>
+                    <p className="text-red-700 dark:text-red-400 mt-1">
+                      La prévalence a augmenté de {trendData.prevalenceDiff.toFixed(1)} points depuis la dernière enquête. 
+                      Envisagez des actions correctives prioritaires.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Comparison cards */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="p-3 bg-muted dark:bg-card rounded-lg">
+                <p className="text-xs text-muted-foreground mb-1">Prévalence N vs N-1</p>
+                <div className="flex items-center gap-2">
+                  {trendData && (
+                    <>
+                      {trendData.prevalenceDiff > 0 ? (
+                        <TrendingUp className="h-4 w-4 text-red-500" />
+                      ) : trendData.prevalenceDiff < 0 ? (
+                        <TrendingDown className="h-4 w-4 text-green-500" />
+                      ) : null}
+                      <span className={`font-semibold ${
+                        trendData.prevalenceDiff > 0 ? 'text-red-600' : 
+                        trendData.prevalenceDiff < 0 ? 'text-green-600' : ''
+                      }`}>
+                        {trendData.prevalenceDiff > 0 ? '+' : ''}{trendData.prevalenceDiff.toFixed(1)} pts
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="p-3 bg-muted dark:bg-card rounded-lg">
+                <p className="text-xs text-muted-foreground mb-1">Efficacité N vs N-1</p>
+                <div className="flex items-center gap-2">
+                  {trendData && (
+                    <>
+                      {trendData.efficiencyDiff > 0 ? (
+                        <TrendingUp className="h-4 w-4 text-green-500" />
+                      ) : trendData.efficiencyDiff < 0 ? (
+                        <TrendingDown className="h-4 w-4 text-red-500" />
+                      ) : null}
+                      <span className={`font-semibold ${
+                        trendData.efficiencyDiff > 0 ? 'text-green-600' : 
+                        trendData.efficiencyDiff < 0 ? 'text-red-600' : ''
+                      }`}>
+                        {trendData.efficiencyDiff > 0 ? '+' : ''}{trendData.efficiencyDiff.toFixed(1)} pts
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="p-3 bg-muted dark:bg-card rounded-lg">
+                <p className="text-xs text-muted-foreground mb-1">Coût N vs N-1</p>
+                <div className="flex items-center gap-2">
+                  {trendData?.costDiff != null && (
+                    <>
+                      {trendData.costDiff > 0 ? (
+                        <TrendingUp className="h-4 w-4 text-red-500" />
+                      ) : trendData.costDiff < 0 ? (
+                        <TrendingDown className="h-4 w-4 text-green-500" />
+                      ) : null}
+                      <span className={`font-semibold ${
+                        trendData.costDiff > 0 ? 'text-red-600' : 
+                        trendData.costDiff < 0 ? 'text-green-600' : ''
+                      }`}>
+                        {trendData.costDiff > 0 ? '+' : ''}{trendData.costDiff.toFixed(1)}%
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Chart */}
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                  <YAxis yAxisId="left" tick={{ fontSize: 12 }} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
+                  <Tooltip formatter={(value: number, name: string) => {
+                    if (name === 'cout') return [`${value.toFixed(1)}k €`, 'Coût'];
+                    return [`${value.toFixed(1)}%`, name === 'prevalence' ? 'Prévalence' : 'Efficacité'];
+                  }} />
+                  <Legend />
+                  <Line
+                    yAxisId="left"
+                    type="monotone"
+                    dataKey="prevalence"
+                    stroke="#8b5cf6"
+                    strokeWidth={2}
+                    name="Prévalence (%)"
+                  />
+                  <Line
+                    yAxisId="left"
+                    type="monotone"
+                    dataKey="efficacite"
+                    stroke="#22c55e"
+                    strokeWidth={2}
+                    name="Efficacité (%)"
+                  />
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="cout"
+                    stroke="#ef4444"
+                    strokeWidth={2}
+                    name="Coût (k€)"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Surveys List */}
       {surveys.length === 0 ? (
@@ -389,6 +610,17 @@ export function SurveyManagement({ companyId, companyName, employeesCount }: Sur
                             >
                               <Copy className="h-4 w-4 mr-1" />
                               Copier le lien
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEmailSurvey(survey);
+                                setIsEmailDialogOpen(true);
+                              }}
+                            >
+                              <Mail className="h-4 w-4 mr-1" />
+                              Générer email
                             </Button>
                             <Button
                               size="sm"
@@ -554,7 +786,7 @@ export function SurveyManagement({ companyId, companyName, employeesCount }: Sur
 
                     {/* Survey link for active surveys */}
                     {survey.status === 'ACTIVE' && (
-                      <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <div className="mt-4 p-3 bg-muted dark:bg-card rounded-lg">
                         <div className="flex items-center gap-2">
                           <LinkIcon className="h-4 w-4 text-muted-foreground" />
                           <code className="text-xs text-muted-foreground flex-1 truncate">
@@ -648,6 +880,42 @@ export function SurveyManagement({ companyId, companyName, employeesCount }: Sur
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Email Generation Dialog */}
+      <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-purple-600" />
+              Email de relance
+            </DialogTitle>
+            <DialogDescription>
+              Copiez ce texte et collez-le dans votre outil d&apos;emailing (Outlook, Gmail, etc.)
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-muted dark:bg-card rounded-lg p-4">
+              <p className="text-xs text-muted-foreground mb-2 font-medium">Objet suggéré :</p>
+              <p className="text-sm mb-4 font-medium">
+                [Important] Participez à l&apos;enquête anonyme sur le bien-être au travail
+              </p>
+              <p className="text-xs text-muted-foreground mb-2 font-medium">Corps du message :</p>
+              <pre className="text-sm whitespace-pre-wrap font-sans text-muted-foreground dark:text-muted-foreground">
+                {emailSurvey && generateEmailContent(emailSurvey)}
+              </pre>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEmailDialogOpen(false)}>
+              Fermer
+            </Button>
+            <Button onClick={copyEmailToClipboard}>
+              <Copy className="h-4 w-4 mr-2" />
+              Copier le texte
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

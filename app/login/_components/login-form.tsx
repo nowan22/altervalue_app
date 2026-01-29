@@ -1,22 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { LogIn, Mail, Lock, AlertCircle, Building2 } from "lucide-react";
+import { LogIn, Mail, Lock, AlertCircle, Building2, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTheme } from "next-themes";
 
 export default function LoginForm() {
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,11 +42,15 @@ export default function LoginForm() {
       } else {
         router.replace("/dashboard");
       }
-    } catch (err) {
+    } catch {
       setError("Une erreur s'est produite");
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
   return (
@@ -48,17 +59,17 @@ export default function LoginForm() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="shadow-xl border-0 bg-white/80 backdrop-blur">
+      <Card className="shadow-xl border-border bg-card/80 backdrop-blur">
         <CardHeader className="text-center pb-2">
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center shadow-lg">
-              <Building2 className="h-8 w-8 text-white" />
+            <div className="w-16 h-16 rounded-2xl bg-gradient-gold flex items-center justify-center shadow-lg">
+              <Building2 className="h-8 w-8 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+          <CardTitle className="text-2xl font-display font-bold text-gradient-gold">
             AlterValue
           </CardTitle>
-          <CardDescription className="text-gray-600">
+          <CardDescription className="text-muted-foreground">
             Performance Humaine & QVCT
           </CardDescription>
         </CardHeader>
@@ -68,7 +79,7 @@ export default function LoginForm() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="flex items-center gap-2 p-3 text-sm text-red-600 bg-red-50 rounded-lg"
+                className="flex items-center gap-2 p-3 text-sm text-error bg-error/10 border border-error/20 rounded-lg"
               >
                 <AlertCircle className="h-4 w-4" />
                 {error}
@@ -78,14 +89,14 @@ export default function LoginForm() {
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="email"
                   type="email"
                   placeholder="votre@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-input border-border"
                   required
                 />
               </div>
@@ -94,14 +105,14 @@ export default function LoginForm() {
             <div className="space-y-2">
               <Label htmlFor="password">Mot de passe</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="password"
                   type="password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-input border-border"
                   required
                 />
               </div>
@@ -109,7 +120,7 @@ export default function LoginForm() {
 
             <Button
               type="submit"
-              className="w-full gradient-primary text-white hover:opacity-90 transition-opacity"
+              className="w-full bg-gradient-gold text-primary-foreground hover:opacity-90 transition-opacity"
               disabled={loading}
             >
               {loading ? (
@@ -142,16 +153,41 @@ export default function LoginForm() {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Pas encore de compte ?{" "}
               <Link
                 href="/signup"
-                className="text-blue-600 hover:text-blue-700 font-medium"
+                className="text-primary hover:text-primary/80 font-medium underline underline-offset-4"
               >
                 Créer un compte
               </Link>
             </p>
           </div>
+
+          {/* Theme Toggle */}
+          {mounted && (
+            <div className="mt-4 flex justify-center">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={toggleTheme}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                {theme === 'dark' ? (
+                  <>
+                    <Sun className="h-4 w-4 mr-2" />
+                    Mode clair
+                  </>
+                ) : (
+                  <>
+                    <Moon className="h-4 w-4 mr-2" />
+                    Mode sombre
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </motion.div>

@@ -1,0 +1,351 @@
+{
+  "survey_type_id": "PRESENTEEISM_METHOD_B",
+  "survey_metadata": {
+    "name": "Diagnostic Présentéisme - Méthode B",
+    "version": "1.0",
+    "framework": ["BNQ 9700-800", "Stanford Presenteeism Scale"],
+    "target_audience": "PME/ETI 50-2000 salariés",
+    "decision_makers": ["DRH", "DAF", "CEO"],
+    "estimated_duration_minutes": 5,
+    "primary_objective": "Mesurer le coût caché du présentéisme via enquête interne",
+    "secondary_objectives": [
+      "Identifier les facteurs contribuant au présentéisme",
+      "Évaluer les impacts sur la performance",
+      "Calculer le ROI potentiel d'une intervention"
+    ]
+  },
+
+  "data_governance": {
+    "anonymity_threshold": 15,
+    "rgpd_compliant": true,
+    "sensitive_data": true,
+    "data_retention_days": 730
+  },
+
+  "questionnaire_structure": {
+    "modules": [
+      {
+        "id": "MOD_CONSENT",
+        "title": "Confidentialité",
+        "description": "Cette enquête est strictement anonyme. Vos réponses seront agrégées et ne permettront pas de vous identifier.",
+        "questions": [
+          {
+            "id": "CONSENT",
+            "type": "consent",
+            "text": "Je comprends que mes réponses sont anonymes et j'accepte de participer à cette enquête.",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": "MOD_PREVALENCE",
+        "title": "Fréquence du présentéisme",
+        "bnq_reference": "BNQ 9700-800 § 5.2.3",
+        "questions": [
+          {
+            "id": "Q1_PREVALENCE",
+            "type": "single_choice",
+            "text": "Au cours des 6 derniers mois, vous est-il arrivé de travailler alors que vous ne vous sentiez pas au meilleur de votre forme (fatigue, stress, douleurs, difficultés de concentration) ?",
+            "required": true,
+            "options": [
+              { "value": "NEVER", "label": "Non, jamais", "score": 0 },
+              { "value": "OCCASIONALLY", "label": "Occasionnellement (1-2 fois)", "score": 0.25 },
+              { "value": "REGULARLY", "label": "Régulièrement (plusieurs fois)", "score": 0.6 },
+              { "value": "VERY_FREQUENTLY", "label": "Très fréquemment (presque tous les jours)", "score": 1 }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "MOD_EFFICIENCY",
+        "title": "Efficacité perçue",
+        "bnq_reference": "Stanford Presenteeism Scale",
+        "condition": "Q1_PREVALENCE != 'NEVER'",
+        "questions": [
+          {
+            "id": "Q2_EFFICIENCY",
+            "type": "single_choice",
+            "text": "Dans ces moments-là, à quel niveau estimez-vous votre efficacité par rapport à votre niveau habituel ?",
+            "required": true,
+            "options": [
+              { "value": 100, "label": "100% - Pleine efficacité", "score": 1.0 },
+              { "value": 90, "label": "90% - Légère baisse", "score": 0.9 },
+              { "value": 80, "label": "80% - Baisse modérée", "score": 0.8 },
+              { "value": 70, "label": "70% - Baisse significative", "score": 0.7 },
+              { "value": 60, "label": "60% - Forte baisse", "score": 0.6 },
+              { "value": 50, "label": "50% ou moins - Très forte baisse", "score": 0.5 }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "MOD_FACTORS",
+        "title": "Facteurs contribuant",
+        "condition": "Q1_PREVALENCE != 'NEVER'",
+        "questions": [
+          {
+            "id": "Q3_FACTORS",
+            "type": "multiple_choice",
+            "text": "Quels facteurs ont contribué à cette baisse d'efficacité ? (Plusieurs réponses possibles)",
+            "required": false,
+            "options": [
+              { "value": "FATIGUE", "label": "Fatigue / manque de récupération" },
+              { "value": "STRESS", "label": "Surcharge mentale / stress" },
+              { "value": "PAIN", "label": "Douleurs physiques" },
+              { "value": "CONCENTRATION", "label": "Difficulté de concentration" },
+              { "value": "OTHER", "label": "Autre" }
+            ],
+            "allow_other": true,
+            "other_field_id": "Q3_OTHER_TEXT"
+          },
+          {
+            "id": "Q3_OTHER_TEXT",
+            "type": "open_ended",
+            "text": "Si \"Autre\", veuillez préciser :",
+            "required": false,
+            "condition": "Q3_FACTORS includes 'OTHER'",
+            "max_length": 500
+          }
+        ]
+      },
+      {
+        "id": "MOD_IMPACT",
+        "title": "Impacts observés",
+        "condition": "Q1_PREVALENCE != 'NEVER'",
+        "questions": [
+          {
+            "id": "Q4_IMPACT",
+            "type": "multiple_choice",
+            "text": "Quels impacts avez-vous observés sur votre travail ? (Plusieurs réponses possibles)",
+            "required": false,
+            "options": [
+              { "value": "QUALITY", "label": "Qualité du travail réduite" },
+              { "value": "DELAYS", "label": "Difficulté à respecter les délais" },
+              { "value": "COLLEAGUES", "label": "Charge reportée sur les collègues" },
+              { "value": "ERRORS", "label": "Erreurs / reprises de travail" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "MOD_CONTEXT",
+        "title": "Contexte de travail",
+        "questions": [
+          {
+            "id": "Q5_WORKING_HOURS",
+            "type": "single_choice",
+            "text": "Combien d'heures travaillez-vous en moyenne par semaine ?",
+            "required": true,
+            "options": [
+              { "value": "<35", "label": "Moins de 35h" },
+              { "value": "35-39", "label": "35-39h" },
+              { "value": "40-44", "label": "40-44h" },
+              { "value": "45-49", "label": "45-49h" },
+              { "value": ">=50", "label": "50h ou plus" }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  "calculation_engine": {
+    "scoring_dimensions": [
+      {
+        "id": "PREVALENCE",
+        "name": "Prévalence du présentéisme",
+        "source": "Q1_PREVALENCE",
+        "aggregation": "percentage_affected",
+        "affected_condition": "!= 'NEVER'",
+        "description": "Pourcentage de salariés affectés par le présentéisme"
+      },
+      {
+        "id": "EFFICIENCY",
+        "name": "Efficacité moyenne",
+        "source": "Q2_EFFICIENCY",
+        "aggregation": "mean_among_affected",
+        "affected_filter": "Q1_PREVALENCE != 'NEVER'",
+        "scale_max": 100,
+        "description": "Efficacité moyenne perçue parmi les salariés affectés"
+      },
+      {
+        "id": "PRODUCTIVITY_LOSS",
+        "name": "Perte de productivité",
+        "formula": "1 - (EFFICIENCY / 100)",
+        "description": "Taux de perte de productivité moyen"
+      }
+    ],
+
+    "critical_indicators": [
+      {
+        "id": "high_prevalence",
+        "condition": "PREVALENCE > 0.5",
+        "severity": "high",
+        "message": "Plus de 50% des salariés sont affectés par le présentéisme",
+        "recommendation": "Une intervention structurelle est recommandée (audit QVCT, formation managers)"
+      },
+      {
+        "id": "severe_productivity_loss",
+        "condition": "PRODUCTIVITY_LOSS > 0.25",
+        "severity": "critical",
+        "message": "Perte de productivité supérieure à 25% parmi les salariés affectés",
+        "recommendation": "Actions prioritaires sur les conditions de travail et la charge mentale"
+      },
+      {
+        "id": "fatigue_dominant",
+        "condition": "FACTOR_FATIGUE > 50",
+        "severity": "warning",
+        "message": "La fatigue est le facteur dominant (>50% des réponses)",
+        "recommendation": "Vérifier la politique de récupération et droit à la déconnexion"
+      },
+      {
+        "id": "stress_dominant",
+        "condition": "FACTOR_STRESS > 50",
+        "severity": "warning",
+        "message": "Le stress est le facteur dominant (>50% des réponses)",
+        "recommendation": "Évaluer la charge de travail et mettre en place des actions de prévention RPS"
+      }
+    ],
+
+    "financial_formulas": [
+      {
+        "id": "hidden_cost",
+        "name": "Coût caché annuel",
+        "formula": "PREVALENCE * headcount * avg_total_salary * PRODUCTIVITY_LOSS * error_correction_coeff",
+        "variables": {
+          "headcount": "company.employeesCount",
+          "avg_total_salary": "company.avgGrossSalary * (1 + company.employerContributionRate)",
+          "error_correction_coeff": 1.1
+        },
+        "unit": "€/an"
+      },
+      {
+        "id": "hidden_cost_pct",
+        "name": "Coût en % de la masse salariale",
+        "formula": "(hidden_cost / payroll) * 100",
+        "variables": {
+          "payroll": "headcount * avg_total_salary"
+        },
+        "unit": "%"
+      },
+      {
+        "id": "cost_per_employee",
+        "name": "Coût par salarié",
+        "formula": "hidden_cost / headcount",
+        "unit": "€/salarié/an"
+      },
+      {
+        "id": "roi_estimate",
+        "name": "ROI potentiel (intervention QVCT)",
+        "formula": "hidden_cost * 0.5",
+        "description": "Estimation du gain si réduction de 50% du présentéisme",
+        "unit": "€/an"
+      },
+      {
+        "id": "degraded_hours",
+        "name": "Heures dégradées annuelles",
+        "formula": "PREVALENCE * headcount * hours_per_year * PRODUCTIVITY_LOSS",
+        "variables": {
+          "hours_per_year": 1600
+        },
+        "unit": "heures"
+      }
+    ],
+
+    "qualitative_aggregations": [
+      {
+        "id": "factor_distribution",
+        "source": "Q3_FACTORS",
+        "type": "count_percentage",
+        "output_keys": ["FACTOR_FATIGUE", "FACTOR_STRESS", "FACTOR_PAIN", "FACTOR_CONCENTRATION", "FACTOR_OTHER"]
+      },
+      {
+        "id": "impact_distribution",
+        "source": "Q4_IMPACT",
+        "type": "count_percentage",
+        "output_keys": ["IMPACT_QUALITY", "IMPACT_DELAYS", "IMPACT_COLLEAGUES", "IMPACT_ERRORS"]
+      },
+      {
+        "id": "hours_distribution",
+        "source": "Q5_WORKING_HOURS",
+        "type": "count_percentage"
+      }
+    ]
+  },
+
+  "output_engine": {
+    "deliverables": [
+      {
+        "id": "executive_summary",
+        "type": "pdf",
+        "template": "presenteeism_executive_report.html",
+        "target": "COMEX",
+        "title": "Rapport Exécutif - Présentéisme",
+        "pages": "2-3"
+      },
+      {
+        "id": "detailed_report",
+        "type": "pdf",
+        "template": "presenteeism_detailed_report.html",
+        "target": "DRH",
+        "title": "Rapport Détaillé - Analyse Présentéisme",
+        "pages": "8-10"
+      }
+    ],
+
+    "visualizations": [
+      {
+        "id": "gauge_prevalence",
+        "type": "gauge",
+        "data": "PREVALENCE",
+        "max": 100,
+        "thresholds": {
+          "green": [0, 30],
+          "orange": [30, 50],
+          "red": [50, 100]
+        }
+      },
+      {
+        "id": "bar_factors",
+        "type": "horizontal_bar",
+        "data": "factor_distribution",
+        "colors": {
+          "FATIGUE": "#f59e0b",
+          "STRESS": "#ef4444",
+          "PAIN": "#8b5cf6",
+          "CONCENTRATION": "#3b82f6",
+          "OTHER": "#6b7280"
+        }
+      },
+      {
+        "id": "bar_impact",
+        "type": "horizontal_bar",
+        "data": "impact_distribution"
+      },
+      {
+        "id": "kpi_cards",
+        "type": "kpi_grid",
+        "cards": [
+          { "metric": "hidden_cost", "format": "currency", "icon": "euro" },
+          { "metric": "hidden_cost_pct", "format": "percentage", "icon": "percent" },
+          { "metric": "roi_estimate", "format": "currency", "icon": "trending-up" },
+          { "metric": "degraded_hours", "format": "number", "icon": "clock" }
+        ]
+      }
+    ],
+
+    "narrative_templates": {
+      "opening": "Sur la base de {response_count} réponses ({participation_rate}% de participation), voici l'analyse du présentéisme au sein de {company_name}.",
+      "prevalence_insight": "Le taux de prévalence est de {prevalence_pct}% : {prevalence_interpretation}.",
+      "prevalence_interpretations": {
+        "low": "un niveau maîtrisé, cohérent avec les meilleures pratiques",
+        "medium": "un niveau modéré nécessitant une vigilance",
+        "high": "un niveau élevé nécessitant des actions correctives"
+      },
+      "financial_impact": "Le coût caché annuel est estimé à {hidden_cost}€, soit {hidden_cost_pct}% de la masse salariale.",
+      "roi_potential": "Une intervention ciblée pourrait générer un ROI de {roi_estimate}€/an.",
+      "factor_insight": "Les principaux facteurs identifiés sont : {top_factors}.",
+      "recommendation": "Recommandation prioritaire : {top_recommendation}."
+    }
+  }
+}

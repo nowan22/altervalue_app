@@ -44,7 +44,7 @@ export function DashboardNav({ user }: { user: any }) {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm">
+    <header className="sticky top-0 z-50 bg-card/80 dark:bg-background/80 backdrop-blur-lg border-b border-border/50 dark:border-border/50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -85,26 +85,26 @@ export function DashboardNav({ user }: { user: any }) {
             <div className="relative">
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted dark:hover:bg-card transition-colors"
               >
                 <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center">
                   <User className="h-4 w-4 text-white" />
                 </div>
-                <span className="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-200">
+                <span className="hidden sm:block text-sm font-medium text-muted-foreground dark:text-foreground">
                   {user?.name || user?.email?.split?.('@')?.[0] || 'Utilisateur'}
                 </span>
-                <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                <ChevronDown className="h-4 w-4 text-muted-foreground dark:text-muted-foreground" />
               </button>
 
               {userMenuOpen && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 py-1 z-50"
+                  className="absolute right-0 mt-2 w-48 bg-card dark:bg-card rounded-lg shadow-lg border dark:border-border py-1 z-50"
                 >
-                  <div className="px-4 py-2 border-b dark:border-gray-700">
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user?.name || 'Utilisateur'}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email || ''}</p>
+                  <div className="px-4 py-2 border-b dark:border-border">
+                    <p className="text-sm font-medium text-foreground dark:text-foreground">{user?.name || 'Utilisateur'}</p>
+                    <p className="text-xs text-muted-foreground dark:text-muted-foreground truncate">{user?.email || ''}</p>
                   </div>
                   <button
                     onClick={handleSignOut}
@@ -119,7 +119,7 @@ export function DashboardNav({ user }: { user: any }) {
 
             {/* Mobile menu button */}
             <button
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
+              className="md:hidden p-2 rounded-lg hover:bg-muted dark:hover:bg-card text-muted-foreground dark:text-foreground"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? (
@@ -152,7 +152,7 @@ export function DashboardNav({ user }: { user: any }) {
                       "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
                       isActive
                         ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-                        : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        : "text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-card"
                     )}
                   >
                     <item.icon className="h-5 w-5" />

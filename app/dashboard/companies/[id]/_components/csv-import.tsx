@@ -242,12 +242,12 @@ export default function CsvImport({ companyId }: CsvImportProps) {
         <CardContent className="p-6">
           {!file ? (
             <div
-              className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-blue-500 transition-colors cursor-pointer"
+              className="border-2 border-dashed border-border rounded-lg p-12 text-center hover:border-blue-500 transition-colors cursor-pointer"
               onClick={() => fileInputRef.current?.click()}
             >
-              <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-lg font-medium text-gray-900">Glissez-déposez votre fichier CSV</p>
-              <p className="text-gray-500 mt-1">ou cliquez pour sélectionner</p>
+              <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-lg font-medium text-foreground">Glissez-déposez votre fichier CSV</p>
+              <p className="text-muted-foreground mt-1">ou cliquez pour sélectionner</p>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -258,12 +258,12 @@ export default function CsvImport({ companyId }: CsvImportProps) {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
                 <div className="flex items-center gap-3">
                   <FileSpreadsheet className="h-8 w-8 text-green-500" />
                   <div>
-                    <p className="font-medium text-gray-900">{file.name}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="font-medium text-foreground">{file.name}</p>
+                    <p className="text-sm text-muted-foreground">
                       {preview ? `${preview.length} ligne(s) détectée(s)` : 'Analyse en cours...'}
                     </p>
                   </div>
@@ -310,7 +310,7 @@ export default function CsvImport({ companyId }: CsvImportProps) {
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b bg-gray-50">
+                        <tr className="border-b bg-muted">
                           <th className="px-3 py-2 text-left">Période</th>
                           <th className="px-3 py-2 text-left">Absent.</th>
                           <th className="px-3 py-2 text-left">Turnover</th>
@@ -331,7 +331,7 @@ export default function CsvImport({ companyId }: CsvImportProps) {
                       </tbody>
                     </table>
                     {preview.length > 5 && (
-                      <p className="text-center text-sm text-gray-500 py-2">
+                      <p className="text-center text-sm text-muted-foreground py-2">
                         ... et {preview.length - 5} autre(s) ligne(s)
                       </p>
                     )}

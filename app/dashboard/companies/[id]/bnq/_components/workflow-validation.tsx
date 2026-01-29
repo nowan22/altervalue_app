@@ -154,7 +154,7 @@ export function WorkflowValidation({ companyId, workflowSteps, onRefresh }: Work
       case 'in_progress':
         return <Clock className="h-6 w-6 text-yellow-600" />;
       default:
-        return <Circle className="h-6 w-6 text-gray-400" />;
+        return <Circle className="h-6 w-6 text-muted-foreground" />;
     }
   };
 
@@ -193,21 +193,21 @@ export function WorkflowValidation({ companyId, workflowSteps, onRefresh }: Work
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
                   status === 'completed'
-                    ? 'bg-green-100 border-green-500'
+                    ? 'bg-green-500/20 border-green-500 dark:bg-green-500/30'
                     : status === 'ready'
-                      ? 'bg-blue-100 border-blue-500'
+                      ? 'bg-blue-500/20 border-blue-500 dark:bg-blue-500/30'
                       : status === 'in_progress'
-                        ? 'bg-yellow-100 border-yellow-500'
-                        : 'bg-gray-100 border-gray-300'
+                        ? 'bg-yellow-500/20 border-yellow-500 dark:bg-yellow-500/30'
+                        : 'bg-muted border-border'
                 }`}
               >
                 {status === 'completed' ? (
-                  <Check className="h-5 w-5 text-green-600" />
+                  <Check className="h-5 w-5 text-green-500" />
                 ) : (
                   <span className={`font-bold ${
-                    status === 'ready' ? 'text-blue-600' :
-                    status === 'in_progress' ? 'text-yellow-600' :
-                    'text-gray-400'
+                    status === 'ready' ? 'text-blue-500' :
+                    status === 'in_progress' ? 'text-yellow-500' :
+                    'text-muted-foreground'
                   }`}>
                     {step.stepNumber}
                   </span>
@@ -215,7 +215,7 @@ export function WorkflowValidation({ companyId, workflowSteps, onRefresh }: Work
               </div>
               {index < workflowSteps.length - 1 && (
                 <div className={`w-16 h-1 mx-2 ${
-                  status === 'completed' ? 'bg-green-500' : 'bg-gray-200'
+                  status === 'completed' ? 'bg-green-500' : 'bg-muted'
                 }`} />
               )}
             </div>
@@ -233,9 +233,9 @@ export function WorkflowValidation({ companyId, workflowSteps, onRefresh }: Work
 
           return (
             <Card key={step.id} className={`${
-              status === 'completed' ? 'border-green-200 bg-green-50/50' :
-              status === 'ready' ? 'border-blue-200 bg-blue-50/50' :
-              status === 'in_progress' ? 'border-yellow-200 bg-yellow-50/50' :
+              status === 'completed' ? 'border-green-500/50 bg-green-500/10 dark:bg-green-500/20' :
+              status === 'ready' ? 'border-blue-500/50 bg-blue-500/10 dark:bg-blue-500/20' :
+              status === 'in_progress' ? 'border-yellow-500/50 bg-yellow-500/10 dark:bg-yellow-500/20' :
               ''
             }`}>
               <CardHeader
@@ -284,8 +284,8 @@ export function WorkflowValidation({ companyId, workflowSteps, onRefresh }: Work
                             key={task.id}
                             className={`flex items-center gap-3 p-3 rounded-lg border ${
                               task.isCompleted
-                                ? 'bg-green-50 border-green-200'
-                                : 'bg-white border-gray-200'
+                                ? 'bg-green-500/10 border-green-500/30 dark:bg-green-500/20'
+                                : 'bg-card border-border'
                             }`}
                           >
                             <Checkbox
@@ -316,16 +316,16 @@ export function WorkflowValidation({ companyId, workflowSteps, onRefresh }: Work
 
                       {/* Validation Section */}
                       {status === 'completed' && step.signature && (
-                        <div className="p-4 bg-green-100 rounded-lg border border-green-200">
-                          <div className="flex items-center gap-2 text-green-800">
+                        <div className="p-4 bg-green-500/20 rounded-lg border border-green-500/30 dark:bg-green-500/30">
+                          <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                             <CheckCircle2 className="h-5 w-5" />
                             <span className="font-medium">Étape validée</span>
                           </div>
-                          <p className="text-sm text-green-700 mt-2">
+                          <p className="text-sm text-green-600 dark:text-green-400 mt-2">
                             Signé par : {step.signature}
                           </p>
                           {step.completedAt && (
-                            <p className="text-sm text-green-700">
+                            <p className="text-sm text-green-600 dark:text-green-400">
                               Le : {new Date(step.completedAt).toLocaleDateString('fr-FR', {
                                 day: 'numeric',
                                 month: 'long',
@@ -339,9 +339,9 @@ export function WorkflowValidation({ companyId, workflowSteps, onRefresh }: Work
                       )}
 
                       {status === 'ready' && (
-                        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="p-4 bg-blue-500/20 rounded-lg border border-blue-500/30 dark:bg-blue-500/30">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-blue-800">
+                            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
                               <AlertCircle className="h-5 w-5" />
                               <span className="font-medium">
                                 Toutes les tâches obligatoires sont complétées

@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/db";
+import { logActivityServer } from "@/lib/activity-logger";
 
 export async function GET(
   request: Request,
@@ -79,6 +80,25 @@ export async function PUT(
       },
     });
 
+    // Log activity
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (user) {
+      await logActivityServer(prisma, {
+        userId: user.id,
+        userEmail: user.email,
+        userName: user.name || user.email,
+        userRole: user.role,
+        type: 'MISSION_UPDATED',
+        action: `Modification de la mission "${company.name}"`,
+        description: `Mise à jour des informations`,
+        companyId: company.id,
+        companyName: company.name,
+        entityType: 'company',
+        entityId: company.id,
+        entityName: company.name,
+      });
+    }
+
     return NextResponse.json(company);
   } catch (error) {
     console.error("Error updating company:", error);
@@ -118,6 +138,23 @@ export async function DELETE(
         { error: "Impossible de supprimer un dossier de démonstration" },
         { status: 403 }
       );
+    }
+
+    // Log activity before deletion
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (user) {
+      await logActivityServer(prisma, {
+        userId: user.id,
+        userEmail: user.email,
+        userName: user.name || user.email,
+        userRole: user.role,
+        type: 'MISSION_DELETED',
+        action: `Suppression de la mission "${existingCompany.name}"`,
+        description: `Mission supprimée définitivement`,
+        companyName: existingCompany.name,
+        entityType: 'company',
+        entityName: existingCompany.name,
+      });
     }
 
     await prisma.company.delete({

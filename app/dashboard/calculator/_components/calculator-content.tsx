@@ -95,8 +95,8 @@ export default function CalculatorContent({ settings }: CalculatorContentProps) 
       className="space-y-6"
     >
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Calculateur de présentéisme</h1>
-        <p className="text-gray-600 mt-1">Estimez rapidement le coût du présentéisme pour n'importe quelle entreprise</p>
+        <h1 className="text-3xl font-bold text-foreground">Calculateur de présentéisme</h1>
+        <p className="text-muted-foreground mt-1">Estimez rapidement le coût du présentéisme pour n'importe quelle entreprise</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -204,7 +204,7 @@ export default function CalculatorContent({ settings }: CalculatorContentProps) 
                     value={params.presAbsCoefficient}
                     onChange={(e) => handleChange('presAbsCoefficient', e.target.value)}
                   />
-                  <p className="text-xs text-gray-500">Défaut: 1.3</p>
+                  <p className="text-xs text-muted-foreground">Défaut: 1.3</p>
                 </div>
 
                 <div className="space-y-2">
@@ -216,7 +216,7 @@ export default function CalculatorContent({ settings }: CalculatorContentProps) 
                     value={params.productivityLossCoeff}
                     onChange={(e) => handleChange('productivityLossCoeff', e.target.value)}
                   />
-                  <p className="text-xs text-gray-500">Défaut: 0.33</p>
+                  <p className="text-xs text-muted-foreground">Défaut: 0.33</p>
                 </div>
 
                 <div className="space-y-2">
@@ -227,7 +227,7 @@ export default function CalculatorContent({ settings }: CalculatorContentProps) 
                     value={params.workingDaysPerYear}
                     onChange={(e) => handleChange('workingDaysPerYear', e.target.value)}
                   />
-                  <p className="text-xs text-gray-500">Défaut: 220</p>
+                  <p className="text-xs text-muted-foreground">Défaut: 220</p>
                 </div>
               </div>
 
@@ -265,20 +265,20 @@ export default function CalculatorContent({ settings }: CalculatorContentProps) 
                   <CardTitle className="text-lg">Résultats détaillés</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
-                    <span className="text-gray-600">Taux de présentéisme</span>
+                  <div className="flex justify-between p-3 bg-muted rounded-lg">
+                    <span className="text-muted-foreground">Taux de présentéisme</span>
                     <span className="font-semibold">{(result?.presRate ?? 0).toFixed(2)}%</span>
                   </div>
-                  <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
-                    <span className="text-gray-600">Jours de présentéisme</span>
+                  <div className="flex justify-between p-3 bg-muted rounded-lg">
+                    <span className="text-muted-foreground">Jours de présentéisme</span>
                     <span className="font-semibold">{(result?.presDays ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })}</span>
                   </div>
-                  <div className="flex justify-between p-3 bg-gray-50 rounded-lg">
-                    <span className="text-gray-600">Perte de productivité</span>
+                  <div className="flex justify-between p-3 bg-muted rounded-lg">
+                    <span className="text-muted-foreground">Perte de productivité</span>
                     <span className="font-semibold">{(result?.productivityLoss ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} jours</span>
                   </div>
                   <div className="flex justify-between p-3 bg-blue-50 rounded-lg">
-                    <span className="text-gray-600">Coût par salarié</span>
+                    <span className="text-muted-foreground">Coût par salarié</span>
                     <span className="font-semibold text-blue-600">
                       {(result?.presCostPerEmployee ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €/an
                     </span>
@@ -295,13 +295,13 @@ export default function CalculatorContent({ settings }: CalculatorContentProps) 
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="p-3 bg-green-50 rounded-lg">
-                    <p className="text-sm text-gray-600">Réduction de 10%</p>
+                    <p className="text-sm text-muted-foreground">Réduction de 10%</p>
                     <p className="text-xl font-bold text-green-600">
                       {((result?.presCost ?? 0) * 0.1).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €/an
                     </p>
                   </div>
                   <div className="p-3 bg-green-50 rounded-lg">
-                    <p className="text-sm text-gray-600">Réduction de 25%</p>
+                    <p className="text-sm text-muted-foreground">Réduction de 25%</p>
                     <p className="text-xl font-bold text-green-600">
                       {((result?.presCost ?? 0) * 0.25).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €/an
                     </p>

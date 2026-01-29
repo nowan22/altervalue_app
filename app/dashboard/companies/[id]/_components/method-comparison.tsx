@@ -404,7 +404,7 @@ export function MethodComparison({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="p-4 bg-muted dark:bg-card rounded-lg">
                 <h4 className="font-medium mb-2">Analyse de l&apos;écart</h4>
                 {Math.abs(comparisonData.diffPct) < 20 ? (
                   <div className="flex items-start gap-2 text-sm">
@@ -433,7 +433,7 @@ export function MethodComparison({
                 )}
               </div>
 
-              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="p-4 bg-muted dark:bg-card rounded-lg">
                 <h4 className="font-medium mb-2">Recommandation</h4>
                 <div className="flex items-start gap-2 text-sm">
                   <Info className="h-4 w-4 text-indigo-600 mt-0.5 flex-shrink-0" />

@@ -14,15 +14,22 @@ model User {
   email         String    @unique
   password      String
   name          String?
-  role          Role      @default(CONSULTANT)
+  role          Role      @default(PILOTE_QVCT)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   companies     Company[]
+  // v4.0: Activity logs created by this user
+  activityLogs  ActivityLog[]
+  // v4.0-epsilon: Mission assignments for Pilotes/Observateurs
+  missionAssignments MissionAssignment[]
 }
 
+// v4.0: User roles for RBAC
 enum Role {
-  ADMIN
-  CONSULTANT
+  SUPER_ADMIN     // AlterValue team - full platform access
+  EXPERT          // Consultant - manages client portfolio
+  PILOTE_QVCT     // Client - action role (edit/manage)
+  OBSERVATEUR     // Client - read-only (CSE, COMEX)
 }
 
 model Company {
@@ -55,8 +62,26 @@ model Company {
   // BNQ v3.0 - Plan d'action & Alertes
   actionPlans             ActionPlan[]
   alerts                  BnqAlert[]
+  alertConfigs            AlertConfig[]
   // Survey Module relations (Method B)
   surveys                 Survey[]
+  // v4.0-epsilon: Mission assignments for Pilotes/Observateurs
+  missionAssignments      MissionAssignment[]
+}
+
+// v4.0-epsilon: Assignment table for linking missions to Pilotes/Observateurs
+model MissionAssignment {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  assignedAt  DateTime @default(now())
+  assignedBy  String?  // ID of user who made the assignment
+  
+  @@unique([userId, companyId])
+  @@index([userId])
+  @@index([companyId])
 }
 
 model KpiSnapshot {
@@ -432,6 +457,22 @@ model BnqAlert {
   @@index([triggerDate])
 }
 
+// v4.0-theta: Alert configuration per company
+model AlertConfig {
+  id              String          @id @default(cuid())
+  companyId       String
+  company         Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  alertType       AlertType
+  enabled         Boolean         @default(true)
+  severity        AlertSeverity   @default(WARNING)
+  reminderDays    Int             @default(30)  // Days before to trigger reminder
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@unique([companyId, alertType])
+  @@index([companyId])
+}
+
 // =====================================================
 // BNQ v3.0 - EXIGENCES DÉTAILLÉES (REQUIREMENTS)
 // =====================================================
@@ -540,4 +581,79 @@ model SurveyAggregate {
   calculatedAt            DateTime?
   createdAt               DateTime        @default(now())
   updatedAt               DateTime        @updatedAt
+}
+
+// =====================================================
+// v4.0 - ACTIVITY LOG (AUDIT TRAIL)
+// =====================================================
+
+// Activity type for categorization
+enum ActivityType {
+  // User actions
+  USER_LOGIN
+  USER_LOGOUT
+  USER_CREATED
+  USER_UPDATED
+  // Mission/Company actions
+  MISSION_CREATED
+  MISSION_UPDATED
+  MISSION_DELETED
+  // Survey actions
+  SURVEY_CREATED
+  SURVEY_LAUNCHED
+  SURVEY_CLOSED
+  SURVEY_THRESHOLD_REACHED
+  // BNQ actions
+  DOCUMENT_UPLOADED
+  DOCUMENT_APPROVED
+  DOCUMENT_EXPIRED
+  WORKFLOW_STEP_COMPLETED
+  WORKFLOW_TASK_COMPLETED
+  // Action plan
+  ACTION_PLAN_CREATED
+  ACTION_PLAN_APPROVED
+  INTERVENTION_CREATED
+  INTERVENTION_COMPLETED
+  INTERVENTION_OVERDUE
+  // Alerts
+  ALERT_CREATED
+  ALERT_RESOLVED
+  // Settings
+  SETTINGS_UPDATED
+  COEFFICIENT_UPDATED
+  // System
+  SYSTEM_NOTIFICATION
+  CUSTOM
+}
+
+// Activity log for audit trail
+model ActivityLog {
+  id                  String              @id @default(cuid())
+  // Who performed the action
+  userId              String?
+  user                User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userEmail           String?             // Stored separately for historical reference
+  userName            String?             // Stored separately for historical reference
+  userRole            String?             // Role at time of action
+  // What was done
+  type                ActivityType
+  action              String              // Human-readable action description
+  description         String?             // Additional details
+  // Context
+  companyId           String?             // Related mission/company
+  companyName         String?             // Stored for historical reference
+  entityType          String?             // "Survey", "Document", "Intervention", etc.
+  entityId            String?             // ID of the related entity
+  entityName          String?             // Name of the related entity
+  // Metadata
+  metadata            String?             // JSON for additional data
+  ipAddress           String?             // For security audit
+  userAgent           String?             // Browser/device info
+  // Timestamp
+  createdAt           DateTime            @default(now())
+
+  @@index([companyId])
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
 }
