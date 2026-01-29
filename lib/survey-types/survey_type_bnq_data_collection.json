@@ -1,0 +1,201 @@
+{
+  "survey_type_id": "BNQ_DATA_COLLECTION",
+  "survey_metadata": {
+    "name": "Collecte de Données BNQ 9700-800",
+    "version": "1.0",
+    "framework": ["BNQ 9700-800 - Collecte complète § 5.2 à 5.5"],
+    "target_audience": "Entreprises en démarche de certification BNQ",
+    "decision_makers": ["Pilote QVCT", "DRH", "Comité Santé Mieux-Être"],
+    "estimated_duration_minutes": 15,
+    "primary_objective": "Collecter les données obligatoires pour la conformité BNQ 9700-800",
+    "secondary_objectives": [
+      "Alimenter le plan d'action annuel",
+      "Préparer l'audit de certification"
+    ]
+  },
+
+  "data_governance": {
+    "anonymity_threshold": 15,
+    "rgpd_compliant": true,
+    "sensitive_data": true,
+    "data_retention_days": 1825,
+    "audit_trail": true
+  },
+
+  "questionnaire_structure": {
+    "modules": [
+      {
+        "id": "MOD_CONSENT",
+        "title": "Cadre et Confidentialité BNQ",
+        "questions": [
+          {
+            "id": "CONSENT",
+            "type": "consent",
+            "text": "J'ai compris que cette collecte s'inscrit dans la démarche BNQ 9700-800 et que mes réponses sont anonymes.",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": "MOD_HABITUDES_VIE",
+        "title": "Sphère 1 : Habitudes de Vie",
+        "bnq_reference": "BNQ 9700-800 § 5.2",
+        "questions": [
+          {"id": "HV1", "type": "scale", "scale": "0-10", "text": "Je pratique une activité physique régulière (au moins 150 min/semaine)."},
+          {"id": "HV2", "type": "scale", "scale": "0-10", "text": "Mon alimentation est équilibrée et variée."},
+          {"id": "HV3", "type": "scale", "scale": "0-10", "text": "Je dors suffisamment (7-9h par nuit)."},
+          {"id": "HV4", "type": "single_choice", "text": "Consommez-vous du tabac ?", "options": ["Jamais", "Occasionnellement", "Régulièrement"]},
+          {"id": "HV5", "type": "scale", "scale": "0-10", "text": "Je gère efficacement mon niveau de stress."}
+        ]
+      },
+      {
+        "id": "MOD_CONCILIATION",
+        "title": "Sphère 2 : Conciliation Vie Pro / Vie Perso",
+        "bnq_reference": "BNQ 9700-800 § 5.3",
+        "questions": [
+          {"id": "CV1", "type": "scale", "scale": "0-10", "text": "Mes horaires de travail me permettent de répondre à mes obligations personnelles."},
+          {"id": "CV2", "type": "scale", "scale": "0-10", "text": "Je parviens à me déconnecter mentalement du travail."},
+          {"id": "CV3", "type": "scale", "scale": "0-10", "text": "L'entreprise offre des pratiques facilitant la conciliation (télétravail, horaires flexibles, etc.)."},
+          {"id": "CV4", "type": "number", "text": "Combien d'heures travaillez-vous en moyenne par semaine ?", "unit": "heures", "min": 0, "max": 80}
+        ]
+      },
+      {
+        "id": "MOD_ENVIRONNEMENT",
+        "title": "Sphère 3 : Environnement de Travail",
+        "bnq_reference": "BNQ 9700-800 § 5.4",
+        "questions": [
+          {"id": "ET1", "type": "scale", "scale": "0-10", "text": "Mon poste de travail est ergonomique et adapté."},
+          {"id": "ET2", "type": "scale", "scale": "0-10", "text": "La qualité de l'air et la température sont satisfaisantes."},
+          {"id": "ET3", "type": "scale", "scale": "0-10", "text": "Le niveau de bruit me permet de me concentrer."},
+          {"id": "ET4", "type": "scale", "scale": "0-10", "text": "L'éclairage est adapté à mes tâches."},
+          {"id": "ET5", "type": "scale", "scale": "0-10", "text": "L'entreprise propose des options alimentaires saines."},
+          {"id": "ET6", "type": "single_choice", "text": "Avez-vous ressenti des douleurs physiques liées à votre poste de travail au cours des 12 derniers mois ?", "options": ["Jamais", "Rarement", "Souvent", "Quotidiennement"]}
+        ]
+      },
+      {
+        "id": "MOD_GESTION",
+        "title": "Sphère 4 : Pratiques de Gestion",
+        "bnq_reference": "BNQ 9700-800 § 5.5",
+        "questions": [
+          {"id": "PG1", "type": "scale", "scale": "0-10", "text": "Mon manager communique clairement les attentes et objectifs."},
+          {"id": "PG2", "type": "scale", "scale": "0-10", "text": "Je reçois des feedbacks réguliers et constructifs."},
+          {"id": "PG3", "type": "scale", "scale": "0-10", "text": "Je participe aux décisions qui concernent mon travail."},
+          {"id": "PG4", "type": "scale", "scale": "0-10", "text": "La charge de travail est raisonnable et gérable."},
+          {"id": "PG5", "type": "scale", "scale": "0-10", "text": "La reconnaissance de mon travail est équitable."},
+          {"id": "PG6", "type": "scale", "scale": "0-10", "text": "Je dispose des outils et formations nécessaires pour accomplir mes tâches."},
+          {"id": "PG7", "type": "scale", "scale": "0-10", "text": "Le climat de confiance permet d'exprimer les difficultés sans crainte."}
+        ]
+      },
+      {
+        "id": "MOD_SANTE_PERF",
+        "title": "Santé & Performance (Données Administratives BNQ)",
+        "bnq_reference": "BNQ 9700-800 § 5.6",
+        "questions": [
+          {"id": "SP1", "type": "scale", "scale": "0-10", "text": "Comment évaluez-vous votre état de santé général ?"},
+          {"id": "SP2", "type": "number", "text": "Au cours des 12 derniers mois, combien de jours d'absence pour maladie avez-vous eu ?", "unit": "jours", "min": 0, "max": 365},
+          {"id": "SP3", "type": "number", "text": "Au cours des 12 derniers mois, combien de jours êtes-vous venu travailler malgré un état de santé justifiant un arrêt ?", "unit": "jours", "min": 0, "max": 250},
+          {"id": "SP4", "type": "scale", "scale": "0-10", "text": "Quel est votre niveau d'énergie actuel pour accomplir vos missions ?"}
+        ]
+      }
+    ]
+  },
+
+  "calculation_engine": {
+    "scoring_dimensions": [
+      {
+        "id": "HABITUDES_VIE",
+        "questions": ["HV1", "HV2", "HV3", "HV5"],
+        "aggregation": "mean",
+        "bnq_compliance": true
+      },
+      {
+        "id": "CONCILIATION",
+        "questions": ["CV1", "CV2", "CV3"],
+        "aggregation": "mean",
+        "bnq_compliance": true
+      },
+      {
+        "id": "ENVIRONNEMENT",
+        "questions": ["ET1", "ET2", "ET3", "ET4", "ET5"],
+        "aggregation": "mean",
+        "bnq_compliance": true
+      },
+      {
+        "id": "GESTION",
+        "questions": ["PG1", "PG2", "PG3", "PG4", "PG5", "PG6", "PG7"],
+        "aggregation": "mean",
+        "bnq_compliance": true
+      },
+      {
+        "id": "absenteeism_rate",
+        "source": "SP2",
+        "aggregation": "mean",
+        "unit": "jours/an/salarié"
+      },
+      {
+        "id": "presenteeism_rate",
+        "source": "SP3",
+        "aggregation": "mean",
+        "unit": "jours/an/salarié"
+      }
+    ],
+
+    "critical_indicators": [
+      {
+        "id": "bnq_compliance_check",
+        "condition": "all_dimensions > 6",
+        "severity": "info",
+        "message": "Conformité BNQ atteinte sur les 4 sphères"
+      },
+      {
+        "id": "high_presenteeism_bnq",
+        "condition": "presenteeism_rate > 5",
+        "severity": "critical",
+        "message": "Présentéisme élevé — Action prioritaire requise"
+      }
+    ]
+  },
+
+  "output_engine": {
+    "deliverables": [
+      {
+        "type": "bnq_compliance_report",
+        "target": "Comité Santé Mieux-Être",
+        "includes": [
+          "Scores par sphère BNQ",
+          "Conformité aux exigences § 5.2 à 5.6",
+          "Données administratives agrégées",
+          "Recommandations pour plan d'action annuel"
+        ]
+      },
+      {
+        "type": "audit_preparation_file",
+        "target": "Pilote QVCT",
+        "format": "Excel",
+        "includes": [
+          "Données brutes anonymisées",
+          "Taux de participation",
+          "Preuves de collecte conforme"
+        ]
+      }
+    ],
+
+    "visualizations": [
+      {
+        "type": "bnq_dashboard",
+        "dimensions": 4,
+        "compliance_threshold": 6
+      },
+      {
+        "type": "administrative_data_summary",
+        "metrics": ["absenteeism_rate", "presenteeism_rate", "health_index"]
+      }
+    ],
+
+    "narrative_templates": {
+      "opening": "Collecte BNQ 9700-800 complétée avec {response_count} réponses ({participation_rate}% de participation).",
+      "compliance": "Conformité atteinte sur {compliant_dimensions}/4 sphères.",
+      "action": "Plan d'action prioritaire : {priority_sphere}."
+    }
+  }
+}

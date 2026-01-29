@@ -68,8 +68,45 @@ export const MENU_ITEMS: MenuItem[] = [
     },
   },
   {
+    id: 'diagnostic-terrain',
+    label: 'Diagnostic Terrain',
+    icon: 'ClipboardCheck',
+    access: {
+      SUPER_ADMIN: 'full',
+      EXPERT: 'full',
+      PILOTE_QVCT: 'full',
+      OBSERVATEUR: 'readonly',
+    },
+    children: [
+      {
+        id: 'campaigns',
+        label: 'Campagnes',
+        icon: 'ClipboardList',
+        href: '/dashboard/diagnostic/campaigns',
+        access: {
+          SUPER_ADMIN: 'full',
+          EXPERT: 'full',
+          PILOTE_QVCT: 'full',
+          OBSERVATEUR: 'readonly',
+        },
+      },
+      {
+        id: 'survey-types',
+        label: 'Types d\'enquêtes',
+        icon: 'FileJson',
+        href: '/dashboard/diagnostic/types',
+        access: {
+          SUPER_ADMIN: 'full',  // Seul SUPER_ADMIN peut créer des types
+          EXPERT: 'readonly',
+          PILOTE_QVCT: 'hidden',
+          OBSERVATEUR: 'hidden',
+        },
+      },
+    ],
+  },
+  {
     id: 'tools',
-    label: 'Outils de Diagnostic',
+    label: 'Outils',
     icon: 'Wrench',
     access: {
       SUPER_ADMIN: 'config',
@@ -90,43 +127,6 @@ export const MENU_ITEMS: MenuItem[] = [
           OBSERVATEUR: 'readonly',
         },
       },
-      {
-        id: 'survey',
-        label: 'Enquête',
-        icon: 'ClipboardList',
-        href: '/dashboard/companies',
-        access: {
-          SUPER_ADMIN: 'config',
-          EXPERT: 'full',
-          PILOTE_QVCT: 'full',
-          OBSERVATEUR: 'readonly',
-        },
-      },
-      // TODO: These pages are planned for future development
-      // {
-      //   id: 'questionnaire-config',
-      //   label: 'Configurateur',
-      //   icon: 'Settings2',
-      //   href: '/dashboard/questionnaires',
-      //   access: {
-      //     SUPER_ADMIN: 'full',
-      //     EXPERT: 'hidden',
-      //     PILOTE_QVCT: 'hidden',
-      //     OBSERVATEUR: 'hidden',
-      //   },
-      // },
-      // {
-      //   id: 'demo-generator',
-      //   label: 'Générateur Démo',
-      //   icon: 'Sparkles',
-      //   href: '/dashboard/demo-generator',
-      //   access: {
-      //     SUPER_ADMIN: 'full',
-      //     EXPERT: 'hidden',
-      //     PILOTE_QVCT: 'hidden',
-      //     OBSERVATEUR: 'hidden',
-      //   },
-      // },
     ],
   },
   {

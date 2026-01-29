@@ -1,0 +1,196 @@
+{
+  "survey_type_id": "PRESENTEEISM_DIAGNOSTIC",
+  "survey_metadata": {
+    "name": "Diagnostic Présentéisme & Coûts Cachés",
+    "version": "1.0",
+    "framework": ["BNQ 9700-800 - Données administratives"],
+    "target_audience": "PME/ETI 50-2000 salariés",
+    "decision_makers": ["DAF", "DRH", "CEO"],
+    "estimated_duration_minutes": 5,
+    "primary_objective": "Chiffrer le coût caché du présentéisme pour construire un business case QVCT",
+    "secondary_objectives": [
+      "Identifier les facteurs déclencheurs",
+      "Prioriser les leviers d'action à ROI rapide"
+    ]
+  },
+
+  "data_governance": {
+    "anonymity_threshold": 15,
+    "rgpd_compliant": true,
+    "sensitive_data": true,
+    "data_retention_days": 730
+  },
+
+  "questionnaire_structure": {
+    "modules": [
+      {
+        "id": "MOD_CONSENT",
+        "title": "Cadre et Confidentialité",
+        "questions": [
+          {
+            "id": "CONSENT",
+            "type": "consent",
+            "text": "J'ai compris que mes réponses sont anonymes et agrégées (seuil min. 15 personnes).",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": "MOD_PRESENTEEISM",
+        "title": "Mesure du Présentéisme",
+        "questions": [
+          {
+            "id": "P1",
+            "type": "number",
+            "text": "Au cours des 12 derniers mois, combien de jours êtes-vous venu travailler alors que votre état de santé (physique ou mental) aurait justifié un arrêt ?",
+            "unit": "jours",
+            "min": 0,
+            "max": 250,
+            "required": true
+          },
+          {
+            "id": "P2",
+            "type": "scale",
+            "text": "Lors de ces journées, estimez votre capacité productive réelle.",
+            "scale": "0-10",
+            "labels": {
+              "0": "Incapable de travailler",
+              "5": "50% de ma capacité",
+              "10": "Pleine capacité"
+            },
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": "MOD_TRIGGERS",
+        "title": "Facteurs Déclencheurs",
+        "questions": [
+          {
+            "id": "T1",
+            "type": "multiple_choice",
+            "text": "Quelles sont les principales raisons qui vous ont poussé à venir travailler malgré votre état ? (3 max)",
+            "max_choices": 3,
+            "options": [
+              "Charge de travail trop importante",
+              "Pression managériale",
+              "Pas de remplaçant possible",
+              "Crainte pour mon poste",
+              "Culture d'entreprise (on ne s'arrête pas)",
+              "Enjeux financiers personnels",
+              "Projet critique en cours"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "MOD_PRIORITY",
+        "title": "Priorisation",
+        "questions": [
+          {
+            "id": "PR1",
+            "type": "single_choice",
+            "text": "Quelle action aurait le plus d'impact pour réduire le présentéisme ?",
+            "options": [
+              "Améliorer le management",
+              "Réduire la charge de travail",
+              "Faciliter les remplacements",
+              "Changer la culture d'entreprise"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  "calculation_engine": {
+    "scoring_dimensions": [
+      {
+        "id": "presenteeism_days",
+        "source": "P1",
+        "aggregation": "mean",
+        "unit": "jours/an/salarié"
+      },
+      {
+        "id": "productivity_loss",
+        "formula": "(10 - P2) / 10",
+        "unit": "% perte capacité"
+      },
+      {
+        "id": "hidden_cost",
+        "formula": "presenteeism_days × daily_cost × productivity_loss × headcount",
+        "parameters": {
+          "daily_cost": "input_from_client",
+          "headcount": "input_from_client"
+        },
+        "unit": "€/an"
+      }
+    ],
+
+    "critical_indicators": [
+      {
+        "id": "high_presenteeism",
+        "condition": "presenteeism_days > 5",
+        "severity": "critical",
+        "message": "Coût caché significatif — ROI intervention rapide"
+      }
+    ],
+
+    "alert_rules": [
+      {
+        "condition": "T1 contains 'Pression managériale'",
+        "priority": "high",
+        "action": "Audit pratiques de gestion recommandé"
+      }
+    ]
+  },
+
+  "output_engine": {
+    "deliverables": [
+      {
+        "type": "executive_summary",
+        "target": "DAF/CEO",
+        "includes": [
+          "Coût annuel du présentéisme",
+          "Comparaison avec absentéisme",
+          "Top 3 facteurs déclencheurs",
+          "ROI estimé d'une intervention"
+        ]
+      },
+      {
+        "type": "detailed_report",
+        "target": "DRH",
+        "includes": [
+          "Distribution des jours de présentéisme",
+          "Analyse des facteurs déclencheurs",
+          "Recommandations priorisées"
+        ]
+      }
+    ],
+
+    "visualizations": [
+      {
+        "type": "bar_chart",
+        "data": "presenteeism_days distribution",
+        "title": "Distribution des jours de présentéisme"
+      },
+      {
+        "type": "pie_chart",
+        "data": "T1 aggregated",
+        "title": "Facteurs déclencheurs principaux"
+      },
+      {
+        "type": "kpi_card",
+        "metric": "hidden_cost",
+        "format": "€",
+        "label": "Coût caché annuel estimé"
+      }
+    ],
+
+    "narrative_templates": {
+      "opening": "Sur la base de {response_count} réponses, le présentéisme représente un coût caché de {hidden_cost}€/an.",
+      "insight": "Le facteur déclencheur principal est : {top_trigger}.",
+      "recommendation": "Une intervention ciblée sur {priority_action} pourrait récupérer {roi_estimate}€ de performance."
+    }
+  }
+}

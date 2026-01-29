@@ -270,7 +270,73 @@ function generateKpiHistory(
   return kpis;
 }
 
+// Seed Survey Types v4.1
+async function seedSurveyTypes() {
+  console.log('Seeding survey types v4.1...');
+  
+  const surveyTypes = [
+    {
+      typeId: 'PRESENTEEISM_DIAGNOSTIC',
+      name: 'Diagnostic Présentéisme & Coûts Cachés',
+      category: 'PRESENTEEISM',
+      estimatedDuration: 5,
+      anonymityThreshold: 15,
+      definitionFile: 'survey_type_presenteeism_diagnostic.json',
+    },
+    {
+      typeId: 'RADAR_QVCT_FLASH',
+      name: 'Radar QVCT - Diagnostic Flash',
+      category: 'QVCT',
+      estimatedDuration: 8,
+      anonymityThreshold: 15,
+      definitionFile: 'survey_type_radar_qvct_flash.json',
+    },
+    {
+      typeId: 'BNQ_DATA_COLLECTION',
+      name: 'Collecte de Données BNQ 9700-800',
+      category: 'QVCT',
+      estimatedDuration: 15,
+      anonymityThreshold: 15,
+      definitionFile: 'survey_type_bnq_data_collection.json',
+    },
+  ];
+
+  for (const st of surveyTypes) {
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      const filePath = path.join(process.cwd(), 'lib', 'survey-types', st.definitionFile);
+      const definition = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      
+      await prisma.surveyType.upsert({
+        where: { typeId: st.typeId },
+        update: {
+          name: st.name,
+          definition,
+          estimatedDuration: st.estimatedDuration,
+          anonymityThreshold: st.anonymityThreshold,
+        },
+        create: {
+          typeId: st.typeId,
+          name: st.name,
+          description: definition.survey_metadata?.primary_objective,
+          category: st.category as any,
+          definition,
+          isActive: true,
+          isSystem: true,
+          estimatedDuration: st.estimatedDuration,
+          anonymityThreshold: st.anonymityThreshold,
+        },
+      });
+      console.log(`  ✓ ${st.name}`);
+    } catch (e) {
+      console.log(`  ✗ ${st.name} (file not found or invalid)`);
+    }
+  }
+}
+
 main()
+  .then(() => seedSurveyTypes())
   .catch((e) => {
     console.error(e);
     process.exit(1);

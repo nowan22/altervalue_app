@@ -63,8 +63,10 @@ model Company {
   actionPlans             ActionPlan[]
   alerts                  BnqAlert[]
   alertConfigs            AlertConfig[]
-  // Survey Module relations (Method B)
+  // Survey Module relations (Method B - Legacy)
   surveys                 Survey[]
+  // v4.1: Survey Engine campaigns
+  surveyCampaigns         SurveyCampaign[]
   // v4.0-epsilon: Mission assignments for Pilotes/Observateurs
   missionAssignments      MissionAssignment[]
 }
@@ -656,4 +658,130 @@ model ActivityLog {
   @@index([userId])
   @@index([type])
   @@index([createdAt])
+}
+
+
+// =====================================================
+// v4.1 - SURVEY ENGINE (JSON-DRIVEN SURVEYS)
+// =====================================================
+
+enum SurveyTypeCategory {
+  PRESENTEEISM     // Diagnostic présentéisme
+  QVCT             // Qualité de Vie et Conditions de Travail
+  RPS              // Risques Psycho-Sociaux
+  CLIMATE          // Climat social
+  CUSTOM           // Type personnalisé
+}
+
+enum CampaignStatus {
+  DRAFT            // Brouillon, pas encore lancée
+  SCHEDULED        // Planifiée, date de lancement future
+  ACTIVE           // En cours de collecte
+  CLOSED           // Clôturée, calculs en cours
+  COMPLETED        // Terminée, résultats disponibles
+  ARCHIVED         // Archivée
+}
+
+// Types d'enquêtes (définitions JSON réutilisables)
+model SurveyType {
+  id                  String              @id @default(cuid())
+  typeId              String              @unique  // "PRESENTEEISM_DIAGNOSTIC", "RADAR_QVCT_FLASH"
+  name                String              // "Diagnostic Présentéisme & Coûts Cachés"
+  description         String?
+  version             String              @default("1.0")
+  category            SurveyTypeCategory
+  definition          Json                // Structure complète JSON du questionnaire
+  isActive            Boolean             @default(true)
+  isSystem            Boolean             @default(false)  // Types système non modifiables
+  estimatedDuration   Int                 @default(10)     // Minutes
+  anonymityThreshold  Int                 @default(15)     // Seuil d'anonymat
+  dataRetentionDays   Int                 @default(730)    // 2 ans par défaut
+  createdById         String?
+  campaigns           SurveyCampaign[]
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@index([category])
+  @@index([isActive])
+}
+
+// Campagnes d'enquête (instances lancées)
+model SurveyCampaign {
+  id                  String              @id @default(cuid())
+  companyId           String
+  company             Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  surveyTypeId        String
+  surveyType          SurveyType          @relation(fields: [surveyTypeId], references: [id])
+  name                String              // "Diagnostic Q1 2026"
+  status              CampaignStatus      @default(DRAFT)
+  token               String              @unique @default(cuid())  // Token public pour accès anonyme
+  // Configuration
+  targetPopulation    Int?                // Nombre de personnes ciblées
+  minRespondents      Int                 @default(15)  // Minimum requis
+  maxRespondents      Int?                // Maximum (null = illimité)
+  // Dates
+  scheduledStartDate  DateTime?
+  scheduledEndDate    DateTime?
+  launchedAt          DateTime?
+  closedAt            DateTime?
+  // Créateur
+  createdById         String
+  // Relations
+  responses           CampaignResponse[]
+  result              CampaignResult?
+  deliverables        CampaignDeliverable[]
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@index([companyId])
+  @@index([status])
+  @@index([token])
+  @@index([createdById])
+}
+
+// Réponses individuelles (anonymisées)
+model CampaignResponse {
+  id                  String              @id @default(cuid())
+  campaignId          String
+  campaign            SurveyCampaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  respondentHash      String              // Hash anonyme pour éviter doublons
+  responses           Json                // { "Q1": 7, "Q2": ["A", "C"], "Q3": "Texte libre" }
+  metadata            Json?               // Données démographiques agrégées optionnelles
+  submittedAt         DateTime            @default(now())
+  isComplete          Boolean             @default(true)
+  userAgent           String?             // Pour détection fraude
+
+  @@unique([campaignId, respondentHash])
+  @@index([campaignId])
+}
+
+// Résultats calculés par campagne
+model CampaignResult {
+  id                  String              @id @default(cuid())
+  campaignId          String              @unique
+  campaign            SurveyCampaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  responseCount       Int                 @default(0)
+  participationRate   Float?              // % de participation
+  scores              Json                // { "GESTION": 6.5, "CONCILIATION": 7.2 }
+  criticalIndicators  Json?               // { "high_presenteeism": { triggered: true, severity: "high" } }
+  financialMetrics    Json?               // { "hidden_cost": 125000, "roi_estimate": 87500 }
+  qualitativeInsights Json?               // Verbatims, ranking agrégés
+  narrative           String?             // Texte narratif généré
+  calculatedAt        DateTime?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+}
+
+// Livrables générés (PDF)
+model CampaignDeliverable {
+  id                  String              @id @default(cuid())
+  campaignId          String
+  campaign            SurveyCampaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  type                String              // "executive_report", "radar_chart", "action_roadmap"
+  title               String
+  cloudStoragePath    String?             // S3 key
+  fileFormat          String              @default("pdf")
+  generatedAt         DateTime            @default(now())
+
+  @@index([campaignId])
 }
