@@ -9,6 +9,7 @@ export interface MenuItem {
   label: string;
   icon: string;
   href?: string;
+  exactMatch?: boolean; // If true, use exact pathname match instead of startsWith
   access: Record<Role, MenuAccess>;
   children?: MenuItem[];
 }
@@ -120,6 +121,7 @@ export const MENU_ITEMS: MenuItem[] = [
         label: 'Vue d\'ensemble',
         icon: 'BarChart3',
         href: '/dashboard/presenteeism',
+        exactMatch: true,
         access: {
           SUPER_ADMIN: 'full',
           EXPERT: 'full',

@@ -19,6 +19,7 @@ import {
   MoreVertical,
   Trash2,
   Eye,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -186,6 +187,16 @@ export default function CampaignsPage() {
                 <SelectItem value="ARCHIVED">Archivée</SelectItem>
               </SelectContent>
             </Select>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => fetchCampaigns()}
+              disabled={loading}
+              className="border-border"
+              title="Rafraîchir la liste"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
           </div>
         </CardContent>
       </Card>

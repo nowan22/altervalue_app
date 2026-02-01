@@ -106,8 +106,8 @@ export default function NewCampaignPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.surveyTypeId || !formData.companyId) {
-      toast({ title: 'Erreur', description: 'Veuillez remplir tous les champs obligatoires', variant: 'destructive' });
+    if (!formData.name || !formData.surveyTypeId || !formData.companyId || !formData.scheduledEndDate) {
+      toast({ title: 'Erreur', description: 'Veuillez remplir tous les champs obligatoires (y compris la date de fin)', variant: 'destructive' });
       return;
     }
 
@@ -274,6 +274,7 @@ export default function NewCampaignPage() {
                 <Input
                   id="targetPopulation"
                   type="number"
+                  min={0}
                   placeholder="ex: 150"
                   value={formData.targetPopulation}
                   onChange={e => setFormData(prev => ({ ...prev, targetPopulation: e.target.value }))}
@@ -286,6 +287,7 @@ export default function NewCampaignPage() {
                 <Input
                   id="minRespondents"
                   type="number"
+                  min={0}
                   value={formData.minRespondents}
                   onChange={e => setFormData(prev => ({ ...prev, minRespondents: e.target.value }))}
                   className="bg-input border-border"
@@ -299,6 +301,7 @@ export default function NewCampaignPage() {
               <Input
                 id="maxRespondents"
                 type="number"
+                min={0}
                 placeholder="Illimité"
                 value={formData.maxRespondents}
                 onChange={e => setFormData(prev => ({ ...prev, maxRespondents: e.target.value }))}
@@ -319,10 +322,11 @@ export default function NewCampaignPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="scheduledEndDate">Date de fin</Label>
+                <Label htmlFor="scheduledEndDate">Date de fin *</Label>
                 <Input
                   id="scheduledEndDate"
                   type="date"
+                  required
                   value={formData.scheduledEndDate}
                   onChange={e => setFormData(prev => ({ ...prev, scheduledEndDate: e.target.value }))}
                   className="bg-input border-border"

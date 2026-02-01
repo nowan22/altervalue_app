@@ -180,13 +180,13 @@ export function Sidebar({ companies, currentCompanyId, onCompanyChange }: Sideba
   const isItemActive = (item: MenuItem, isChild: boolean = false): boolean => {
     if (!item.href) return false;
     
+    // If exactMatch is true, use strict equality
+    if (item.exactMatch) {
+      return pathname === item.href;
+    }
+    
     // For child items (sub-menu items), use exact match to avoid multiple highlights
     if (isChild) {
-      // Exact match for items that could have sub-paths
-      if (item.href === '/dashboard/bnq') {
-        return pathname === '/dashboard/bnq';
-      }
-      // For other child items, exact match
       return pathname === item.href || pathname.startsWith(item.href + '/');
     }
     

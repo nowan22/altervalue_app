@@ -246,7 +246,7 @@ export default function CompanyDetail({ company, settings, benchmarks }: Company
               </div>
               <div>
                 <p className="text-blue-100 text-sm">Coût présent.</p>
-                <p className="text-2xl font-bold">{(result?.presCost ?? 0).toLocaleString('fr-FR')} €</p>
+                <p className="text-2xl font-bold">{(result?.presCost ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €</p>
               </div>
               <div>
                 <p className="text-blue-100 text-sm">Par salarié</p>

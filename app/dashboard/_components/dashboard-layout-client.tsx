@@ -28,19 +28,39 @@ interface DashboardLayoutClientProps {
   companies: Array<{ id: string; name: string }>;
 }
 
+const SELECTED_COMPANY_KEY = 'altervalue_selected_company';
+
 export function DashboardLayoutClient({ children, companies }: DashboardLayoutClientProps) {
   const router = useRouter();
   const pathname = usePathname();
   
-  // State for current company ID - persisted across page navigations
+  // State for current company ID - persisted across page navigations and page refresh
   const [currentCompanyId, setCurrentCompanyIdState] = useState<string>(
     companies[0]?.id || ''
   );
+  
+  // Restore selected company from localStorage on mount
+  useEffect(() => {
+    try {
+      const storedCompanyId = localStorage.getItem(SELECTED_COMPANY_KEY);
+      if (storedCompanyId && companies.some(c => c.id === storedCompanyId)) {
+        setCurrentCompanyIdState(storedCompanyId);
+      }
+    } catch {
+      // localStorage not available
+    }
+  }, [companies]);
   
   const currentCompany = companies.find(c => c.id === currentCompanyId) || null;
 
   const handleCompanyChange = (companyId: string) => {
     setCurrentCompanyIdState(companyId);
+    // Persist to localStorage
+    try {
+      localStorage.setItem(SELECTED_COMPANY_KEY, companyId);
+    } catch {
+      // localStorage not available
+    }
     // Navigate to "Ma Mission" page when changing company
     router.push('/dashboard/my-mission');
   };
