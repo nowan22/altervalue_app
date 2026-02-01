@@ -147,6 +147,28 @@ export default function CompanyDetail({ company, settings, benchmarks }: Company
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
+      {/* Deprecation Notice */}
+      <div className="p-4 bg-warning/10 border border-warning/30 rounded-lg">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-warning">
+              Cette page est dépréciée
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Utilisez désormais la page{' '}
+              <button
+                onClick={() => router.push('/dashboard/my-mission')}
+                className="text-primary hover:underline font-medium"
+              >
+                Ma Mission
+              </button>
+              {' '}pour consulter les informations de cette entreprise, y compris l'historique des indicateurs et les boutons d'export.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
@@ -253,7 +275,6 @@ export default function CompanyDetail({ company, settings, benchmarks }: Company
             Résultats
           </TabsTrigger>
           <TabsTrigger value="import">Import CSV</TabsTrigger>
-          <TabsTrigger value="history">Historique</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 mt-6">
@@ -483,14 +504,6 @@ export default function CompanyDetail({ company, settings, benchmarks }: Company
 
         <TabsContent value="import" className="mt-6">
           <CsvImport companyId={safeCompany?.id ?? ''} />
-        </TabsContent>
-
-        <TabsContent value="history" className="mt-6">
-          <KpiHistory
-            kpis={safeCompany?.kpis ?? []}
-            settings={safeSettings}
-            company={exportCompanyData}
-          />
         </TabsContent>
       </Tabs>
     </motion.div>

@@ -100,6 +100,17 @@ export async function POST(request: Request) {
         employerContributionRate: parseFloat(employerContributionRate),
         absenteeismRate: parseFloat(absenteeismRate),
         userId,
+        // Initialize BNQ progress for new companies
+        bnqProgress: {
+          create: {
+            targetLevel: 'ES',
+            currentProgress: 0,
+            documentsProgress: 0,
+            workflowProgress: 0,
+            checklistProgress: 0,
+            actionsProgress: 0,
+          },
+        },
       },
     });
 

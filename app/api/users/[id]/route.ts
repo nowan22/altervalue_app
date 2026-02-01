@@ -4,42 +4,30 @@ import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
-// GET: Get single user
-export async function GET(request: NextRequest, { params }: RouteParams) {
+// GET - Fetch a single user
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    if (!session?.user) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-    }
-
-    const { id } = await params;
-    const currentUser = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    // Users can view their own profile, Super-Admin can view all
-    if (!currentUser) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-    }
-
-    if (currentUser.id !== id && currentUser.role !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
     }
 
     const user = await prisma.user.findUnique({
-      where: { id },
+      where: { id: params.id },
       select: {
         id: true,
-        email: true,
         name: true,
+        email: true,
         role: true,
         createdAt: true,
         _count: {
-          select: { companies: true },
+          select: {
+            companies: true,
+            missionAssignments: true,
+          },
         },
       },
     });
@@ -48,102 +36,119 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 });
     }
 
-    return NextResponse.json(user);
+    return NextResponse.json({
+      ...user,
+      createdAt: user.createdAt.toISOString(),
+    });
   } catch (error) {
     console.error('Error fetching user:', error);
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Erreur serveur' },
+      { status: 500 }
+    );
   }
 }
 
-// PUT: Update user
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+// PUT - Update a user
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    if (!session?.user) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const { id } = await params;
-    const currentUser = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
+    const userRole = (session.user as any).role;
 
-    if (!currentUser) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-    }
-
-    const body = await request.json();
-    const { name, email, role, password } = body;
-
-    // Users can edit their own profile (name, password), Super-Admin can edit all
-    const isSelfEdit = currentUser.id === id;
-    const isSuperAdmin = currentUser.role === 'SUPER_ADMIN';
-
-    if (!isSelfEdit && !isSuperAdmin) {
+    // Only SUPER_ADMIN can update users
+    if (userRole !== 'SUPER_ADMIN') {
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
     }
 
-    // Build update data
-    const updateData: Record<string, unknown> = {};
-    
-    if (name) updateData.name = name;
-    
-    // Only Super-Admin can change email or role
-    if (isSuperAdmin) {
-      if (email) updateData.email = email;
-      if (role) updateData.role = role;
-    }
-    
+    const { name, email, role, password } = await request.json();
+
+    const updateData: any = {};
+
+    if (name !== undefined) updateData.name = name;
+    if (email !== undefined) updateData.email = email;
+    if (role !== undefined) updateData.role = role;
     if (password) {
-      updateData.password = await bcrypt.hash(password, 12);
+      updateData.password = await bcrypt.hash(password, 10);
     }
 
     const user = await prisma.user.update({
-      where: { id },
+      where: { id: params.id },
       data: updateData,
       select: {
         id: true,
-        email: true,
         name: true,
+        email: true,
         role: true,
         createdAt: true,
+        _count: {
+          select: {
+            companies: true,
+            missionAssignments: true,
+          },
+        },
       },
     });
 
-    return NextResponse.json(user);
+    return NextResponse.json({
+      ...user,
+      createdAt: user.createdAt.toISOString(),
+    });
   } catch (error) {
     console.error('Error updating user:', error);
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Erreur serveur' },
+      { status: 500 }
+    );
   }
 }
 
-// DELETE: Delete user (Super-Admin only)
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+// DELETE - Delete a user
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    if (!session?.user) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const { id } = await params;
-    const currentUser = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
+    const userRole = (session.user as any).role;
 
-    if (!currentUser || currentUser.role !== 'SUPER_ADMIN') {
+    // Only SUPER_ADMIN can delete users
+    if (userRole !== 'SUPER_ADMIN') {
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
     }
 
-    // Prevent self-deletion
-    if (currentUser.id === id) {
-      return NextResponse.json({ error: 'Vous ne pouvez pas supprimer votre propre compte' }, { status: 400 });
+    // Don't allow deleting the current user
+    const currentUser = await prisma.user.findUnique({
+      where: { email: session.user.email! },
+    });
+
+    if (currentUser?.id === params.id) {
+      return NextResponse.json(
+        { error: 'Vous ne pouvez pas supprimer votre propre compte' },
+        { status: 400 }
+      );
     }
 
-    await prisma.user.delete({ where: { id } });
+    await prisma.user.delete({
+      where: { id: params.id },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting user:', error);
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Erreur serveur' },
+      { status: 500 }
+    );
   }
 }

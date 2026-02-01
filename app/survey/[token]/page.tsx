@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import {
   CheckCircle,
   AlertCircle,
@@ -13,6 +13,7 @@ import {
   Send,
   Shield,
   Loader2,
+  GripVertical,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -30,13 +31,15 @@ interface QuestionOption {
   score?: number;
 }
 
+type QuestionOptionInput = QuestionOption | string;
+
 interface Question {
   id: string;
   type: string;
   text: string;
   required?: boolean;
   scale?: string;
-  options?: QuestionOption[];
+  options?: QuestionOptionInput[];
   min?: number;
   max?: number;
   unit?: string;
@@ -64,10 +67,19 @@ interface SurveyData {
   dataGovernance: { anonymity_threshold: number; rgpd_compliant: boolean };
   currentResponses: number;
   endDate: string | null;
+  isLegacySurvey?: boolean;
+  surveyId?: string;
 }
 
-export default function SurveyPage({ params }: { params: Promise<{ token: string }> }) {
-  const resolvedParams = use(params);
+// Helper to normalize option format (string or object)
+const normalizeOption = (option: QuestionOptionInput): QuestionOption => {
+  if (typeof option === 'string') {
+    return { value: option, label: option };
+  }
+  return option;
+};
+
+export default function SurveyPage({ params }: { params: { token: string } }) {
   const router = useRouter();
 
   const [surveyData, setSurveyData] = useState<SurveyData | null>(null);
@@ -82,7 +94,7 @@ export default function SurveyPage({ params }: { params: Promise<{ token: string
   useEffect(() => {
     const fetchSurvey = async () => {
       try {
-        const res = await fetch(`/api/diagnostic/respond/${resolvedParams.token}`);
+        const res = await fetch(`/api/diagnostic/respond/${params.token}`);
         if (!res.ok) {
           const data = await res.json();
           throw new Error(data.error || 'Enquête non disponible');
@@ -96,7 +108,7 @@ export default function SurveyPage({ params }: { params: Promise<{ token: string
       }
     };
     fetchSurvey();
-  }, [resolvedParams.token]);
+  }, [params.token]);
 
   const modules = surveyData?.questionnaire?.modules || [];
   const currentModule = modules[currentModuleIndex];
@@ -137,10 +149,18 @@ export default function SurveyPage({ params }: { params: Promise<{ token: string
       // Generate a simple fingerprint from available data
       const fingerprint = `${navigator.userAgent}-${new Date().getTime()}-${Math.random()}`;
       
-      const res = await fetch(`/api/diagnostic/respond/${resolvedParams.token}`, {
+      const payload: any = { responses, fingerprint };
+      
+      // Add legacy survey fields if this is a legacy survey
+      if (surveyData?.isLegacySurvey) {
+        payload.isLegacySurvey = true;
+        payload.surveyId = surveyData.surveyId;
+      }
+      
+      const res = await fetch(`/api/diagnostic/respond/${params.token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ responses, fingerprint }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -252,9 +272,11 @@ export default function SurveyPage({ params }: { params: Promise<{ token: string
                 </p>
               </div>
 
-              {surveyData.metadata.framework && surveyData.metadata.framework.length > 0 && (
+              {surveyData.metadata.framework && (
                 <p className="text-xs text-muted-foreground text-center">
-                  Référentiel : {surveyData.metadata.framework.join(', ')}
+                  Référentiel : {Array.isArray(surveyData.metadata.framework) 
+                    ? surveyData.metadata.framework.join(', ')
+                    : surveyData.metadata.framework}
                 </p>
               )}
 
@@ -384,21 +406,25 @@ export default function SurveyPage({ params }: { params: Promise<{ token: string
                           onValueChange={(value) => handleResponse(question.id, value)}
                           className="space-y-2"
                         >
-                          {question.options.map((option) => (
-                            <div key={String(option.value)} className="flex items-center space-x-3">
-                              <RadioGroupItem value={String(option.value)} id={`${question.id}-${option.value}`} />
-                              <Label htmlFor={`${question.id}-${option.value}`} className="font-normal cursor-pointer">
-                                {option.label}
-                              </Label>
-                            </div>
-                          ))}
+                          {question.options.map((opt) => {
+                            const option = normalizeOption(opt);
+                            return (
+                              <div key={String(option.value)} className="flex items-center space-x-3">
+                                <RadioGroupItem value={String(option.value)} id={`${question.id}-${option.value}`} />
+                                <Label htmlFor={`${question.id}-${option.value}`} className="font-normal cursor-pointer">
+                                  {option.label}
+                                </Label>
+                              </div>
+                            );
+                          })}
                         </RadioGroup>
                       )}
 
                       {/* Multiple choice */}
                       {question.type === 'multiple_choice' && question.options && (
                         <div className="space-y-2">
-                          {question.options.map((option) => {
+                          {question.options.map((opt) => {
+                            const option = normalizeOption(opt);
                             const selected = responses[question.id] || [];
                             const isSelected = selected.includes(option.value);
                             const maxReached = question.max_choices && selected.length >= question.max_choices;
@@ -448,17 +474,26 @@ export default function SurveyPage({ params }: { params: Promise<{ token: string
                           <p className="text-sm text-muted-foreground mb-3">
                             Glissez pour réorganiser (1 = plus prioritaire)
                           </p>
-                          {(responses[question.id] || question.options.map((o: any) => o.value || o)).map((item: string, index: number) => (
-                            <div
-                              key={item}
-                              className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg"
-                            >
-                              <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-sm flex items-center justify-center font-medium">
-                                {index + 1}
-                              </span>
-                              <span>{typeof item === 'string' ? item : (item as any).label || item}</span>
-                            </div>
-                          ))}
+                          <Reorder.Group
+                            axis="y"
+                            values={responses[question.id] || question.options.map((o: any) => o.value || o)}
+                            onReorder={(newOrder) => handleResponse(question.id, newOrder)}
+                            className="space-y-2"
+                          >
+                            {(responses[question.id] || question.options.map((o: any) => o.value || o)).map((item: string, index: number) => (
+                              <Reorder.Item
+                                key={item}
+                                value={item}
+                                className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg cursor-grab active:cursor-grabbing hover:bg-muted transition-colors"
+                              >
+                                <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-sm flex items-center justify-center font-medium flex-shrink-0">
+                                  {index + 1}
+                                </span>
+                                <span className="flex-1">{typeof item === 'string' ? item : (item as any).label || item}</span>
+                              </Reorder.Item>
+                            ))}
+                          </Reorder.Group>
                         </div>
                       )}
                     </motion.div>

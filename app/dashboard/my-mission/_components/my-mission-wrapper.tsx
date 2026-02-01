@@ -20,12 +20,28 @@ interface CompanyData {
   employerContributionRate: number;
   absenteeismRate: number;
   createdAt: string;
+  kpis: Array<{
+    id: string;
+    periodDate: string;
+    employees: number;
+    absenteeismRate: number;
+    presRate: number;
+    presCost: number;
+  }>;
   bnqProgress: {
     targetLevel: string;
     currentProgress: number;
     documentsProgress: number;
     workflowProgress: number;
   } | null;
+}
+
+interface Settings {
+  presAbsCoefficient: number;
+  productivityLossCoeff: number;
+  workingDaysPerYear: number;
+  presCostGreenMaxPct: number;
+  presCostOrangeMaxPct: number;
 }
 
 interface CalculationResult {
@@ -42,6 +58,7 @@ export function MyMissionWrapper({ userId, userRole }: MyMissionWrapperProps) {
   const { currentCompanyId } = useDashboardContext();
   const [company, setCompany] = useState<CompanyData | null>(null);
   const [calculationResult, setCalculationResult] = useState<CalculationResult | null>(null);
+  const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,6 +91,7 @@ export function MyMissionWrapper({ userId, userRole }: MyMissionWrapperProps) {
           const data = await res.json();
           setCompany(data.company);
           setCalculationResult(data.calculationResult);
+          setSettings(data.settings);
         }
       } catch (err) {
         setError('Erreur lors du chargement des données');
@@ -124,6 +142,7 @@ export function MyMissionWrapper({ userId, userRole }: MyMissionWrapperProps) {
     <MyMissionContent 
       company={company} 
       calculationResult={calculationResult}
+      settings={settings}
       userRole={userRole}
     />
   );

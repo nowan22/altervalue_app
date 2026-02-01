@@ -11,7 +11,7 @@ import {
   FileText,
   Target,
   ChevronRight,
-  DollarSign,
+  Euro,
   Percent,
   Calendar,
   BarChart3,
@@ -23,6 +23,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { BNQ_LEVEL_LABELS } from '@/lib/bnq-data';
 import type { BnqLevel } from '@prisma/client';
+import { ExportButtons } from '../../companies/[id]/_components/export-buttons';
+import KpiHistory from '../../companies/[id]/_components/kpi-history';
 
 interface MyMissionContentProps {
   company: {
@@ -34,6 +36,14 @@ interface MyMissionContentProps {
     employerContributionRate: number;
     absenteeismRate: number;
     createdAt: string;
+    kpis: Array<{
+      id: string;
+      periodDate: string;
+      employees: number;
+      absenteeismRate: number;
+      presRate: number;
+      presCost: number;
+    }>;
     bnqProgress: {
       targetLevel: string;
       currentProgress: number;
@@ -50,10 +60,17 @@ interface MyMissionContentProps {
     presCostPctPayroll: number;
     signalColor: string;
   } | null;
+  settings: {
+    presAbsCoefficient: number;
+    productivityLossCoeff: number;
+    workingDaysPerYear: number;
+    presCostGreenMaxPct: number;
+    presCostOrangeMaxPct: number;
+  } | null;
   userRole: string;
 }
 
-export function MyMissionContent({ company, calculationResult, userRole }: MyMissionContentProps) {
+export function MyMissionContent({ company, calculationResult, settings, userRole }: MyMissionContentProps) {
   const router = useRouter();
   const isReadonly = userRole === 'OBSERVATEUR';
 
@@ -61,9 +78,9 @@ export function MyMissionContent({ company, calculationResult, userRole }: MyMis
   const levelInfo = BNQ_LEVEL_LABELS[targetLevel];
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('fr-CA', {
+    return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
-      currency: 'CAD',
+      currency: 'EUR',
       maximumFractionDigits: 0,
     }).format(value);
   };
@@ -72,14 +89,35 @@ export function MyMissionContent({ company, calculationResult, userRole }: MyMis
     return `${value.toFixed(1)}%`;
   };
 
+  // Prepare data for ExportButtons (map to expected format)
+  const exportCompanyData = {
+    id: company.id,
+    name: company.name,
+    sector: company.sector,
+    employees: company.employeesCount,
+    averageSalary: company.avgGrossSalary,
+    absenteeismRate: company.absenteeismRate,
+  };
+
+  const exportResult = calculationResult ? {
+    presenteeismRate: calculationResult.presRate,
+    presenteeismDays: calculationResult.presDays,
+    productivityLoss: calculationResult.productivityLoss,
+    presenteeismCost: calculationResult.presCost,
+    costPerEmployee: calculationResult.presCostPerEmployee,
+    percentOfPayroll: calculationResult.presCostPctPayroll,
+    signal: calculationResult.signalColor as 'green' | 'orange' | 'red',
+    trend: 'stable' as 'improving' | 'stable' | 'degrading',
+  } : null;
+
   // Quick access cards
   const quickAccess = [
     {
-      id: 'calculator',
-      label: 'Calculateur ROI',
+      id: 'presenteeism',
+      label: 'Calcul Présentéisme',
       description: 'Analyser les coûts du présentéisme',
       icon: Calculator,
-      href: '/dashboard/calculator',
+      href: '/dashboard/presenteeism',
       color: 'text-primary',
       bgColor: 'bg-primary/10',
     },
@@ -97,7 +135,7 @@ export function MyMissionContent({ company, calculationResult, userRole }: MyMis
       label: 'Enquêtes',
       description: 'Gérer les sondages',
       icon: ClipboardList,
-      href: `/dashboard/companies/${company.id}`,
+      href: '/dashboard/presenteeism/survey-b',
       color: 'text-info',
       bgColor: 'bg-info/10',
     },
@@ -116,16 +154,23 @@ export function MyMissionContent({ company, calculationResult, userRole }: MyMis
             <p className="text-muted-foreground">{company.sector}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          {company.bnqProgress && (
-            <Badge className={`${levelInfo.color} text-white`}>
-              Objectif {levelInfo.badge}
+        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
+          <ExportButtons
+            company={exportCompanyData}
+            result={exportResult}
+            type="report"
+          />
+          <div className="flex items-center gap-3">
+            {company.bnqProgress && (
+              <Badge className={`${levelInfo.color} text-white`}>
+                Objectif {levelInfo.badge}
+              </Badge>
+            )}
+            <Badge variant="outline" className="flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              {company.employeesCount} employés
             </Badge>
-          )}
-          <Badge variant="outline" className="flex items-center gap-1">
-            <Users className="h-3 w-3" />
-            {company.employeesCount} employés
-          </Badge>
+          </div>
         </div>
       </div>
 
@@ -141,7 +186,7 @@ export function MyMissionContent({ company, calculationResult, userRole }: MyMis
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div className="p-2 bg-primary/20 rounded-lg">
-                  <DollarSign className="h-5 w-5 text-primary" />
+                  <Euro className="h-5 w-5 text-primary" />
                 </div>
                 <Badge 
                   variant="outline" 
@@ -239,74 +284,74 @@ export function MyMissionContent({ company, calculationResult, userRole }: MyMis
         </motion.div>
       </div>
 
-      {/* Quick Access & Details */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Quick Access */}
-        <div className="lg:col-span-2 space-y-4">
-          <h3 className="text-sm font-medium text-muted-foreground">Accès rapide</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {quickAccess.map((item, index) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 + index * 0.05 }}
+      {/* Quick Access */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-medium text-muted-foreground">Accès rapide</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {quickAccess.map((item, index) => (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 + index * 0.05 }}
+            >
+              <Card
+                className="glass-card hover:border-primary/30 cursor-pointer transition-all group h-full"
+                onClick={() => router.push(item.href)}
               >
-                <Card
-                  className="glass-card hover:border-primary/30 cursor-pointer transition-all group h-full"
-                  onClick={() => router.push(item.href)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-lg ${item.bgColor}`}>
-                        <item.icon className={`h-5 w-5 ${item.color}`} />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{item.label}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className={`p-2 rounded-lg ${item.bgColor}`}>
+                      <item.icon className={`h-5 w-5 ${item.color}`} />
                     </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Company Details */}
-          <Card className="glass-card">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-primary" />
-                Détails de la mission
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground">Salaire moyen</p>
-                  <p className="font-medium">{formatCurrency(company.avgGrossSalary)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Cotisations employeur</p>
-                  <p className="font-medium">{formatPercent(company.employerContributionRate)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Coût par employé</p>
-                  <p className="font-medium">
-                    {calculationResult ? formatCurrency(calculationResult.presCostPerEmployee) : '-'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">% de la masse salariale</p>
-                  <p className="font-medium">
-                    {calculationResult ? formatPercent(calculationResult.presCostPctPayroll) : '-'}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{item.label}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
         </div>
+      </div>
+
+      {/* Details & BNQ */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Company Details */}
+        <Card className="glass-card lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-primary" />
+              Détails de la mission
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-xs text-muted-foreground">Salaire moyen</p>
+                <p className="font-medium">{formatCurrency(company.avgGrossSalary)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Cotisations employeur</p>
+                <p className="font-medium">{formatPercent(company.employerContributionRate)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Coût par employé</p>
+                <p className="font-medium">
+                  {calculationResult ? formatCurrency(calculationResult.presCostPerEmployee) : '-'}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">% de la masse salariale</p>
+                <p className="font-medium">
+                  {calculationResult ? formatPercent(calculationResult.presCostPctPayroll) : '-'}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* BNQ Status */}
         <Card className="glass-card">
@@ -361,6 +406,30 @@ export function MyMissionContent({ company, calculationResult, userRole }: MyMis
           </CardContent>
         </Card>
       </div>
+
+      {/* Historical Graphs */}
+      {company.kpis && company.kpis.length > 0 && settings && (
+        <div className="mt-6">
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                Historique des indicateurs
+              </CardTitle>
+              <CardDescription>
+                Évolution des KPIs sur les 12 derniers mois
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <KpiHistory
+                kpis={company.kpis}
+                settings={settings}
+                company={exportCompanyData}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Role notice */}
       {isReadonly && (

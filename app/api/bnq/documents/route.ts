@@ -40,10 +40,12 @@ export async function GET(request: Request) {
       documents: company.documents.map((doc: any) => ({
         id: doc.id,
         fileName: doc.fileName,
+        fileUrl: doc.fileUrl || '',
         status: doc.status,
         version: doc.version,
         createdAt: doc.createdAt.toISOString(),
         validatedAt: doc.validatedAt?.toISOString() || null,
+        notes: doc.notes || null,
         documentType: doc.documentType,
       })),
       documentTypes: documentTypes,

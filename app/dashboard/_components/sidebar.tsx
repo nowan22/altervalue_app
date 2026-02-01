@@ -37,6 +37,11 @@ import {
   Moon,
   Building2,
   Briefcase,
+  BarChart3,
+  Scale,
+  PieChart,
+  Upload,
+  UserCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -64,6 +69,7 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
+import { HelpDrawer } from '@/components/ui/help-drawer';
 
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard,
@@ -85,6 +91,11 @@ const ICON_MAP: Record<string, React.ElementType> = {
   SlidersHorizontal,
   History,
   Briefcase,
+  BarChart3,
+  Scale,
+  PieChart,
+  Upload,
+  UserCheck,
 };
 
 interface SidebarProps {
@@ -101,6 +112,7 @@ export function Sidebar({ companies, currentCompanyId, onCompanyChange }: Sideba
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isHelpDrawerOpen, setIsHelpDrawerOpen] = useState(false);
 
   // Get user role (default to PILOTE_QVCT if not set)
   const userRole = (session?.user as any)?.role as Role || 'PILOTE_QVCT';
@@ -308,7 +320,7 @@ export function Sidebar({ companies, currentCompanyId, onCompanyChange }: Sideba
           <Settings className="mr-2 h-4 w-4" />
           Paramètres
         </DropdownMenuItem>
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setIsHelpDrawerOpen(true)}>
           <HelpCircle className="mr-2 h-4 w-4" />
           Support AlterValue
         </DropdownMenuItem>
@@ -451,6 +463,9 @@ export function Sidebar({ companies, currentCompanyId, onCompanyChange }: Sideba
       >
         <SidebarContent />
       </aside>
+
+      {/* Help Drawer */}
+      <HelpDrawer isOpen={isHelpDrawerOpen} onClose={() => setIsHelpDrawerOpen(false)} />
     </>
   );
 }

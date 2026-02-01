@@ -32,6 +32,8 @@ import { getSectorLabel } from "@/lib/sectors";
 import { calculatePresenteeism, getSignalColor } from "@/lib/presenteeism-calculator";
 import PerformanceChart from "./performance-chart";
 import ActivityFeed from "./activity-feed";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
+import { useDashboardContext } from "./dashboard-layout-client";
 
 interface DashboardContentProps {
   companies: any[];
@@ -102,9 +104,10 @@ interface KpiCardProps {
   trend?: { value: number; isPositive: boolean };
   variant: 'gold' | 'teal' | 'accent' | 'muted';
   subtitle?: string;
+  tooltipKey?: string;
 }
 
-function KpiCard({ title, value, suffix = "", decimals = 0, icon, trend, variant, subtitle }: KpiCardProps) {
+function KpiCard({ title, value, suffix = "", decimals = 0, icon, trend, variant, subtitle, tooltipKey }: KpiCardProps) {
   const variantStyles = {
     gold: "bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border-primary/30 hover:border-primary/50",
     teal: "bg-gradient-to-br from-secondary/20 via-secondary/10 to-transparent border-secondary/30 hover:border-secondary/50",
@@ -124,7 +127,10 @@ function KpiCard({ title, value, suffix = "", decimals = 0, icon, trend, variant
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+            <p className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+              {title}
+              {tooltipKey && <HelpTooltip tooltipKey={tooltipKey as any} iconSize={12} />}
+            </p>
             <p className="text-3xl font-bold mt-2 text-foreground">
               <AnimatedNumber value={value} suffix={suffix} decimals={decimals} />
             </p>
@@ -148,6 +154,7 @@ function KpiCard({ title, value, suffix = "", decimals = 0, icon, trend, variant
 }
 
 export default function DashboardContent({ companies, settings, benchmarks, activityLogs }: DashboardContentProps) {
+  const { setCurrentCompanyId } = useDashboardContext();
   const safeCompanies = companies ?? [];
   const safeSettings = settings ?? {};
 
@@ -283,6 +290,7 @@ export default function DashboardContent({ companies, settings, benchmarks, acti
           icon={<FolderKanban className="h-6 w-6" />}
           variant="gold"
           subtitle={`${totalEmployees.toLocaleString('fr-FR')} salariés`}
+          tooltipKey="dashboard_kpi_missions"
         />
 
         <KpiCard
@@ -292,6 +300,7 @@ export default function DashboardContent({ companies, settings, benchmarks, acti
           icon={<Euro className="h-6 w-6" />}
           variant="teal"
           subtitle={companiesWithMethodB > 0 ? `${companiesWithMethodB} avec Méthode B` : "Méthode A"}
+          tooltipKey="dashboard_kpi_costs"
         />
 
         <KpiCard
@@ -300,6 +309,7 @@ export default function DashboardContent({ companies, settings, benchmarks, acti
           icon={<Bell className="h-6 w-6" />}
           variant="muted"
           subtitle={signals.length > activeAlerts ? `+${signals.length - activeAlerts} avertissements` : "Aucun avertissement"}
+          tooltipKey="dashboard_kpi_alerts"
         />
 
         <KpiCard
@@ -309,6 +319,7 @@ export default function DashboardContent({ companies, settings, benchmarks, acti
           icon={<ShieldCheck className="h-6 w-6" />}
           variant="accent"
           subtitle={companiesWithBnq > 0 ? `${companiesWithBnq} mission(s) en cours` : "Aucune démarche"}
+          tooltipKey="dashboard_kpi_compliance"
         />
       </motion.div>
 
@@ -320,6 +331,7 @@ export default function DashboardContent({ companies, settings, benchmarks, acti
               <CardTitle className="flex items-center gap-2 text-foreground">
                 <AlertTriangle className="h-5 w-5 text-warning" />
                 Signaux prioritaires
+                <HelpTooltip tooltipKey="dashboard_signals" iconSize={14} />
               </CardTitle>
               <CardDescription>Alertes nécessitant votre attention</CardDescription>
             </CardHeader>
@@ -367,6 +379,7 @@ export default function DashboardContent({ companies, settings, benchmarks, acti
                 <CardTitle className="flex items-center gap-2 text-foreground">
                   <FolderKanban className="h-5 w-5 text-primary" />
                   Missions récentes
+                  <HelpTooltip tooltipKey="dashboard_recent_missions" iconSize={14} />
                 </CardTitle>
                 <CardDescription>Vos dernières entreprises analysées</CardDescription>
               </div>
@@ -416,7 +429,11 @@ export default function DashboardContent({ companies, settings, benchmarks, acti
                         (latestSurvey.closedAt && new Date(latestSurvey.closedAt) < new Date(Date.now() - 365 * 24 * 60 * 60 * 1000));
 
                       return (
-                        <Link key={company?.id ?? index} href={`/dashboard/companies/${company?.id ?? ''}`}>
+                        <div 
+                          key={company?.id ?? index} 
+                          onClick={() => setCurrentCompanyId(company?.id ?? '')}
+                          className="cursor-pointer"
+                        >
                           <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -500,7 +517,7 @@ export default function DashboardContent({ companies, settings, benchmarks, acti
                               <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-blue-500 transition-colors" />
                             </div>
                           </motion.div>
-                        </Link>
+                        </div>
                       );
                     })}
                   </div>

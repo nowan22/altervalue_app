@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { SECTORS, SECTOR_DEFAULTS } from "@/lib/sectors";
 import { calculatePresenteeism, PresenteeismResult } from "@/lib/presenteeism-calculator";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 
 interface CalculatorContentProps {
   settings: any;
@@ -115,7 +116,10 @@ export default function CalculatorContent({ settings }: CalculatorContentProps) 
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="sector">Secteur d'activité</Label>
+                  <Label htmlFor="sector" className="flex items-center gap-1.5">
+                    Secteur d'activité
+                    <HelpTooltip tooltipKey="calculator_sector" iconSize={13} />
+                  </Label>
                   <Select
                     value={params.sector}
                     onValueChange={(value) => handleChange('sector', value)}
@@ -134,7 +138,10 @@ export default function CalculatorContent({ settings }: CalculatorContentProps) 
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="employeesCount">Effectif</Label>
+                  <Label htmlFor="employeesCount" className="flex items-center gap-1.5">
+                    Effectif
+                    <HelpTooltip tooltipKey="calculator_employees" iconSize={13} />
+                  </Label>
                   <Input
                     id="employeesCount"
                     type="number"
@@ -145,7 +152,10 @@ export default function CalculatorContent({ settings }: CalculatorContentProps) 
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="avgGrossSalary">Salaire brut moyen (€/an)</Label>
+                  <Label htmlFor="avgGrossSalary" className="flex items-center gap-1.5">
+                    Salaire brut moyen (€/an)
+                    <HelpTooltip tooltipKey="calculator_salary" iconSize={13} />
+                  </Label>
                   <Input
                     id="avgGrossSalary"
                     type="number"
@@ -156,7 +166,10 @@ export default function CalculatorContent({ settings }: CalculatorContentProps) 
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="employerContributionRate">Charges patronales (%)</Label>
+                  <Label htmlFor="employerContributionRate" className="flex items-center gap-1.5">
+                    Charges patronales (%)
+                    <HelpTooltip tooltipKey="calculator_contributions" iconSize={13} />
+                  </Label>
                   <Input
                     id="employerContributionRate"
                     type="number"
@@ -168,7 +181,10 @@ export default function CalculatorContent({ settings }: CalculatorContentProps) 
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="absenteeismRate">Taux d'absentéisme (%)</Label>
+                  <Label htmlFor="absenteeismRate" className="flex items-center gap-1.5">
+                    Taux d'absentéisme (%)
+                    <HelpTooltip tooltipKey="calculator_absenteeism" iconSize={13} />
+                  </Label>
                   <Input
                     id="absenteeismRate"
                     type="number"
@@ -196,7 +212,10 @@ export default function CalculatorContent({ settings }: CalculatorContentProps) 
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="presAbsCoefficient">Coeff. prés./abs.</Label>
+                  <Label htmlFor="presAbsCoefficient" className="flex items-center gap-1.5">
+                    Coeff. prés./abs.
+                    <HelpTooltip tooltipKey="calculator_ratio" iconSize={13} />
+                  </Label>
                   <Input
                     id="presAbsCoefficient"
                     type="number"
@@ -208,7 +227,10 @@ export default function CalculatorContent({ settings }: CalculatorContentProps) 
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="productivityLossCoeff">Coeff. perte prod.</Label>
+                  <Label htmlFor="productivityLossCoeff" className="flex items-center gap-1.5">
+                    Coeff. perte prod.
+                    <HelpTooltip tooltipKey="calculator_productivity" iconSize={13} />
+                  </Label>
                   <Input
                     id="productivityLossCoeff"
                     type="number"
@@ -220,7 +242,10 @@ export default function CalculatorContent({ settings }: CalculatorContentProps) 
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="workingDaysPerYear">Jours/an</Label>
+                  <Label htmlFor="workingDaysPerYear" className="flex items-center gap-1.5">
+                    Jours/an
+                    <HelpTooltip tooltipKey="calculator_working_days" iconSize={13} />
+                  </Label>
                   <Input
                     id="workingDaysPerYear"
                     type="number"
@@ -231,10 +256,13 @@ export default function CalculatorContent({ settings }: CalculatorContentProps) 
                 </div>
               </div>
 
-              <Button variant="outline" onClick={resetToDefaults} size="sm">
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Réinitialiser
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" onClick={resetToDefaults} size="sm">
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Réinitialiser
+                </Button>
+                <HelpTooltip tooltipKey="calculator_reset" iconSize={13} />
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -265,20 +293,26 @@ export default function CalculatorContent({ settings }: CalculatorContentProps) 
                   <CardTitle className="text-lg">Résultats détaillés</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="flex justify-between p-3 bg-muted rounded-lg">
-                    <span className="text-muted-foreground">Taux de présentéisme</span>
+                  <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                    <span className="text-muted-foreground flex items-center gap-1.5">
+                      Taux de présentéisme
+                      <HelpTooltip tooltipKey="calculator_result_presenteeism_rate" iconSize={12} />
+                    </span>
                     <span className="font-semibold">{(result?.presRate ?? 0).toFixed(2)}%</span>
                   </div>
-                  <div className="flex justify-between p-3 bg-muted rounded-lg">
+                  <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                     <span className="text-muted-foreground">Jours de présentéisme</span>
                     <span className="font-semibold">{(result?.presDays ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })}</span>
                   </div>
-                  <div className="flex justify-between p-3 bg-muted rounded-lg">
+                  <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                     <span className="text-muted-foreground">Perte de productivité</span>
                     <span className="font-semibold">{(result?.productivityLoss ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} jours</span>
                   </div>
-                  <div className="flex justify-between p-3 bg-blue-50 rounded-lg">
-                    <span className="text-muted-foreground">Coût par salarié</span>
+                  <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                    <span className="text-muted-foreground flex items-center gap-1.5">
+                      Coût par salarié
+                      <HelpTooltip tooltipKey="calculator_result_per_employee" iconSize={12} />
+                    </span>
                     <span className="font-semibold text-blue-600">
                       {(result?.presCostPerEmployee ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €/an
                     </span>

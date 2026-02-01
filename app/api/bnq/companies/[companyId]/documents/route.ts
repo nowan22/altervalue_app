@@ -93,7 +93,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Update BNQ progress
     await updateBnqProgress(companyId);
 
-    return NextResponse.json(document);
+    return NextResponse.json({ document });
   } catch (error) {
     console.error('Error creating document:', error);
     return NextResponse.json(

@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const companyIdParam = searchParams.get('companyId');
 
-    let company = null;
+    let company: any = null;
 
     // For PILOTE_QVCT and OBSERVATEUR, use their assignment
     if (userRole === 'PILOTE_QVCT' || userRole === 'OBSERVATEUR') {
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    // Serialize data
+    // Serialize data and calculate presenteeism for each KPI if not already calculated
     const serializedCompany = {
       id: company.id,
       name: company.name,
@@ -115,6 +115,34 @@ export async function GET(request: NextRequest) {
       employerContributionRate: company.employerContributionRate,
       absenteeismRate: company.absenteeismRate,
       createdAt: company.createdAt.toISOString(),
+      kpis: company.kpis.map((kpi: any) => {
+        // If presRate or presCost are missing, calculate them
+        let presRate = kpi.presRate;
+        let presCost = kpi.presCost;
+        
+        if (settings && (presRate == null || presCost == null)) {
+          const kpiCalc = calculatePresenteeism({
+            employeesCount: kpi.employees || company.employeesCount,
+            avgGrossSalary: company.avgGrossSalary,
+            employerContributionRate: company.employerContributionRate / 100,
+            absenteeismRate: kpi.absenteeismRate,
+            presAbsCoefficient: settings.presAbsCoefficient,
+            productivityLossCoeff: settings.productivityLossCoeff,
+            workingDaysPerYear: settings.workingDaysPerYear,
+          });
+          presRate = kpiCalc.presRate;
+          presCost = kpiCalc.presCost;
+        }
+
+        return {
+          id: kpi.id,
+          periodDate: kpi.periodDate.toISOString(),
+          employees: kpi.employees || company.employeesCount,
+          absenteeismRate: kpi.absenteeismRate,
+          presRate,
+          presCost,
+        };
+      }),
       bnqProgress: company.bnqProgress
         ? {
             targetLevel: company.bnqProgress.targetLevel,
@@ -128,6 +156,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       company: serializedCompany,
       calculationResult,
+      settings: settings ? {
+        presAbsCoefficient: settings.presAbsCoefficient,
+        productivityLossCoeff: settings.productivityLossCoeff,
+        workingDaysPerYear: settings.workingDaysPerYear,
+        presCostGreenMaxPct: settings.presCostGreenMaxPct,
+        presCostOrangeMaxPct: settings.presCostOrangeMaxPct,
+      } : null,
     });
   } catch (error) {
     console.error('Error fetching mission data:', error);

@@ -42,10 +42,12 @@ interface BnqContentProps {
     documents: Array<{
       id: string;
       fileName: string;
+      fileUrl: string | null;
       status: string;
       version: number;
       createdAt: string;
       validatedAt: string | null;
+      notes?: string | null;
       documentType: {
         id: string;
         code: string;

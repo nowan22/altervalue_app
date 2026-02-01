@@ -42,6 +42,7 @@ import {
 import { SECTORS, getSectorLabel } from "@/lib/sectors";
 import { calculatePresenteeism, getSignalColor } from "@/lib/presenteeism-calculator";
 import { useToast } from "@/hooks/use-toast";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 
 interface CompaniesContentProps {
   companies: any[];
@@ -96,12 +97,15 @@ export default function CompaniesContent({ companies, settings }: CompaniesConte
           <h1 className="text-3xl font-bold text-foreground">Dossiers Entreprises</h1>
           <p className="text-muted-foreground mt-1">Gérez et analysez vos dossiers clients</p>
         </div>
-        <Link href="/dashboard/companies/new">
-          <Button className="gradient-primary text-white">
-            <Plus className="h-4 w-4 mr-2" />
-            Nouveau dossier
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/dashboard/companies/new">
+            <Button className="gradient-primary text-white">
+              <Plus className="h-4 w-4 mr-2" />
+              Nouveau dossier
+            </Button>
+          </Link>
+          <HelpTooltip tooltipKey="companies_new_button" iconSize={14} />
+        </div>
       </div>
 
       {/* Filters */}
@@ -116,27 +120,34 @@ export default function CompaniesContent({ companies, settings }: CompaniesConte
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"
               />
+              <HelpTooltip tooltipKey="companies_search" iconSize={13} className="absolute right-3 top-1/2 -translate-y-1/2" />
             </div>
-            <Select value={sectorFilter} onValueChange={setSectorFilter}>
-              <SelectTrigger className="w-full sm:w-48">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Secteur" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les secteurs</SelectItem>
-                {SECTORS.map((sector) => (
-                  <SelectItem key={sector.value} value={sector.value}>
-                    {sector.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              variant={showDemo ? "secondary" : "outline"}
-              onClick={() => setShowDemo(!showDemo)}
-            >
-              {showDemo ? "Masquer démo" : "Afficher démo"}
-            </Button>
+            <div className="flex items-center gap-1">
+              <Select value={sectorFilter} onValueChange={setSectorFilter}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Secteur" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les secteurs</SelectItem>
+                  {SECTORS.map((sector) => (
+                    <SelectItem key={sector.value} value={sector.value}>
+                      {sector.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <HelpTooltip tooltipKey="companies_filter_sector" iconSize={13} />
+            </div>
+            <div className="flex items-center gap-1">
+              <Button
+                variant={showDemo ? "secondary" : "outline"}
+                onClick={() => setShowDemo(!showDemo)}
+              >
+                {showDemo ? "Masquer démo" : "Afficher démo"}
+              </Button>
+              <HelpTooltip tooltipKey="companies_toggle_demo" iconSize={13} />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -215,16 +226,19 @@ export default function CompaniesContent({ companies, settings }: CompaniesConte
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4 text-muted-foreground" />
                         <span className="text-muted-foreground">{company?.employeesCount ?? 0} salariés</span>
+                        <HelpTooltip tooltipKey="companies_card_employees" iconSize={11} />
                       </div>
                       <div className="flex items-center gap-2">
                         <Percent className="h-4 w-4 text-muted-foreground" />
                         <span className="text-muted-foreground">{(company?.absenteeismRate ?? 0).toFixed(1)}% absent.</span>
+                        <HelpTooltip tooltipKey="companies_card_absenteeism" iconSize={11} />
                       </div>
                       <div className="col-span-2 flex items-center gap-2">
                         <Euro className="h-4 w-4 text-muted-foreground" />
                         <span className="text-muted-foreground">
                           Coût présent.: <strong className="text-foreground">{(result?.presCost ?? 0).toLocaleString('fr-FR')} €</strong>
                         </span>
+                        <HelpTooltip tooltipKey="companies_card_cost" iconSize={11} />
                       </div>
                     </div>
 

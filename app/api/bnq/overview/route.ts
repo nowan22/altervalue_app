@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
+import { BNQ_REQUIREMENTS } from '@/lib/bnq-requirements';
+import { WORKFLOW_STEPS } from '@/lib/bnq-data';
 
 export async function GET(request: Request) {
   try {
@@ -35,9 +37,26 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Mission non trouvée' }, { status: 404 });
     }
 
-    // Get document types for counting required docs
+    // Get target level for filtering requirements
+    const targetLevel = company.bnqProgress?.targetLevel || 'ES';
+    const levelOrder: Record<string, number> = { ES: 1, ESE: 2, ESE_PLUS: 3 };
+    const currentLevelValue = levelOrder[targetLevel] || 1;
+
+    // Calculate total requirements for this level
+    const applicableRequirements = BNQ_REQUIREMENTS.filter(
+      r => levelOrder[r.requiredForLevel] <= currentLevelValue
+    );
+    const totalRequirements = applicableRequirements.length;
+
+    // Get document types for counting required docs (for the target level)
     const documentTypes = await prisma.documentType.findMany({
-      where: { requiredForLevel: 'ES', isOptional: false },
+      where: { 
+        isOptional: false,
+        requiredForLevel: {
+          in: targetLevel === 'ESE_PLUS' ? ['ES', 'ESE', 'ESE_PLUS'] :
+              targetLevel === 'ESE' ? ['ES', 'ESE'] : ['ES']
+        }
+      },
     });
 
     // Calculate stats
@@ -46,6 +65,8 @@ export async function GET(request: Request) {
     const uploadedDocTypeIds = new Set(company.documents.map((d: { documentTypeId: string }) => d.documentTypeId));
     const missingDocs = documentTypes.filter((dt: { id: string }) => !uploadedDocTypeIds.has(dt.id));
 
+    // Use workflow template for total steps count
+    const totalWorkflowSteps = WORKFLOW_STEPS?.length || 8; // Fallback to 8 if not defined
     const completedSteps = company.workflowSteps.filter((s: { status: string }) => s.status === 'COMPLETED');
     const compliantItems = company.checklistItems.filter((item: { isCompliant: boolean | null }) => item.isCompliant === true);
 
@@ -62,25 +83,44 @@ export async function GET(request: Request) {
       },
     });
 
+    // Fetch actual active alerts count
+    const activeAlertsCount = await prisma.bnqAlert.count({
+      where: {
+        companyId,
+        isResolved: false,
+      },
+    });
+
+    // Calculate progress percentages
+    const documentsProgress = documentTypes.length > 0 
+      ? Math.round((approvedDocs.length / documentTypes.length) * 100) 
+      : 0;
+    const checklistProgress = totalRequirements > 0 
+      ? Math.round((compliantItems.length / totalRequirements) * 100) 
+      : 0;
+    const workflowProgress = totalWorkflowSteps > 0 
+      ? Math.round((completedSteps.length / totalWorkflowSteps) * 100) 
+      : 0;
+
     const response = {
       progress: {
-        currentProgress: company.bnqProgress?.currentProgress || 0,
-        documentsProgress: company.bnqProgress?.documentsProgress || 0,
-        workflowProgress: company.bnqProgress?.workflowProgress || 0,
-        checklistProgress: company.bnqProgress?.checklistProgress || 0,
+        currentProgress: company.bnqProgress?.currentProgress || Math.round((documentsProgress + checklistProgress + workflowProgress) / 3),
+        documentsProgress: company.bnqProgress?.documentsProgress || documentsProgress,
+        workflowProgress: company.bnqProgress?.workflowProgress || workflowProgress,
+        checklistProgress: company.bnqProgress?.checklistProgress || checklistProgress,
         actionsProgress: company.bnqProgress?.actionsProgress || 0,
-        targetLevel: company.bnqProgress?.targetLevel || 'ES',
+        targetLevel,
       },
       stats: {
         totalDocuments: documentTypes.length,
         approvedDocuments: approvedDocs.length,
         pendingDocuments: pendingDocs.length,
         missingDocuments: missingDocs.length,
-        totalSteps: company.workflowSteps.length,
+        totalSteps: totalWorkflowSteps,
         completedSteps: completedSteps.length,
-        totalChecklist: company.checklistItems.length,
+        totalChecklist: totalRequirements,
         compliantItems: compliantItems.length,
-        activeAlerts: missingDocs.length + pendingDocs.length, // Simple alert count
+        activeAlerts: activeAlertsCount, // Use actual alerts count from database
       },
       recentActivity: recentActivity.map((a) => ({
         id: a.id,

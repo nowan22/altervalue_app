@@ -58,6 +58,7 @@ interface DocumentVaultProps {
   documents: Array<{
     id: string;
     fileName: string;
+    fileUrl: string | null;
     status: string;
     version: number;
     createdAt: string;
@@ -99,6 +100,7 @@ export function DocumentVault({ companyId, documents, documentTypes, onRefresh }
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedDocType, setSelectedDocType] = useState<string>('');
   const [selectedDoc, setSelectedDoc] = useState<typeof documents[0] | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState('');
   const [notes, setNotes] = useState('');
   const [validationSignature, setValidationSignature] = useState('');
@@ -127,11 +129,34 @@ export function DocumentVault({ companyId, documents, documentTypes, onRefresh }
     setExpandedCategories(newExpanded);
   };
 
-  const handleAddDocument = async () => {
-    if (!selectedDocType || !fileName) {
+  const handleViewDocument = async (doc: typeof documents[0]) => {
+    try {
+      // Get signed URL from API
+      const response = await fetch(`/api/bnq/files/${doc.id}`);
+      
+      if (!response.ok) {
+        throw new Error('Fichier non disponible');
+      }
+
+      const { fileUrl } = await response.json();
+
+      // Open document in a new tab
+      window.open(fileUrl, '_blank');
+    } catch (error) {
+      console.error('Error viewing document:', error);
       toast({
         title: 'Erreur',
-        description: 'Veuillez remplir tous les champs obligatoires',
+        description: 'Le fichier n\'est pas disponible',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleAddDocument = async () => {
+    if (!selectedDocType || !selectedFile) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez sélectionner un type de document et un fichier',
         variant: 'destructive',
       });
       return;
@@ -139,32 +164,75 @@ export function DocumentVault({ companyId, documents, documentTypes, onRefresh }
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/bnq/companies/${companyId}/documents`, {
+      // Step 1: Create document record first
+      const createResponse = await fetch(`/api/bnq/companies/${companyId}/documents`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           documentTypeId: selectedDocType,
-          fileName,
+          fileName: selectedFile.name,
           notes,
         }),
       });
 
-      if (!response.ok) throw new Error('Erreur lors de l\'ajout');
+      if (!createResponse.ok) throw new Error('Erreur lors de la création du document');
+      
+      const { document } = await createResponse.json();
+
+      // Step 2: Get presigned URL for upload
+      const presignedResponse = await fetch('/api/bnq/upload/presigned', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: selectedFile.name,
+          contentType: selectedFile.type || 'application/octet-stream',
+          isPublic: false,
+        }),
+      });
+
+      if (!presignedResponse.ok) throw new Error('Erreur lors de la génération de l\'URL d\'upload');
+      
+      const { uploadUrl, cloud_storage_path } = await presignedResponse.json();
+
+      // Step 3: Upload file to S3
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': selectedFile.type || 'application/octet-stream',
+        },
+        body: selectedFile,
+      });
+
+      if (!uploadResponse.ok) throw new Error('Erreur lors de l\'upload du fichier');
+
+      // Step 4: Complete the upload by updating the document
+      const completeResponse = await fetch('/api/bnq/upload/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cloud_storage_path,
+          documentId: document.id,
+        }),
+      });
+
+      if (!completeResponse.ok) throw new Error('Erreur lors de la finalisation');
 
       toast({
         title: 'Document ajouté',
-        description: 'Le document a été ajouté avec succès',
+        description: 'Le document a été ajouté et uploadé avec succès',
       });
 
       setIsAddDialogOpen(false);
       setSelectedDocType('');
+      setSelectedFile(null);
       setFileName('');
       setNotes('');
       onRefresh();
     } catch (error) {
+      console.error('Error adding document:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible d\'ajouter le document',
+        description: error instanceof Error ? error.message : 'Impossible d\'ajouter le document',
         variant: 'destructive',
       });
     } finally {
@@ -378,11 +446,23 @@ export function DocumentVault({ companyId, documents, documentTypes, onRefresh }
                                     variant="ghost"
                                     onClick={(e) => {
                                       e.stopPropagation();
+                                      handleViewDocument(doc);
+                                    }}
+                                    title="Consulter le document"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
                                       setSelectedDoc(doc);
                                       setIsValidateDialogOpen(true);
                                     }}
+                                    title="Changer le statut"
                                   >
-                                    <Eye className="h-4 w-4" />
+                                    <FileCheck className="h-4 w-4" />
                                   </Button>
                                   <Button
                                     size="sm"
@@ -452,11 +532,31 @@ export function DocumentVault({ companyId, documents, documentTypes, onRefresh }
             </div>
 
             <div className="space-y-2">
-              <Label>Nom du fichier *</Label>
+              <Label>Fichier *</Label>
+              <Input
+                type="file"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  setSelectedFile(file || null);
+                  if (file) {
+                    setFileName(file.name);
+                  }
+                }}
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+              />
+              {selectedFile && (
+                <p className="text-sm text-muted-foreground">
+                  Fichier sélectionné : {selectedFile.name}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Nom du fichier (optionnel)</Label>
               <Input
                 value={fileName}
                 onChange={(e) => setFileName(e.target.value)}
-                placeholder="Ex: Note_intention_2024.pdf"
+                placeholder="Laissez vide pour utiliser le nom du fichier"
               />
             </div>
 

@@ -1,39 +1,104 @@
-# AlterValue - Application de Calcul du Présentéisme
+# AlterValue - Plateforme SaaS Performance Humaine & QVCT
 
-> **v2.0** - Application d'évaluation et de suivi du coût du présentéisme avec Méthode A (Macro) + Méthode B (Micro - Enquête)
+> **v4.1** - Plateforme complète d'évaluation de la performance humaine, diagnostic QVCT et conformité BNQ 9700-800
 
-![Version](https://img.shields.io/badge/version-2.0.0-blue)
+![Version](https://img.shields.io/badge/version-4.1.0-blue)
 ![Status](https://img.shields.io/badge/status-Production-green)
 ![Méthode](https://img.shields.io/badge/méthode-A%20%2B%20B-orange)
 ![BNQ](https://img.shields.io/badge/BNQ-9700--800-purple)
+![QVCT](https://img.shields.io/badge/QVCT-Radar%20Flash-teal)
 
 ---
 
 ## 📋 Sommaire
 
 1. [Présentation](#-présentation)
-2. [Fonctionnalités v1.0](#-fonctionnalités-v10-mvp)
-3. [Architecture Technique](#-architecture-technique)
-4. [Méthode A - Ratios Sectoriels](#-méthode-a---ratios-sectoriels)
-5. [Données de Démonstration](#-données-de-démonstration)
-6. [Roadmap - Itérations Futures](#-roadmap---itérations-futures)
-7. [Guide d'Utilisation](#-guide-dutilisation)
-8. [Déploiement](#-déploiement)
+2. [Changelog - Historique des versions](#-changelog)
+3. [Fonctionnalités v4.1 (Actuelle)](#-fonctionnalités-v41-actuelle)
+4. [Architecture Technique](#-architecture-technique)
+5. [Méthode A - Ratios Sectoriels](#-méthode-a---ratios-sectoriels)
+6. [Données de Démonstration](#-données-de-démonstration)
+7. [Roadmap - Prochaines Itérations](#-roadmap---prochaines-itérations)
+8. [Guide d'Utilisation](#-guide-dutilisation)
+9. [Déploiement](#-déploiement)
 
 ---
 
 ## 🎯 Présentation
 
-**AlterValue** est une application SaaS destinée aux consultants RH et dirigeants d'entreprise pour évaluer, suivre et optimiser le coût du présentéisme dans leurs organisations.
+**AlterValue** est une plateforme SaaS complète destinée aux consultants RH, préventeurs et dirigeants d'entreprise pour :
+- Évaluer et optimiser le coût du présentéisme
+- Piloter la Qualité de Vie et les Conditions de Travail (QVCT)
+- Accompagner la certification BNQ 9700-800 "Entreprise en Santé"
 
-Le présentéisme désigne le fait d'être présent au travail mais avec une productivité réduite (maladie, stress, démotivation). Cette "présence improductive" coûte en moyenne **1.5 à 2 fois plus cher** que l'absentéisme.
+### Objectifs de la plateforme
 
-### Objectifs de l'application
+- **Quantifier** le coût caché du présentéisme (Méthode A macro + Méthode B micro)
+- **Diagnostiquer** la QVCT via des enquêtes terrain anonymisées
+- **Visualiser** les résultats via graphiques radar et indicateurs clés
+- **Accompagner** la conformité BNQ 9700-800 (3 niveaux: Es/EsE/EsE+)
+- **Générer** des rapports PDF professionnels pour les directions
 
-- **Quantifier** le coût caché du présentéisme
-- **Visualiser** les tendances et signaux d'alerte
-- **Comparer** avec les benchmarks sectoriels
-- **Simuler** différents scénarios d'amélioration
+---
+
+## 📜 Changelog
+
+### v4.1 - Moteur d'Enquête SaaS (Janvier 2026) ✅
+
+**Architecture JSON-driven pour enquêtes QVCT**
+
+| Phase | Fonctionnalité | Statut |
+|-------|----------------|--------|
+| v4.1-alpha | Schéma DB (SurveyType, Campaign, Response, Result) | ✅ |
+| v4.1-beta | APIs CRUD + Moteur de calcul générique | ✅ |
+| v4.1-gamma | Pages UI (campagnes, types, formulaire public) | ✅ |
+| v4.1-delta | Visualisations Radar Chart + Jauges | ✅ |
+| v4.1-epsilon | Génération PDF rapports | ✅ |
+
+**Types d'enquêtes disponibles :**
+- Diagnostic Présentéisme & Coûts Cachés (Méthode B avancée)
+- Radar QVCT - Diagnostic Flash (10 dimensions)
+- Collecte de Données BNQ 9700-800
+
+### v4.0 - RBAC & Design System (Janvier 2026) ✅
+
+**Système de rôles et missions**
+
+| Fonctionnalité | Statut |
+|----------------|--------|
+| 4 rôles (SUPER_ADMIN, EXPERT, PILOTE_QVCT, OBSERVATEUR) | ✅ |
+| Assignation missions multi-utilisateurs | ✅ |
+| Design System Gold/Teal avec mode sombre | ✅ |
+| Dashboard KPI avec activité temps réel | ✅ |
+| Module BNQ avancé (workflow, alertes, documents) | ✅ |
+| Sidebar dynamique selon rôle | ✅ |
+
+### v3.0 - Module BNQ 9700-800 Complet ✅
+
+| Fonctionnalité | Statut |
+|----------------|--------|
+| Coffre-fort documentaire (24 types) | ✅ |
+| Workflow validation direction (5 étapes) | ✅ |
+| Alertes intelligentes (expiration, manquants) | ✅ |
+| Plans d'action avec interventions | ✅ |
+| Rapport de conformité BNQ | ✅ |
+
+### v2.0 - Méthode B Enquête ✅
+
+| Fonctionnalité | Statut |
+|----------------|--------|
+| Système d'enquêtes anonymes | ✅ |
+| Questionnaire 5 étapes | ✅ |
+| Calcul méthode B (heures dégradées) | ✅ |
+| Comparaison Méthode A vs B | ✅ |
+
+### v1.x - Fondations ✅
+
+| Version | Fonctionnalité |
+|---------|----------------|
+| v1.0 | Authentification, CRUD entreprises, Méthode A, Import CSV |
+| v1.1 | Export PDF/Excel, Dark mode, Notifications email |
+| v1.2 | Module BNQ base, Checklist conformité |
 
 ---
 
@@ -433,19 +498,53 @@ Mot de passe: demo123
 
 ---
 
-## 🗺 Roadmap - Itérations Futures
+## 🗺 Roadmap - Prochaines Itérations
 
-### 📌 v1.1 - Améliorations UX (Prochaine itération)
+### 📌 v4.2 - Intelligence Artificielle (Prochaine itération)
 
-| Fonctionnalité | Priorité | Effort |
-|----------------|----------|--------|
-| Export PDF des rapports | Haute | 2-3 jours |
-| Export Excel des données | Haute | 1-2 jours |
-| Notifications email (alertes) | Moyenne | 2-3 jours |
-| Mode sombre | Basse | 1 jour |
-| Tableaux triables | Moyenne | 1 jour |
+| Fonctionnalité | Description | Effort |
+|----------------|-------------|--------|
+| **Analyse narrative IA** | Génération automatique de synthèses via LLM | 2 jours |
+| **Recommandations personnalisées** | Suggestions d'actions basées sur les scores | 2 jours |
+| **Benchmark intelligent** | Comparaison sectorielle automatique | 1 jour |
+| **Détection d'anomalies** | Alertes prédictives sur les indicateurs | 2 jours |
 
 ---
+
+### 📌 v4.3 - Collaboration Avancée (Planifié)
+
+| Fonctionnalité | Description | Effort |
+|----------------|-------------|--------|
+| **Partage de campagnes** | Inviter des utilisateurs externes | 2 jours |
+| **Commentaires sur résultats** | Annotations collaboratives | 1 jour |
+| **Export multi-format** | PowerPoint, Word, Excel | 2 jours |
+| **Planification campagnes** | Lancement automatique programmé | 1 jour |
+
+---
+
+### 📌 v5.0 - Écosystème Étendu (Vision)
+
+| Fonctionnalité | Description |
+|----------------|-------------|
+| API publique REST | Intégration SIRH (SAP, Workday, ADP) |
+| Application mobile | Consultation dashboards iOS/Android |
+| White-label | Personnalisation pour cabinets conseil |
+| Marketplace benchmarks | Enrichissement données sectorielles |
+
+---
+
+## 📚 Documentation Technique
+
+- **Roadmap détaillée v4.1** : `/docs/ROADMAP_V4.1.md`
+- **Documentation produit** : `/docs/DOCUMENTATION_PRODUIT_V2.1.md`
+- **Types d'enquêtes JSON** : `/lib/survey-types/*.json`
+
+---
+
+## 📖 Historique - Versions Antérieures
+
+<details>
+<summary>Cliquer pour voir l'historique complet</summary>
 
 ### 📌 v1.2 - Module BNQ 9700-800 "Entreprise en Santé"
 
@@ -729,15 +828,7 @@ Le **DUERP** est obligatoire en France (Code du travail art. R4121-1) et s'intè
 
 ---
 
-### 📌 v3.0 - Écosystème Étendu
-
-| Fonctionnalité | Description |
-|----------------|-------------|
-| API publique | Intégration avec SIRH externes |
-| Connecteurs | SAP, Workday, ADP, etc. |
-| Application mobile | Consultation des dashboards |
-| White-label | Personnalisation pour cabinets conseil |
-| Marketplace de benchmarks | Enrichissement des données sectorielles |
+</details>
 
 ---
 
@@ -785,7 +876,7 @@ Le **DUERP** est obligatoire en France (Code du travail art. R4121-1) et s'intè
 ### URL de Production
 
 ```
-https://altervalue-25c20u.abacusai.app
+https://app.altervalue.fr
 ```
 
 ### Variables d'Environnement Requises
@@ -793,7 +884,7 @@ https://altervalue-25c20u.abacusai.app
 ```env
 DATABASE_URL=postgresql://...
 NEXTAUTH_SECRET=...
-NEXTAUTH_URL=https://altervalue-25c20u.abacusai.app
+NEXTAUTH_URL=https://app.altervalue.fr
 ```
 
 ### Commandes Utiles
@@ -806,9 +897,9 @@ yarn install
 yarn prisma generate
 
 # Appliquer les migrations
-yarn prisma migrate deploy
+yarn prisma db push
 
-# Charger les données de démo
+# Charger les données de démo et types d'enquêtes
 yarn prisma db seed
 
 # Lancer en développement
@@ -818,22 +909,21 @@ yarn dev
 yarn build
 ```
 
----
+### Comptes de Démonstration
 
-## 📞 Support
-
-Pour toute question ou suggestion concernant AlterValue :
-
-- **Documentation** : Ce README
-- **PRD complet** : `/home/ubuntu/Uploads/PRD_2.1.md`
-- **Analyse des méthodes** : `/home/ubuntu/methodes_comparaison.md`
+| Rôle | Email | Mot de passe |
+|------|-------|--------------|
+| Super Admin | superadmin@altervalue.ca | altervalue2026 |
+| Expert | expert@altervalue.ca | altervalue2026 |
+| Pilote QVCT | pilote@demo.com | altervalue2026 |
+| Observateur | observateur@demo.com | altervalue2026 |
 
 ---
 
 ## 📄 Licence
 
-© 2024 AlterValue - Tous droits réservés
+© 2026 AlterValue - Tous droits réservés
 
 ---
 
-*Dernière mise à jour : Janvier 2026*
+*Dernière mise à jour : 29 Janvier 2026 - v4.1*

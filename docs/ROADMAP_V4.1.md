@@ -1,16 +1,36 @@
 # AlterValue V4.1 - Moteur d'Enquête SaaS
 
+## ✅ Statut : COMPLÉTÉ (29 Janvier 2026)
+
 ## 📋 Vue d'Ensemble
 
 Le moteur d'enquête V4.1 est une refonte majeure du module Survey existant (Méthode B présentéisme) vers une architecture **JSON-driven** permettant de définir des types d'enquêtes réutilisables, de lancer des campagnes multi-entreprises, et de générer des rapports PDF professionnels.
 
-### Objectifs
+### Objectifs ✅
 
-1. **Flexibilité** : Définir des types d'enquêtes via des fichiers JSON réutilisables
-2. **Multi-campagnes** : Lancer plusieurs campagnes simultanées pour différentes entreprises
-3. **Anonymisation** : Conformité RGPD + BNQ 9700-800 (seuil d'agrégation 15 réponses)
-4. **Calcul automatique** : Scores, indicateurs critiques, métriques financières (ROI, coût caché)
-5. **Livrables PDF** : Rapports exécutifs, radar QVCT, feuilles de route
+1. ✅ **Flexibilité** : Définir des types d'enquêtes via des fichiers JSON réutilisables
+2. ✅ **Multi-campagnes** : Lancer plusieurs campagnes simultanées pour différentes entreprises
+3. ✅ **Anonymisation** : Conformité RGPD + BNQ 9700-800 (seuil d'agrégation 15 réponses)
+4. ✅ **Calcul automatique** : Scores, indicateurs critiques, métriques financières (ROI, coût caché)
+5. ✅ **Livrables PDF** : Rapports exécutifs avec visualisations
+
+---
+
+## 📊 Phases d'Implémentation
+
+| Phase | Description | Statut |
+|-------|-------------|--------|
+| v4.1-alpha | Schéma DB Prisma (SurveyType, Campaign, Response, Result) | ✅ |
+| v4.1-beta | APIs CRUD + Moteur de calcul générique | ✅ |
+| v4.1-gamma | Pages UI (campagnes, types, formulaire public) | ✅ |
+| v4.1-delta | Visualisations Radar Chart + Jauges (recharts) | ✅ |
+| v4.1-epsilon | Génération PDF rapports (Abacus HTML2PDF API) | ✅ |
+
+### Types d'enquêtes disponibles
+
+1. **PRESENTEEISM_DIAGNOSTIC** - Diagnostic Présentéisme & Coûts Cachés
+2. **RADAR_QVCT_FLASH** - Radar QVCT Diagnostic Flash (10 dimensions)
+3. **BNQ_DATA_COLLECTION** - Collecte de Données BNQ 9700-800
 
 ---
 
@@ -516,3 +536,201 @@ Les types d'enquêtes JSON sont stockés dans :
 - `lib/survey-types/RADAR_QVCT_FLASH.json` - Type Radar QVCT 4 sphères BNQ
 
 Les spécifications originales ont été fournies via les fichiers uploadés lors de la conception.
+
+---
+
+# AlterValue V4.2 - Roadmap Fonctionnalités Futures
+
+## 📅 Version : V4.2 (En Planification)
+
+Cette section répertorie les fonctionnalités et améliorations prévues pour les prochaines versions de l'application AlterValue.
+
+---
+
+## 🌍 Internationalisation (i18n)
+
+### Objectif
+Rendre l'application disponible en plusieurs langues et devises pour une utilisation internationale.
+
+### Fonctionnalités Principales
+
+1. **Gestion Multi-Langues**
+   - Support de l'anglais, français, espagnol
+   - Interface utilisateur complètement traduite
+   - Contenus dynamiques (enquêtes, rapports) localisés
+   - Sélecteur de langue dans les paramètres utilisateur
+
+2. **Gestion Multi-Devises**
+   - Support de l'euro (€), dollar ($), livre sterling (£)
+   - Conversion automatique des coûts
+   - Affichage adapté selon les paramètres régionaux
+   - Taux de change configurables
+
+### Architecture Technique
+
+- **Framework i18n** : next-intl ou react-i18next
+- **Gestion des traductions** : Fichiers JSON par locale
+- **Conversion de devises** : API externe (ex: Open Exchange Rates)
+- **Format régional** : Intl.NumberFormat pour les nombres, dates, devises
+
+### Phases d'Implémentation
+
+1. **Phase 1** : Infrastructure i18n
+   - Configuration du framework de traduction
+   - Structure des fichiers de traduction
+   - Middleware de détection de langue
+
+2. **Phase 2** : Traduction UI
+   - Interface d'administration
+   - Pages d'authentification
+   - Dashboard et navigation
+   - Composants réutilisables
+
+3. **Phase 3** : Contenu Dynamique
+   - Types d'enquêtes multilingues
+   - Questionnaires traduits
+   - Rapports PDF localisés
+
+4. **Phase 4** : Gestion Devises
+   - Configuration des devises par entreprise
+   - Conversion automatique
+   - Affichage multi-devises dans les rapports
+
+### Dépendances
+- Modification du schéma de base de données pour stocker les préférences linguistiques et de devise par utilisateur/entreprise
+- Mise à jour de tous les composants UI
+- Adaptation des templates PDF
+
+---
+
+## 📋 Questionnaire BNQ Ultime
+
+### Objectif
+Implémenter un questionnaire complet et exhaustif conforme à la norme BNQ 9700-800 pour l'évaluation de la qualité de vie et conditions de travail.
+
+### Fonctionnalités Principales
+
+1. **Structure du Questionnaire**
+   - Basé sur les 4 sphères BNQ
+   - Questions détaillées par dimension
+   - Logique conditionnelle avancée
+   - Validation des réponses
+
+2. **Types de Questions**
+   - Échelles de Likert
+   - Questions ouvertes
+   - Classements
+   - Questions conditionnelles
+
+3. **Calcul et Scoring**
+   - Algorithme de scoring BNQ
+   - Génération d'indicateurs par sphère
+   - Identification des axes d'amélioration prioritaires
+   - Comparaison avec les benchmarks sectoriels
+
+4. **Rapports Spécialisés**
+   - Rapport exécutif conforme BNQ
+   - Visualisations par sphère
+   - Plan d'action suggéré
+   - Conformité aux exigences de certification
+
+### Architecture Technique
+
+- **Format** : JSON Survey Type `BNQ_ULTIMATE`
+- **Catégorie** : QVCT (Qualité de Vie et Conditions de Travail)
+- **Durée estimée** : 45-60 minutes
+- **Seuil d'anonymat** : 20 réponses minimum
+- **Engine de calcul** : Algorithme spécifique BNQ
+
+### Phases d'Implémentation
+
+1. **Phase 1** : Spécification Détaillée
+   - Analyse des exigences BNQ 9700-800
+   - Définition de la structure du questionnaire
+   - Validation avec experts QVCT
+
+2. **Phase 2** : Développement du Type d'Enquête
+   - Création du fichier JSON
+   - Implémentation des questions
+   - Logique conditionnelle
+
+3. **Phase 3** : Moteur de Calcul
+   - Algorithme de scoring BNQ
+   - Calcul des indicateurs par sphère
+   - Génération des recommandations
+
+4. **Phase 4** : Visualisations & Rapports
+   - Templates PDF spécifiques BNQ
+   - Graphiques radar 4 sphères
+   - Dashboard de conformité
+
+5. **Phase 5** : Tests & Validation
+   - Tests avec données réelles
+   - Validation par experts
+   - Ajustements et optimisations
+
+### Dépendances
+- Expertise BNQ 9700-800 requise
+- Spécifications détaillées à transmettre
+- Validation par auditeurs BNQ
+
+---
+
+## 📊 Sections de Détail sur Vue d'Ensemble Présentéisme
+
+### Objectif
+Enrichir la page "Calcul Présentéisme / Vue d'ensemble" avec les sections détaillées actuellement présentes uniquement sur `/companies/[id]`.
+
+### Sections à Ajouter
+
+1. **Détail du Calcul (Méthode A)**
+   - Étapes de calcul détaillées
+   - Formules appliquées
+   - Coefficients utilisés
+   - Valeurs intermédiaires
+
+2. **Interprétation**
+   - Analyse des résultats
+   - Comparaison avec benchmarks sectoriels
+   - Signaux d'alerte
+   - Recommandations
+
+3. **Points Clés**
+   - Indicateurs principaux
+   - Insights visuels
+   - Métriques financières
+   - Tendances
+
+### Architecture Technique
+
+- **Réutilisation de Composants** : Extraction des composants existants de `/companies/[id]`
+- **Adaptation au Contexte** : Les composants doivent s'adapter à l'entreprise courante sélectionnée
+- **Cohérence UI** : Maintenir la même présentation visuelle
+
+### Phases d'Implémentation
+
+1. **Phase 1** : Extraction de Composants
+   - Isoler les composants réutilisables
+   - Rendre les composants context-aware
+
+2. **Phase 2** : Intégration Vue d'Ensemble
+   - Ajouter les composants à la page overview
+   - Gérer l'état de l'entreprise courante
+   - Adapter les layouts
+
+3. **Phase 3** : Tests & Ajustements
+   - Vérifier la cohérence des données
+   - Optimiser les performances
+   - Tests utilisateurs
+
+---
+
+## 🔗 Liens Utiles
+
+- [Norme BNQ 9700-800](https://www.bnq.qc.ca/)
+- [Documentation Next.js i18n](https://nextjs.org/docs/advanced-features/i18n-routing)
+- [Recharts Documentation](https://recharts.org/)
+
+---
+
+*Dernière mise à jour : 30 janvier 2026*

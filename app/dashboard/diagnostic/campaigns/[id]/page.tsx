@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -20,6 +20,8 @@ import {
   BarChart3,
   FileText,
   Target,
+  Download,
+  Loader2,
 } from 'lucide-react';
 import { RadarChart, ScoreBars, ScoreGauge } from './_components/radar-chart';
 import { Button } from '@/components/ui/button';
@@ -92,8 +94,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   ARCHIVED: { label: 'Archivée', color: 'bg-muted text-muted-foreground' },
 };
 
-export default function CampaignDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params);
+export default function CampaignDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { toast } = useToast();
   const { data: session } = useSession() || {};
@@ -102,12 +103,13 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [showLaunchDialog, setShowLaunchDialog] = useState(false);
   const [showCloseDialog, setShowCloseDialog] = useState(false);
 
   const fetchCampaign = async () => {
     try {
-      const res = await fetch(`/api/diagnostic/campaigns/${resolvedParams.id}`);
+      const res = await fetch(`/api/diagnostic/campaigns/${params.id}`);
       if (!res.ok) throw new Error('Erreur');
       const data = await res.json();
       setCampaign(data);
@@ -120,12 +122,12 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
 
   useEffect(() => {
     fetchCampaign();
-  }, [resolvedParams.id]);
+  }, [params.id]);
 
   const handleLaunch = async () => {
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/diagnostic/campaigns/${resolvedParams.id}/launch`, { method: 'PATCH' });
+      const res = await fetch(`/api/diagnostic/campaigns/${params.id}/launch`, { method: 'PATCH' });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Erreur');
@@ -143,7 +145,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   const handleClose = async () => {
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/diagnostic/campaigns/${resolvedParams.id}/close`, { method: 'PATCH' });
+      const res = await fetch(`/api/diagnostic/campaigns/${params.id}/close`, { method: 'PATCH' });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Erreur');
@@ -161,7 +163,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   const handleRecalculate = async () => {
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/diagnostic/campaigns/${resolvedParams.id}/calculate`, { method: 'POST' });
+      const res = await fetch(`/api/diagnostic/campaigns/${params.id}/calculate`, { method: 'POST' });
       if (!res.ok) throw new Error('Erreur');
       toast({ title: 'Succès', description: 'Résultats recalculés' });
       fetchCampaign();
@@ -176,6 +178,35 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     if (campaign) {
       navigator.clipboard.writeText(`${window.location.origin}/survey/${campaign.token}`);
       toast({ title: 'Lien copié !' });
+    }
+  };
+
+  const downloadPdf = async () => {
+    if (!campaign) return;
+    
+    setPdfLoading(true);
+    try {
+      const res = await fetch(`/api/diagnostic/campaigns/${campaign.id}/pdf`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: 'Erreur' }));
+        throw new Error(data.error || 'Erreur lors de la génération');
+      }
+      
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `rapport_${campaign.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({ title: 'Succès', description: 'Rapport PDF téléchargé' });
+    } catch (error: any) {
+      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+    } finally {
+      setPdfLoading(false);
     }
   };
 
@@ -247,11 +278,25 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                 </Button>
               </>
             )}
-            {campaign.status === 'COMPLETED' && campaign.result && (
-              <Button variant="outline" onClick={handleRecalculate} disabled={actionLoading}>
-                <RefreshCw className={`h-4 w-4 mr-2 ${actionLoading ? 'animate-spin' : ''}`} />
-                Recalculer
-              </Button>
+            {(campaign.status === 'COMPLETED' || campaign.status === 'CLOSED') && campaign.result && (
+              <>
+                <Button variant="outline" onClick={handleRecalculate} disabled={actionLoading}>
+                  <RefreshCw className={`h-4 w-4 mr-2 ${actionLoading ? 'animate-spin' : ''}`} />
+                  Recalculer
+                </Button>
+                <Button 
+                  onClick={downloadPdf} 
+                  disabled={pdfLoading}
+                  className="bg-gradient-gold text-primary-foreground"
+                >
+                  {pdfLoading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4 mr-2" />
+                  )}
+                  {pdfLoading ? 'Génération...' : 'Télécharger PDF'}
+                </Button>
+              </>
             )}
           </div>
         )}

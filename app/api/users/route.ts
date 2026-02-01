@@ -2,125 +2,140 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
+import { Role } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import { logActivityServer } from '@/lib/activity-logger';
 
-// GET: List all users (Super-Admin only)
+// GET - Fetch users with optional role filter
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    if (!session?.user) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const currentUser = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
+    const userRole = (session.user as any).role;
 
-    if (!currentUser || currentUser.role !== 'SUPER_ADMIN') {
+    // Only SUPER_ADMIN and EXPERT can access user list
+    if (userRole !== 'SUPER_ADMIN' && userRole !== 'EXPERT') {
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
-    const role = searchParams.get('role');
-    const search = searchParams.get('search');
+    const rolesParam = searchParams.get('roles');
 
-    const where: Record<string, unknown> = {};
-    if (role) where.role = role;
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-      ];
+    let whereClause: any = {};
+
+    // Filter by roles if provided
+    if (rolesParam) {
+      const roles = rolesParam.split(',') as Role[];
+      whereClause.role = { in: roles };
     }
 
     const users = await prisma.user.findMany({
-      where,
+      where: whereClause,
       select: {
         id: true,
-        email: true,
         name: true,
+        email: true,
         role: true,
         createdAt: true,
         _count: {
-          select: { 
+          select: {
             companies: true,
             missionAssignments: true,
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
 
-    return NextResponse.json(users);
+    return NextResponse.json(
+      users.map(u => ({
+        ...u,
+        createdAt: u.createdAt.toISOString(),
+      }))
+    );
   } catch (error) {
     console.error('Error fetching users:', error);
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Erreur serveur' },
+      { status: 500 }
+    );
   }
 }
 
-// POST: Create new user (Super-Admin only)
+// POST - Create a new user
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    if (!session?.user) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const currentUser = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
+    const userRole = (session.user as any).role;
 
-    if (!currentUser || currentUser.role !== 'SUPER_ADMIN') {
+    // Only SUPER_ADMIN can create users
+    if (userRole !== 'SUPER_ADMIN') {
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
     }
 
-    const body = await request.json();
-    const { email, name, role, password } = body;
+    const { name, email, role, password } = await request.json();
 
     if (!email || !password || !role) {
-      return NextResponse.json({ error: 'Champs requis manquants' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Email, mot de passe et rôle requis' },
+        { status: 400 }
+      );
     }
 
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) {
-      return NextResponse.json({ error: 'Cet email existe déjà' }, { status: 409 });
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: 'Un utilisateur avec cet email existe déjà' },
+        { status: 400 }
+      );
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const user = await prisma.user.create({
       data: {
+        name,
         email,
-        name: name || email.split('@')[0],
         role,
         password: hashedPassword,
       },
       select: {
         id: true,
-        email: true,
         name: true,
+        email: true,
         role: true,
         createdAt: true,
+        _count: {
+          select: {
+            companies: true,
+            missionAssignments: true,
+          },
+        },
       },
     });
 
-    // Log activity
-    await logActivityServer(prisma, {
-      userId: currentUser.id,
-      userEmail: currentUser.email,
-      userName: currentUser.name || currentUser.email,
-      userRole: currentUser.role,
-      type: 'USER_CREATED',
-      action: `Création de l'utilisateur "${user.name || user.email}"`,
-      description: `Rôle: ${role}`,
-      entityType: 'user',
-      entityId: user.id,
-      entityName: user.name || user.email,
+    return NextResponse.json({
+      ...user,
+      createdAt: user.createdAt.toISOString(),
     });
-
-    return NextResponse.json(user, { status: 201 });
   } catch (error) {
     console.error('Error creating user:', error);
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Erreur serveur' },
+      { status: 500 }
+    );
   }
 }

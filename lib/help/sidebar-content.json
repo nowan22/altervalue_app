@@ -1,0 +1,118 @@
+{
+  "dashboard": {
+    "title": "Bienvenue sur votre tableau de bord",
+    "description": "Vue d'ensemble de tous vos dossiers et indicateurs clés.",
+    "steps": [
+      "1. Consultez les KPI en haut pour un aperçu rapide",
+      "2. Explorez les signaux prioritaires pour identifier les actions",
+      "3. Cliquez sur une mission pour approfondir l'analyse"
+    ],
+    "tip": "💡 Les cartes KPI se mettent à jour en temps réel. Cliquez sur l'une d'elles pour voir les détails."
+  },
+  "companies": {
+    "title": "Gérez vos dossiers clients",
+    "description": "Créez, consultez et modifiez les informations de vos entreprises.",
+    "steps": [
+      "1. Cliquez sur 'Nouveau dossier' pour ajouter une entreprise",
+      "2. Remplissez les informations de base (nom, secteur, effectif)",
+      "3. Consultez les indicateurs clés sur chaque carte"
+    ],
+    "tip": "💡 Utilisez la recherche et les filtres pour trouver rapidement un dossier."
+  },
+  "company_detail": {
+    "title": "Détail du dossier client",
+    "description": "Accédez à tous les éléments de suivi pour une entreprise.",
+    "steps": [
+      "1. Consultez l'onglet 'Overview' pour les KPI",
+      "2. Lancez des enquêtes dans l'onglet 'Enquêtes'",
+      "3. Suivez la conformité BNQ dans l'onglet dédié"
+    ],
+    "tip": "💡 Chaque onglet offre une vue spécialisée. Explorez-les pour une vision complète."
+  },
+  "calculator": {
+    "title": "Estimez le coût du présentéisme",
+    "description": "Outil de calcul rapide pour évaluer l'impact financier.",
+    "steps": [
+      "1. Sélectionnez le secteur d'activité",
+      "2. Entrez les données de l'entreprise (effectif, salaires)",
+      "3. Consultez les résultats en temps réel"
+    ],
+    "tip": "💡 Les coefficients par défaut sont basés sur des benchmarks sectoriels. Vous pouvez les ajuster dans les paramètres."
+  },
+  "campaigns": {
+    "title": "Lancez et suivez vos enquêtes",
+    "description": "Gestion complète du cycle de vie des diagnostics terrain.",
+    "steps": [
+      "1. Cliquez sur 'Nouvelle campagne' pour créer une enquête",
+      "2. Configurez les paramètres (dates, objectif de réponses)",
+      "3. Partagez le lien ou le QR code avec les répondants",
+      "4. Suivez la progression en temps réel"
+    ],
+    "tip": "💡 Fixez un objectif minimum de répondants pour garantir la validité statistique."
+  },
+  "survey_creation": {
+    "title": "Créer une enquête",
+    "description": "Configurez les paramètres de votre diagnostic terrain.",
+    "steps": [
+      "1. Donnez un titre clair et explicite",
+      "2. Définissez la date de fin (deadline)",
+      "3. Fixez le nombre minimum de répondants",
+      "4. Lancez l'enquête"
+    ],
+    "tip": "💡 Plus l'objectif de répondants est élevé, plus les résultats seront représentatifs."
+  },
+  "survey_results": {
+    "title": "Analysez les résultats",
+    "description": "Interprétez les données collectées et identifiez les leviers.",
+    "steps": [
+      "1. Consultez le Radar QVCT pour une vue synthétique",
+      "2. Explorez les graphiques par thématique",
+      "3. Lisez les verbatims pour comprendre les irritants",
+      "4. Exportez le rapport pour présenter aux dirigeants"
+    ],
+    "tip": "💡 Les zones rouges du Radar indiquent les priorités d'action."
+  },
+  "bnq": {
+    "title": "Suivez votre certification BNQ",
+    "description": "Pilotez la mise en place de la norme BNQ 9700-800.",
+    "steps": [
+      "1. Consultez la progression globale",
+      "2. Vérifiez les exigences par catégorie",
+      "3. Téléchargez les documents requis",
+      "4. Suivez le plan d'actions"
+    ],
+    "tip": "💡 La certification BNQ est un processus structuré. Respectez les étapes pour garantir la conformité."
+  },
+  "admin": {
+    "title": "Administrez la plateforme",
+    "description": "Gestion des utilisateurs, configuration et audit.",
+    "steps": [
+      "1. Ajoutez des experts et assignez-les à des dossiers",
+      "2. Consultez le journal d'activité pour l'audit",
+      "3. Configurez les paramètres globaux"
+    ],
+    "tip": "💡 Seuls les Super-Admin ont accès à cette section."
+  },
+  "settings": {
+    "title": "Configurez vos paramètres",
+    "description": "Ajustez les coefficients et benchmarks de calcul.",
+    "steps": [
+      "1. Modifiez les coefficients si nécessaire",
+      "2. Mettez à jour les benchmarks sectoriels",
+      "3. Configurez les seuils d'alerte",
+      "4. Enregistrez vos modifications"
+    ],
+    "tip": "💡 Les modifications s'appliquent à tous les calculs futurs. Soyez prudent avec les changements."
+  },
+  "exports": {
+    "title": "Exportez vos rapports",
+    "description": "Générez des documents pour présenter vos résultats.",
+    "steps": [
+      "1. Sélectionnez le format (PDF, Excel, CSV)",
+      "2. Choisissez la période couverte",
+      "3. Sélectionnez les données à inclure",
+      "4. Téléchargez le rapport"
+    ],
+    "tip": "💡 Les rapports PDF sont prêts à présenter aux dirigeants. Les fichiers Excel permettent une analyse approfondie."
+  }
+}

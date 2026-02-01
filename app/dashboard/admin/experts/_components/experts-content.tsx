@@ -57,12 +57,18 @@ import { Role } from '@prisma/client';
 interface Assignment {
   id: string;
   companyId: string;
+  type?: 'owned' | 'assigned';
   company: {
     id: string;
     name: string;
     sector: string;
     employeesCount?: number;
   };
+}
+
+interface ExpertAssignmentsResponse {
+  ownedMissions: Assignment[];
+  assignedMissions: Assignment[];
 }
 
 interface User {
@@ -118,6 +124,7 @@ export function ExpertsContent({ initialUsers, allCompanies }: ExpertsContentPro
   
   // Assignments state
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [ownedMissions, setOwnedMissions] = useState<Assignment[]>([]);
   const [assignmentsLoading, setAssignmentsLoading] = useState(false);
   const [selectedCompanyToAssign, setSelectedCompanyToAssign] = useState<string>('');
 
@@ -156,10 +163,22 @@ export function ExpertsContent({ initialUsers, allCompanies }: ExpertsContentPro
 
   const loadAssignments = async (userId: string) => {
     setAssignmentsLoading(true);
+    setOwnedMissions([]);
+    setAssignments([]);
+    
     try {
       const res = await fetch(`/api/users/${userId}/assignments`);
       if (res.ok) {
-        setAssignments(await res.json());
+        const data = await res.json();
+        
+        // Check if response is for EXPERT (has ownedMissions and assignedMissions)
+        if (data.ownedMissions !== undefined && data.assignedMissions !== undefined) {
+          setOwnedMissions(data.ownedMissions);
+          setAssignments(data.assignedMissions);
+        } else {
+          // For other roles, it's just an array of assignments
+          setAssignments(data);
+        }
       }
     } catch (err) {
       console.error('Error loading assignments:', err);
@@ -348,7 +367,9 @@ export function ExpertsContent({ initialUsers, allCompanies }: ExpertsContentPro
   // Get companies not yet assigned to this user
   const getAvailableCompanies = () => {
     const assignedIds = new Set(assignments.map((a) => a.companyId));
-    return allCompanies.filter((c) => !assignedIds.has(c.id));
+    // For experts, also exclude their owned missions
+    const ownedIds = new Set(ownedMissions.map((m) => m.companyId));
+    return allCompanies.filter((c) => !assignedIds.has(c.id) && !ownedIds.has(c.id));
   };
 
   return (
@@ -434,7 +455,7 @@ export function ExpertsContent({ initialUsers, allCompanies }: ExpertsContentPro
         ) : (
           filteredUsers.map((user, index) => {
             const RoleIcon = ROLE_ICONS[user.role];
-            const showAssignButton = ['PILOTE_QVCT', 'OBSERVATEUR'].includes(user.role);
+            const showAssignButton = ['EXPERT', 'PILOTE_QVCT', 'OBSERVATEUR'].includes(user.role);
             const missionCount = user.role === 'EXPERT' 
               ? user._count.companies 
               : user._count.missionAssignments;
@@ -661,89 +682,127 @@ export function ExpertsContent({ initialUsers, allCompanies }: ExpertsContentPro
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Link2 className="h-5 w-5 text-primary" />
-              Missions assignées
+              Gestion des missions
             </DialogTitle>
             <DialogDescription>
-              Gérez les missions assignées à {selectedUser?.name || selectedUser?.email}
+              Gérez les missions de {selectedUser?.name || selectedUser?.email}
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
-            {/* Assigned missions */}
-            <div>
-              <Label className="mb-2 block">Missions actuelles</Label>
-              {assignmentsLoading ? (
-                <div className="text-center py-4 text-muted-foreground">
-                  Chargement...
-                </div>
-              ) : assignments.length === 0 ? (
-                <div className="text-center py-4 text-muted-foreground bg-muted/50 rounded-lg">
-                  <Building2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>Aucune mission assignée</p>
-                </div>
-              ) : (
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {assignments.map((assignment) => (
-                    <div
-                      key={assignment.id}
-                      className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Building2 className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium">{assignment.company.name}</p>
-                          <p className="text-xs text-muted-foreground">{assignment.company.sector}</p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:bg-destructive/10"
-                        onClick={() => handleRemoveAssignment(assignment.companyId)}
-                        disabled={loading}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Add new assignment */}
-            <div className="pt-4 border-t">
-              <Label className="mb-2 block">Ajouter une mission</Label>
-              <div className="flex gap-2">
-                <Select
-                  value={selectedCompanyToAssign}
-                  onValueChange={setSelectedCompanyToAssign}
-                >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Sélectionner une mission..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getAvailableCompanies().length === 0 ? (
-                      <div className="p-2 text-center text-muted-foreground text-sm">
-                        Toutes les missions sont déjà assignées
+            {assignmentsLoading ? (
+              <div className="text-center py-4 text-muted-foreground">
+                Chargement...
+              </div>
+            ) : (
+              <>
+                {/* Section 1: Missions créées (EXPERT only) */}
+                {selectedUser?.role === 'EXPERT' && (
+                  <div>
+                    <Label className="mb-2 block font-semibold text-primary">
+                      Missions créées
+                    </Label>
+                    {ownedMissions.length === 0 ? (
+                      <div className="text-center py-3 text-muted-foreground bg-muted/50 rounded-lg">
+                        <p className="text-sm">Aucune mission créée</p>
                       </div>
                     ) : (
-                      getAvailableCompanies().map((company) => (
-                        <SelectItem key={company.id} value={company.id}>
-                          {company.name} ({company.sector})
-                        </SelectItem>
-                      ))
+                      <div className="space-y-2 max-h-36 overflow-y-auto">
+                        {ownedMissions.map((mission) => (
+                          <div
+                            key={mission.id}
+                            className="flex items-center justify-between p-3 bg-primary/10 rounded-lg border border-primary/20"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Building2 className="h-4 w-4 text-primary" />
+                              <div>
+                                <p className="font-medium">{mission.company.name}</p>
+                                <p className="text-xs text-muted-foreground">{mission.company.sector}</p>
+                              </div>
+                            </div>
+                            <Badge variant="outline" className="text-xs">Propriétaire</Badge>
+                          </div>
+                        ))}
+                      </div>
                     )}
-                  </SelectContent>
-                </Select>
-                <Button
-                  onClick={handleAssign}
-                  disabled={loading || !selectedCompanyToAssign}
-                  className="bg-gradient-gold"
-                >
-                  <Check className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+                  </div>
+                )}
+
+                {/* Section 2: Missions assignées (all roles) */}
+                <div className={selectedUser?.role === 'EXPERT' ? 'pt-4 border-t' : ''}>
+                  <Label className="mb-2 block font-semibold">
+                    Missions assignées
+                  </Label>
+                  {assignments.length === 0 ? (
+                    <div className="text-center py-3 text-muted-foreground bg-muted/50 rounded-lg">
+                      <Building2 className="h-6 w-6 mx-auto mb-1 opacity-50" />
+                      <p className="text-sm">Aucune mission assignée</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-36 overflow-y-auto">
+                      {assignments.map((assignment) => (
+                        <div
+                          key={assignment.id}
+                          className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                              <p className="font-medium">{assignment.company.name}</p>
+                              <p className="text-xs text-muted-foreground">{assignment.company.sector}</p>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:bg-destructive/10"
+                            onClick={() => handleRemoveAssignment(assignment.companyId)}
+                            disabled={loading}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Section 3: Add new assignment (all roles) */}
+                <div className="pt-4 border-t">
+                  <Label className="mb-2 block">Ajouter une mission</Label>
+                  <div className="flex gap-2">
+                    <Select
+                      value={selectedCompanyToAssign}
+                      onValueChange={setSelectedCompanyToAssign}
+                    >
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Sélectionner une mission..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getAvailableCompanies().length === 0 ? (
+                          <div className="p-2 text-center text-muted-foreground text-sm">
+                            Toutes les missions sont déjà assignées
+                          </div>
+                        ) : (
+                          getAvailableCompanies().map((company) => (
+                            <SelectItem key={company.id} value={company.id}>
+                              {company.name} ({company.sector})
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      onClick={handleAssign}
+                      disabled={loading || !selectedCompanyToAssign}
+                      className="bg-gradient-gold"
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           <DialogFooter>

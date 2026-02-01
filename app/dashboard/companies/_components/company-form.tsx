@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { SECTORS, SECTOR_DEFAULTS } from "@/lib/sectors";
 import { useToast } from "@/hooks/use-toast";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 
 interface CompanyFormProps {
   company?: any;
@@ -154,7 +155,10 @@ export default function CompanyForm({ company, isEdit = false }: CompanyFormProp
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nom de l'entreprise *</Label>
+                  <Label htmlFor="name" className="flex items-center gap-1.5">
+                    Nom de l'entreprise *
+                    <HelpTooltip tooltipKey="company_form_name" iconSize={13} />
+                  </Label>
                   <Input
                     id="name"
                     placeholder="Ex: Acme Corp"
@@ -165,7 +169,10 @@ export default function CompanyForm({ company, isEdit = false }: CompanyFormProp
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="sector">Secteur d'activité *</Label>
+                  <Label htmlFor="sector" className="flex items-center gap-1.5">
+                    Secteur d'activité *
+                    <HelpTooltip tooltipKey="company_form_sector" iconSize={13} />
+                  </Label>
                   <Select
                     value={formData.sector}
                     onValueChange={(value) => handleChange('sector', value)}
@@ -195,9 +202,10 @@ export default function CompanyForm({ company, isEdit = false }: CompanyFormProp
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="employeesCount" className="flex items-center gap-2">
+                  <Label htmlFor="employeesCount" className="flex items-center gap-1.5">
                     <Users className="h-4 w-4" />
                     Effectif *
+                    <HelpTooltip tooltipKey="company_form_employees" iconSize={13} />
                   </Label>
                   <Input
                     id="employeesCount"
@@ -221,7 +229,10 @@ export default function CompanyForm({ company, isEdit = false }: CompanyFormProp
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="avgGrossSalary">Salaire brut moyen (€/an) *</Label>
+                  <Label htmlFor="avgGrossSalary" className="flex items-center gap-1.5">
+                    Salaire brut moyen (€/an) *
+                    <HelpTooltip tooltipKey="company_form_salary" iconSize={13} />
+                  </Label>
                   <Input
                     id="avgGrossSalary"
                     type="number"
@@ -236,7 +247,10 @@ export default function CompanyForm({ company, isEdit = false }: CompanyFormProp
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="employerContributionRate">Taux de charges patronales (%) *</Label>
+                  <Label htmlFor="employerContributionRate" className="flex items-center gap-1.5">
+                    Taux de charges patronales (%) *
+                    <HelpTooltip tooltipKey="company_form_contributions" iconSize={13} />
+                  </Label>
                   <Input
                     id="employerContributionRate"
                     type="number"
@@ -262,7 +276,10 @@ export default function CompanyForm({ company, isEdit = false }: CompanyFormProp
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="absenteeismRate">Taux d'absentéisme (%) *</Label>
+                  <Label htmlFor="absenteeismRate" className="flex items-center gap-1.5">
+                    Taux d'absentéisme (%) *
+                    <HelpTooltip tooltipKey="company_form_absenteeism" iconSize={13} />
+                  </Label>
                   <Input
                     id="absenteeismRate"
                     type="number"

@@ -14,6 +14,75 @@ export async function GET(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
+    // Get the user to check their role
+    const user = await prisma.user.findUnique({
+      where: { id: params.id },
+      select: { role: true },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 });
+    }
+
+    // For EXPERTS, return BOTH their owned companies AND their mission assignments
+    if (user.role === 'EXPERT') {
+      // Get owned companies (missions créées)
+      const companies = await prisma.company.findMany({
+        where: { userId: params.id },
+        select: {
+          id: true,
+          name: true,
+          sector: true,
+          employeesCount: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      // Transform to match the assignment structure
+      const ownedMissions = companies.map(company => ({
+        id: `owned-${company.id}`,
+        companyId: company.id,
+        userId: params.id,
+        assignedAt: company.createdAt,
+        type: 'owned' as const, // Mark as owned mission
+        company: {
+          id: company.id,
+          name: company.name,
+          sector: company.sector,
+          employeesCount: company.employeesCount,
+        },
+      }));
+
+      // Get mission assignments (missions assignées)
+      const assignments = await prisma.missionAssignment.findMany({
+        where: { userId: params.id },
+        include: {
+          company: {
+            select: {
+              id: true,
+              name: true,
+              sector: true,
+              employeesCount: true,
+            },
+          },
+        },
+        orderBy: { assignedAt: 'desc' },
+      });
+
+      const assignedMissions = assignments.map(a => ({
+        ...a,
+        type: 'assigned' as const, // Mark as assigned mission
+      }));
+
+      // Return both types
+      return NextResponse.json({
+        ownedMissions,
+        assignedMissions,
+      });
+    }
+
+    // For PILOTE_QVCT and OBSERVATEUR, return mission assignments only
     const assignments = await prisma.missionAssignment.findMany({
       where: { userId: params.id },
       include: {
@@ -147,6 +216,7 @@ export async function DELETE(
       );
     }
 
+    // Delete the mission assignment (works for all roles including EXPERT)
     await prisma.missionAssignment.delete({
       where: {
         userId_companyId: {

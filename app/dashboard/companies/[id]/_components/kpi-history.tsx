@@ -59,10 +59,10 @@ export default function KpiHistory({ kpis, settings, company }: KpiHistoryProps)
     return safeKpis.map(k => ({
       id: k?.id ?? '',
       periodDate: k?.periodDate,
-      employees: k?.employeesCount ?? 0,
+      employees: k?.employees ?? 0,
       absenteeismRate: k?.absenteeismRate ?? 0,
-      presenteeismRate: k?.presRateCalculated ?? 0,
-      presenteeismCost: k?.presCostCalculated ?? 0,
+      presenteeismRate: k?.presRate ?? 0,
+      presenteeismCost: k?.presCost ?? 0,
     }));
   }, [safeKpis]);
 
@@ -91,20 +91,20 @@ export default function KpiHistory({ kpis, settings, company }: KpiHistoryProps)
           bVal = new Date(b?.periodDate ?? 0).getTime();
           break;
         case 'employees':
-          aVal = a?.employeesCount ?? 0;
-          bVal = b?.employeesCount ?? 0;
+          aVal = a?.employees ?? 0;
+          bVal = b?.employees ?? 0;
           break;
         case 'absenteeismRate':
           aVal = a?.absenteeismRate ?? 0;
           bVal = b?.absenteeismRate ?? 0;
           break;
         case 'presRate':
-          aVal = a?.presRateCalculated ?? 0;
-          bVal = b?.presRateCalculated ?? 0;
+          aVal = a?.presRate ?? 0;
+          bVal = b?.presRate ?? 0;
           break;
         case 'presCost':
-          aVal = a?.presCostCalculated ?? 0;
-          bVal = b?.presCostCalculated ?? 0;
+          aVal = a?.presCost ?? 0;
+          bVal = b?.presCost ?? 0;
           break;
         default:
           aVal = 0;
@@ -120,8 +120,8 @@ export default function KpiHistory({ kpis, settings, company }: KpiHistoryProps)
       .map(kpi => ({
         month: new Date(kpi?.periodDate ?? new Date()).toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' }),
         absenteeism: kpi?.absenteeismRate ?? 0,
-        presRate: kpi?.presRateCalculated ?? 0,
-        presCost: (kpi?.presCostCalculated ?? 0) / 1000,
+        presRate: kpi?.presRate ?? 0,
+        presCost: (kpi?.presCost ?? 0) / 1000,
         turnover: kpi?.turnoverRate ?? 0,
       }));
   }, [safeKpis]);
@@ -183,11 +183,11 @@ export default function KpiHistory({ kpis, settings, company }: KpiHistoryProps)
               <div>
                 <p className="text-sm text-muted-foreground">Coût présentéisme moyen</p>
                 <p className="text-2xl font-bold">
-                  {(safeKpis.reduce((sum, k) => sum + (k?.presCostCalculated ?? 0), 0) / (safeKpis.length || 1) / 1000).toFixed(0)}k€
+                  {(safeKpis.reduce((sum, k) => sum + (k?.presCost ?? 0), 0) / (safeKpis.length || 1) / 1000).toFixed(0)}k€
                 </p>
               </div>
               {(() => {
-                const values = safeKpis.map(k => k?.presCostCalculated ?? 0);
+                const values = safeKpis.map(k => k?.presCost ?? 0);
                 const trend = values.length > 1 ? values[values.length - 1] - values[0] : 0;
                 if (Math.abs(trend) < 1000) return <Minus className="h-8 w-8 text-muted-foreground" />;
                 return trend > 0 
@@ -356,11 +356,11 @@ export default function KpiHistory({ kpis, settings, company }: KpiHistoryProps)
                             year: 'numeric',
                           })}
                         </td>
-                        <td className="px-4 py-3">{kpi?.employeesCount ?? '-'}</td>
+                        <td className="px-4 py-3">{kpi?.employees ?? '-'}</td>
                         <td className="px-4 py-3">{kpi?.absenteeismRate != null ? `${kpi.absenteeismRate.toFixed(1)}%` : '-'}</td>
-                        <td className="px-4 py-3">{kpi?.presRateCalculated != null ? `${kpi.presRateCalculated.toFixed(1)}%` : '-'}</td>
+                        <td className="px-4 py-3">{kpi?.presRate != null ? `${kpi.presRate.toFixed(1)}%` : '-'}</td>
                         <td className="px-4 py-3">
-                          {kpi?.presCostCalculated != null ? `${(kpi.presCostCalculated / 1000).toFixed(0)}k€` : '-'}
+                          {kpi?.presCost != null ? `${(kpi.presCost / 1000).toFixed(0)}k€` : '-'}
                         </td>
                         <td className="px-4 py-3">
                           <Badge
