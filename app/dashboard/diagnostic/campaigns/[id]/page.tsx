@@ -41,6 +41,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useSession } from 'next-auth/react';
+import { QRCode } from '@/components/ui/qr-code';
 
 interface Campaign {
   id: string;
@@ -370,28 +371,41 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
         </Card>
       </div>
 
-      {/* Survey Link (when active) */}
+      {/* Survey Link & QR Code (when active) */}
       {campaign.status === 'ACTIVE' && (
         <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <p className="font-medium">Lien de l'enquête</p>
-                <p className="text-sm text-muted-foreground break-all">
-                  {window.location.origin}/survey/{campaign.token}
-                </p>
+          <CardContent className="p-6">
+            <div className="flex flex-col lg:flex-row lg:items-center gap-6">
+              {/* Link Section */}
+              <div className="flex-1 space-y-4">
+                <div>
+                  <p className="font-medium text-lg mb-1">Lien de l'enquête</p>
+                  <p className="text-sm text-muted-foreground break-all font-mono bg-background/50 p-2 rounded">
+                    {typeof window !== 'undefined' ? window.location.origin : ''}/survey/{campaign.token}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" onClick={copyLink}>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copier le lien
+                  </Button>
+                  <Button size="sm" asChild>
+                    <a href={`/survey/${campaign.token}`} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Ouvrir
+                    </a>
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={copyLink}>
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copier
-                </Button>
-                <Button size="sm" asChild>
-                  <a href={`/survey/${campaign.token}`} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Ouvrir
-                  </a>
-                </Button>
+              
+              {/* QR Code Section */}
+              <div className="flex flex-col items-center gap-2 lg:border-l lg:pl-6 border-border/50">
+                <p className="text-sm font-medium text-muted-foreground">QR Code</p>
+                <QRCode
+                  value={typeof window !== 'undefined' ? `${window.location.origin}/survey/${campaign.token}` : ''}
+                  size={120}
+                  downloadFileName={`qr-${campaign.name.replace(/\s+/g, '-').toLowerCase()}`}
+                />
               </div>
             </div>
           </CardContent>

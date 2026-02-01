@@ -299,6 +299,15 @@ async function seedSurveyTypes() {
       anonymityThreshold: 15,
       definitionFile: 'survey_type_bnq_data_collection.json',
     },
+    {
+      typeId: 'BNQ_ULTIMATE',
+      name: 'Questionnaire QVCT BNQ Ultimate',
+      category: 'QVCT_BNQ',
+      estimatedDuration: 13,
+      anonymityThreshold: 15,
+      isModular: true,
+      definitionFile: 'survey_type_bnq_ultimate.json',
+    },
   ];
 
   for (const st of surveyTypes) {
@@ -315,6 +324,7 @@ async function seedSurveyTypes() {
           definition,
           estimatedDuration: st.estimatedDuration,
           anonymityThreshold: st.anonymityThreshold,
+          isModular: (st as any).isModular || false,
         },
         create: {
           typeId: st.typeId,
@@ -324,6 +334,7 @@ async function seedSurveyTypes() {
           definition,
           isActive: true,
           isSystem: true,
+          isModular: (st as any).isModular || false,
           estimatedDuration: st.estimatedDuration,
           anonymityThreshold: st.anonymityThreshold,
         },

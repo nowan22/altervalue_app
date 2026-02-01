@@ -58,7 +58,7 @@ export async function GET(request: Request) {
           select: { id: true, name: true },
         },
         surveyType: {
-          select: { id: true, typeId: true, name: true, category: true, estimatedDuration: true },
+          select: { id: true, typeId: true, name: true, category: true, estimatedDuration: true, isModular: true },
         },
         _count: {
           select: { responses: true },
@@ -162,6 +162,9 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check if this is a BNQ Ultimate type that needs wizard configuration
+    const isBNQUltimate = surveyType.typeId === 'BNQ_ULTIMATE' || surveyType.isModular;
+
     // Create campaign
     const campaign = await prisma.surveyCampaign.create({
       data: {
@@ -175,21 +178,47 @@ export async function POST(request: Request) {
         scheduledEndDate: scheduledEndDate ? new Date(scheduledEndDate) : null,
         createdById: user.id,
         status: 'DRAFT',
+        // For BNQ Ultimate, set moduleConfig to empty/default state
+        moduleConfig: isBNQUltimate ? { needsFullConfig: true } : undefined,
       },
       include: {
         company: { select: { id: true, name: true } },
-        surveyType: { select: { id: true, typeId: true, name: true } },
+        surveyType: { select: { id: true, typeId: true, name: true, isModular: true } },
       },
     });
 
     // Log activity
 
+    // Return redirect info for BNQ Ultimate types
+    if (isBNQUltimate) {
+      return NextResponse.json({
+        ...campaign,
+        redirectToWizard: true,
+        wizardUrl: `/dashboard/diagnostic/campaigns/${campaign.id}/configure`,
+      }, { status: 201 });
+    }
+
     return NextResponse.json(campaign, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating campaign:', error);
-    return NextResponse.json(
-      { error: 'Erreur lors de la création de la campagne' },
-      { status: 500 }
-    );
+    
+    // Return standardized error response
+    const errorResponse = {
+      success: false,
+      code: 'CAMPAIGN_CREATE_ERROR',
+      message: 'Erreur lors de la création de la campagne',
+      details: process.env.NODE_ENV === 'development' ? error?.message : undefined,
+    };
+    
+    // Handle specific Prisma errors
+    if (error?.code === 'P2002') {
+      errorResponse.code = 'DUPLICATE_ENTRY';
+      errorResponse.message = 'Une campagne avec ces paramètres existe déjà';
+    } else if (error?.code === 'P2003') {
+      errorResponse.code = 'FOREIGN_KEY_ERROR';
+      errorResponse.message = 'Référence invalide (entreprise ou type d\'enquête)';
+    }
+    
+    return NextResponse.json(errorResponse, { status: 500 });
   }
 }

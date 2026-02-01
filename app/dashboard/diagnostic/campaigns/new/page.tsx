@@ -126,14 +126,23 @@ export default function NewCampaignPage() {
         }),
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Erreur lors de la création');
+        // Handle standardized error response
+        const errorMsg = data.message || data.error || 'Erreur lors de la création';
+        throw new Error(errorMsg);
       }
 
-      const campaign = await res.json();
+      // Check if this is a BNQ Ultimate type that needs wizard configuration
+      if (data.redirectToWizard && data.wizardUrl) {
+        toast({ title: 'Campagne créée', description: 'Redirection vers la configuration BNQ...' });
+        router.push(data.wizardUrl);
+        return;
+      }
+
       toast({ title: 'Succès', description: 'Campagne créée avec succès' });
-      router.push(`/dashboard/diagnostic/campaigns/${campaign.id}`);
+      router.push(`/dashboard/diagnostic/campaigns/${data.id}`);
     } catch (error: any) {
       toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
     } finally {

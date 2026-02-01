@@ -1,0 +1,873 @@
+{
+  "survey_type_id": "BNQ_ULTIMATE",
+  "survey_metadata": {
+    "name": "Questionnaire QVCT BNQ Ultimate",
+    "version": "4.2",
+    "framework": ["BNQ 9700-800", "QVCT"],
+    "target_audience": "PME/ETI/GE - Tous salariés",
+    "decision_makers": ["DRH", "COMEX", "CSE"],
+    "estimated_duration_minutes": {
+      "minimum": 8,
+      "standard": 13,
+      "complete": 18
+    },
+    "primary_objective": "Identifier les priorités QVCT avec conformité BNQ 9700-800",
+    "secondary_objectives": [
+      "Générer une matrice de priorisation actionnable",
+      "Alimenter le calculateur ROI présentéisme",
+      "Préparer la certification BNQ Es/EsE/EsE+"
+    ]
+  },
+
+  "data_governance": {
+    "anonymity_threshold_default": 15,
+    "anonymity_threshold_module3": 30,
+    "rgpd_compliant": true,
+    "sensitive_data": true,
+    "data_retention_days": 1095
+  },
+
+  "modular_structure": {
+    "is_modular": true,
+    "modules": [
+      {
+        "module_id": 0,
+        "name": "Cadre légal et confidentialité",
+        "code": "MOD_CONSENT",
+        "is_mandatory": true,
+        "activation": "MANDATORY",
+        "estimated_duration_minutes": 0.5,
+        "description": "Consentement RGPD et information sur l'anonymat"
+      },
+      {
+        "module_id": 1,
+        "name": "Priorisation BNQ (Core)",
+        "code": "MOD_CORE_BNQ",
+        "is_mandatory": true,
+        "activation": "MANDATORY",
+        "estimated_duration_minutes": 8,
+        "description": "4 sphères BNQ + priorisation stratégique",
+        "bnq_compliance": {
+          "level": "ES",
+          "articles": ["4.3.1", "4.3.2", "4.3.3", "4.3.4"]
+        }
+      },
+      {
+        "module_id": 2,
+        "name": "Pratiques de gestion (RPS)",
+        "code": "MOD_RPS",
+        "is_mandatory": false,
+        "activation": "OPT_IN",
+        "estimated_duration_minutes": 5,
+        "description": "8 dimensions RPS BNQ",
+        "activation_conditions": {
+          "expert_choice": true,
+          "mission_type": ["RPS", "DUERP"],
+          "bnq_level": ["ESE", "ESE_PLUS"]
+        }
+      },
+      {
+        "module_id": 3,
+        "name": "Santé et Présentéisme",
+        "code": "MOD_HEALTH",
+        "is_mandatory": false,
+        "activation": "OPT_IN_STRICT",
+        "estimated_duration_minutes": 5,
+        "description": "Données sensibles - Santé perçue, présentéisme, TMS, détresse",
+        "activation_conditions": {
+          "min_headcount": 50,
+          "drh_consent_required": true,
+          "occupational_health_required": true,
+          "expert_approval_required": true,
+          "min_respondents_guaranteed": 30
+        },
+        "warning_message": "Attention: MODULE 3 contient des données sensibles (santé). Vérifiez que les conditions RGPD sont réunies (effectif > 50, consentement DRH, seuil 30 répondants)."
+      }
+    ]
+  },
+
+  "questionnaire_structure": {
+    "modules": [
+      {
+        "id": "MOD_CONSENT",
+        "title": "Cadre légal et confidentialité",
+        "sections": [
+          {
+            "id": "SEC_INTRO",
+            "title": "Page d'accueil",
+            "type": "intro",
+            "content": {
+              "title": "Diagnostic QVCT - Entreprise en Santé",
+              "subtitle": "Votre avis compte pour améliorer votre qualité de vie au travail",
+              "intro_text": "Bonjour,\n\n{company_name} souhaite mieux comprendre votre vécu au travail pour identifier les actions prioritaires qui amélioreront réellement votre quotidien.\n\nCette enquête est réalisée dans le cadre d'une démarche \u00ab Entreprise en santé \u00bb conforme à la norme BNQ 9700-800.",
+              "key_points": [
+                { "icon": "clock", "text": "Durée: 8 à 18 minutes selon les modules choisis" },
+                { "icon": "lock", "text": "Anonymat garanti: Aucune donnée personnelle n'est collectée" },
+                { "icon": "target", "text": "Objectif: Dégager les priorités pour un plan d'action concret" }
+              ]
+            }
+          },
+          {
+            "id": "SEC_CONSENT",
+            "title": "Consentement",
+            "questions": [
+              {
+                "id": "CONSENT",
+                "type": "consent",
+                "text": "J'ai pris connaissance des conditions de confidentialité et j'accepte de participer à cette enquête anonyme.",
+                "required": true,
+                "options": [
+                  { "value": "yes", "label": "Oui, je consens à participer" },
+                  { "value": "no", "label": "Non, je ne souhaite pas participer" }
+                ],
+                "exit_on_no": true,
+                "exit_message": "Merci de votre attention. Vous pouvez fermer cette page."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "MOD_CORE_BNQ",
+        "title": "Priorisation BNQ",
+        "sections": [
+          {
+            "id": "SEC_SOCIOPRO",
+            "title": "Données socio-professionnelles",
+            "description": "Ces informations permettent des analyses par sous-groupes (seuil min. 15 répondants).",
+            "questions": [
+              {
+                "id": "Q1",
+                "type": "single_choice",
+                "text": "Depuis combien de temps travaillez-vous dans cette entreprise?",
+                "required": true,
+                "options": [
+                  { "value": "<1", "label": "Moins de 1 an" },
+                  { "value": "1-3", "label": "1 à 3 ans" },
+                  { "value": "3-5", "label": "3 à 5 ans" },
+                  { "value": "5-10", "label": "5 à 10 ans" },
+                  { "value": ">10", "label": "Plus de 10 ans" }
+                ]
+              },
+              {
+                "id": "Q2",
+                "type": "single_choice",
+                "text": "Quelle est votre catégorie professionnelle?",
+                "required": true,
+                "options": [
+                  { "value": "OUVRIER_EMPLOYE", "label": "Ouvrier / Employé" },
+                  { "value": "AGENT_MAITRISE", "label": "Agent de maîtrise / Technicien" },
+                  { "value": "CADRE", "label": "Cadre" },
+                  { "value": "CADRE_DIRIGEANT", "label": "Cadre dirigeant" }
+                ]
+              },
+              {
+                "id": "Q3",
+                "type": "single_choice",
+                "text": "Quel est votre type de contrat de travail?",
+                "required": true,
+                "options": [
+                  { "value": "CDI_TEMPS_PLEIN", "label": "CDI temps plein" },
+                  { "value": "CDI_TEMPS_PARTIEL", "label": "CDI temps partiel" },
+                  { "value": "CDD_INTERIM", "label": "CDD / Intérim" },
+                  { "value": "ALTERNANCE_STAGE", "label": "Alternance / Stage" }
+                ]
+              },
+              {
+                "id": "Q4",
+                "type": "dropdown",
+                "text": "Dans quel service travaillez-vous principalement?",
+                "required": true,
+                "customizable": true,
+                "default_options": [
+                  { "value": "DIRECTION", "label": "Direction / Support" },
+                  { "value": "COMMERCIAL", "label": "Commercial / Ventes" },
+                  { "value": "PRODUCTION", "label": "Production / Opérations" },
+                  { "value": "RD", "label": "Développement / R&D" },
+                  { "value": "SUPPORT_CLIENT", "label": "Support client" },
+                  { "value": "RH", "label": "Ressources Humaines" },
+                  { "value": "FINANCE", "label": "Finance / Administration" },
+                  { "value": "MARKETING", "label": "Marketing / Communication" },
+                  { "value": "IT", "label": "IT / Systèmes d'information" },
+                  { "value": "LOGISTIQUE", "label": "Logistique / Supply Chain" },
+                  { "value": "QUALITE", "label": "Qualité / Sécurité" },
+                  { "value": "AUTRE", "label": "Autre" }
+                ]
+              },
+              {
+                "id": "Q5",
+                "type": "single_choice",
+                "text": "Quelle est votre situation de télétravail?",
+                "required": true,
+                "options": [
+                  { "value": "0", "label": "Pas de télétravail (100% sur site)" },
+                  { "value": "<1", "label": "Télétravail occasionnel (< 1 jour/semaine)" },
+                  { "value": "1-3", "label": "Télétravail partiel (1-3 jours/semaine)" },
+                  { "value": ">3", "label": "Télétravail majoritaire (> 3 jours/semaine)" },
+                  { "value": "100", "label": "Télétravail complet (100% à distance)" }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "SEC_SPHERE1",
+            "title": "Habitudes de vie",
+            "bnq_reference": "BNQ 9700-800 Clause 4.3.1",
+            "sphere_id": 1,
+            "intro_text": "Les questions suivantes concernent votre santé, votre équilibre de vie et vos habitudes au quotidien.\n\nÉvaluez chaque affirmation sur une échelle de 0 à 10:\n- 0 = Pas du tout d'accord / Très insatisfait\n- 10 = Tout à fait d'accord / Très satisfait",
+            "questions": [
+              {
+                "id": "Q6",
+                "type": "scale",
+                "text": "Dans l'ensemble, je dors suffisamment et mon sommeil est réparateur.",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q7",
+                "type": "scale",
+                "text": "Je pratique régulièrement une activité physique ou sportive.",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q8",
+                "type": "scale",
+                "text": "Je mange équilibré et j'ai accès à une alimentation saine au travail.",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q9",
+                "type": "scale",
+                "text": "Mon niveau de stress ou de charge mentale est acceptable et gérable.",
+                "scale": "0-10",
+                "required": true,
+                "valence": "positive"
+              },
+              {
+                "id": "Q10",
+                "type": "scale",
+                "text": "Je n'ai pas besoin de substances (alcool, tabac, etc.) pour gérer mon stress ou ma fatigue.",
+                "scale": "0-10",
+                "required": false,
+                "sensitive": true,
+                "allow_skip": true,
+                "skip_label": "Préfère ne pas répondre"
+              },
+              {
+                "id": "Q11",
+                "type": "scale",
+                "text": "Mon entreprise propose des actions concrètes pour soutenir ma santé (sport, nutrition, prévention, etc.).",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q12",
+                "type": "single_choice",
+                "text": "Parmi les aspects suivants, lequel devrait être LA PRIORITÉ pour améliorer les habitudes de vie dans votre entreprise?",
+                "required": true,
+                "is_priority_question": true,
+                "options": [
+                  { "value": "ACTIVITE_PHYSIQUE", "label": "Faciliter l'activité physique (salles, équipements, horaires)" },
+                  { "value": "ALIMENTATION", "label": "Améliorer l'offre alimentaire (cantine, pauses, équilibre)" },
+                  { "value": "SOMMEIL", "label": "Sensibiliser sur le sommeil et la récupération" },
+                  { "value": "STRESS", "label": "Proposer des programmes de gestion du stress" },
+                  { "value": "SEVRAGE", "label": "Accompagner le sevrage tabagique / alcool" },
+                  { "value": "SANTE", "label": "Renforcer les services de santé (médecine du travail, prévention)" },
+                  { "value": "OTHER", "label": "Autre (précisez)" }
+                ],
+                "allow_other": true
+              }
+            ]
+          },
+          {
+            "id": "SEC_SPHERE2",
+            "title": "Conciliation vie professionnelle / vie personnelle",
+            "bnq_reference": "BNQ 9700-800 Clause 4.3.2",
+            "sphere_id": 2,
+            "intro_text": "Les questions suivantes portent sur l'équilibre entre votre travail et votre vie personnelle.\n\nÉvaluez chaque affirmation sur une échelle de 0 à 10:\n- 0 = Pas du tout d'accord\n- 10 = Tout à fait d'accord",
+            "questions": [
+              {
+                "id": "Q13",
+                "type": "scale",
+                "text": "Je parviens à concilier ma vie professionnelle et ma vie personnelle de manière satisfaisante.",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q14",
+                "type": "scale",
+                "text": "Mes horaires de travail sont compatibles avec ma vie personnelle (enfants, loisirs, famille).",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q15",
+                "type": "scale",
+                "text": "Ma charge de travail me permet de déconnecter en dehors des horaires de travail.",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q16",
+                "type": "scale",
+                "text": "Je peux réellement déconnecter (emails, appels) le soir et le week-end sans conséquences négatives.",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q17",
+                "type": "scale",
+                "text": "Mon entreprise propose des solutions de flexibilité (télétravail, horaires aménagés, temps partiel).",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q18",
+                "type": "scale",
+                "text": "Je me sens soutenu(e) par mon manager en cas de besoin personnel ou familial.",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q19",
+                "type": "single_choice",
+                "text": "Parmi les aspects suivants, lequel devrait être LA PRIORITÉ pour améliorer la conciliation vie pro/perso?",
+                "required": true,
+                "is_priority_question": true,
+                "options": [
+                  { "value": "CHARGE_TRAVAIL", "label": "Réduire la charge de travail" },
+                  { "value": "DECONNEXION", "label": "Renforcer le droit à la déconnexion" },
+                  { "value": "FLEXIBILITE", "label": "Augmenter la flexibilité des horaires" },
+                  { "value": "TELETRAVAIL", "label": "Développer le télétravail" },
+                  { "value": "MANAGER", "label": "Former les managers à la conciliation" },
+                  { "value": "SERVICES", "label": "Proposer des services (garde d'enfants, conciergerie)" },
+                  { "value": "OTHER", "label": "Autre (précisez)" }
+                ],
+                "allow_other": true
+              }
+            ]
+          },
+          {
+            "id": "SEC_SPHERE3",
+            "title": "Environnement de travail",
+            "bnq_reference": "BNQ 9700-800 Clause 4.3.3",
+            "sphere_id": 3,
+            "intro_text": "Les questions suivantes concernent votre environnement de travail physique et organisationnel.\n\nÉvaluez chaque affirmation sur une échelle de 0 à 10.",
+            "questions": [
+              {
+                "id": "Q20",
+                "type": "scale",
+                "text": "Mon poste de travail est adapté à mes besoins (ergonomie, équipement).",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q21",
+                "type": "scale",
+                "text": "L'ambiance sonore de mon environnement de travail est acceptable.",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q22",
+                "type": "scale",
+                "text": "La température et la qualité de l'air sont satisfaisantes sur mon lieu de travail.",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q23",
+                "type": "scale",
+                "text": "Je dispose d'espaces de repos ou de détente adaptés.",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q24",
+                "type": "scale",
+                "text": "Les règles de sécurité sont respectées et je me sens en sécurité au travail.",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q25",
+                "type": "scale",
+                "text": "Les outils et systèmes informatiques mis à ma disposition sont performants.",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q26",
+                "type": "scale",
+                "text": "L'organisation du travail (processus, réunions) est efficace.",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q27",
+                "type": "scale",
+                "text": "Je dispose des ressources nécessaires pour bien faire mon travail.",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q28",
+                "type": "single_choice",
+                "text": "Parmi les aspects suivants, lequel devrait être LA PRIORITÉ pour améliorer l'environnement de travail?",
+                "required": true,
+                "is_priority_question": true,
+                "options": [
+                  { "value": "ERGONOMIE", "label": "Améliorer l'ergonomie des postes" },
+                  { "value": "BRUIT", "label": "Réduire les nuisances sonores" },
+                  { "value": "CONFORT", "label": "Améliorer le confort thermique et qualité de l'air" },
+                  { "value": "ESPACES", "label": "Créer/améliorer les espaces de détente" },
+                  { "value": "SECURITE", "label": "Renforcer la sécurité" },
+                  { "value": "OUTILS", "label": "Moderniser les outils informatiques" },
+                  { "value": "ORGANISATION", "label": "Optimiser l'organisation du travail" },
+                  { "value": "OTHER", "label": "Autre (précisez)" }
+                ],
+                "allow_other": true
+              }
+            ]
+          },
+          {
+            "id": "SEC_SPHERE4",
+            "title": "Pratiques de gestion",
+            "bnq_reference": "BNQ 9700-800 Clause 4.3.4",
+            "sphere_id": 4,
+            "intro_text": "Les questions suivantes concernent les pratiques de management et de gestion dans votre entreprise.\n\nÉvaluez chaque affirmation sur une échelle de 0 à 10.",
+            "questions": [
+              {
+                "id": "Q29",
+                "type": "scale",
+                "text": "Je reçois suffisamment de reconnaissance pour mon travail.",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q30",
+                "type": "scale",
+                "text": "Mon manager me fait confiance et me laisse de l'autonomie.",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q31",
+                "type": "scale",
+                "text": "La communication interne est transparente et régulière.",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q32",
+                "type": "scale",
+                "text": "J'ai des opportunités de développement professionnel (formation, évolution).",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q33",
+                "type": "scale",
+                "text": "Les décisions qui me concernent sont prises de manière équitable.",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q34",
+                "type": "scale",
+                "text": "Je peux exprimer mes idées et elles sont prises en compte.",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q35",
+                "type": "single_choice",
+                "text": "Parmi les aspects suivants, lequel devrait être LA PRIORITÉ pour améliorer les pratiques de gestion?",
+                "required": true,
+                "is_priority_question": true,
+                "options": [
+                  { "value": "RECONNAISSANCE", "label": "Améliorer la reconnaissance" },
+                  { "value": "AUTONOMIE", "label": "Donner plus d'autonomie" },
+                  { "value": "COMMUNICATION", "label": "Améliorer la communication interne" },
+                  { "value": "FORMATION", "label": "Développer les formations" },
+                  { "value": "EQUITE", "label": "Renforcer l'équité des décisions" },
+                  { "value": "PARTICIPATION", "label": "Favoriser la participation aux décisions" },
+                  { "value": "OTHER", "label": "Autre (précisez)" }
+                ],
+                "allow_other": true
+              }
+            ]
+          },
+          {
+            "id": "SEC_IMPACT",
+            "title": "Impact business",
+            "questions": [
+              {
+                "id": "Q36",
+                "type": "scale",
+                "text": "Je me sens capable de donner le meilleur de moi-même au travail.",
+                "scale": "0-10",
+                "required": true
+              },
+              {
+                "id": "Q37",
+                "type": "scale",
+                "text": "L'ambiance et la collaboration au sein de mon équipe sont bonnes.",
+                "scale": "0-10",
+                "required": true
+              }
+            ]
+          },
+          {
+            "id": "SEC_PRIORITY_MATRIX",
+            "title": "Priorisation finale",
+            "questions": [
+              {
+                "id": "Q38",
+                "type": "ranking",
+                "text": "Si vous ne deviez choisir qu'UNE SEULE priorité d'amélioration pour votre entreprise, laquelle serait-ce?",
+                "required": true,
+                "is_global_priority": true,
+                "options": [
+                  { "value": "1", "label": "Habitudes de vie (santé, sport, alimentation)" },
+                  { "value": "2", "label": "Conciliation vie pro/perso (équilibre, flexibilité)" },
+                  { "value": "3", "label": "Environnement de travail (locaux, équipements)" },
+                  { "value": "4", "label": "Pratiques de gestion (management, reconnaissance)" }
+                ]
+              },
+              {
+                "id": "Q39",
+                "type": "open_ended",
+                "text": "Avez-vous des suggestions ou commentaires pour améliorer votre qualité de vie au travail?",
+                "required": false,
+                "max_length": 1000,
+                "placeholder": "Vos suggestions (facultatif)..."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "MOD_RPS",
+        "title": "Pratiques de gestion - Dimensions RPS",
+        "activation": "OPT_IN",
+        "intro_text": "Les questions suivantes permettent d'approfondir l'analyse des pratiques de gestion selon 8 dimensions clés.\n\nÉvaluez chaque affirmation sur une échelle de 1 à 5:\n- 1 = Pas du tout d'accord\n- 5 = Tout à fait d'accord",
+        "sections": [
+          {
+            "id": "SEC_RPS_DIM",
+            "title": "8 Dimensions RPS",
+            "questions": [
+              { "id": "Q40", "type": "scale", "text": "Ma charge de travail est raisonnable.", "scale": "1-5", "dimension": "charge_travail", "required": true },
+              { "id": "Q41", "type": "scale", "text": "J'ai suffisamment de temps pour accomplir mes tâches.", "scale": "1-5", "dimension": "charge_travail", "required": true },
+              { "id": "Q42", "type": "scale", "text": "Je comprends clairement ce qu'on attend de moi.", "scale": "1-5", "dimension": "clarte_role", "required": true },
+              { "id": "Q43", "type": "scale", "text": "Mes objectifs sont clairement définis.", "scale": "1-5", "dimension": "clarte_role", "required": true },
+              { "id": "Q44", "type": "scale", "text": "Mon travail est reconnu à sa juste valeur.", "scale": "1-5", "dimension": "reconnaissance", "required": true },
+              { "id": "Q45", "type": "scale", "text": "Je reçois des retours réguliers sur mon travail.", "scale": "1-5", "dimension": "reconnaissance", "required": true },
+              { "id": "Q46", "type": "scale", "text": "J'ai la liberté de décider comment faire mon travail.", "scale": "1-5", "dimension": "autonomie", "required": true },
+              { "id": "Q47", "type": "scale", "text": "Je peux influencer les décisions qui affectent mon travail.", "scale": "1-5", "dimension": "autonomie", "required": true },
+              { "id": "Q48", "type": "scale", "text": "Je peux compter sur mes collègues en cas de difficulté.", "scale": "1-5", "dimension": "soutien_social", "required": true },
+              { "id": "Q49", "type": "scale", "text": "Mon manager me soutient quand j'en ai besoin.", "scale": "1-5", "dimension": "soutien_social", "required": true },
+              { "id": "Q50", "type": "scale", "text": "Mon travail respecte mon équilibre vie pro/perso.", "scale": "1-5", "dimension": "equilibre", "required": true },
+              { "id": "Q51", "type": "scale", "text": "Je ne suis pas sollicité(e) en dehors des heures de travail.", "scale": "1-5", "dimension": "equilibre", "required": true },
+              { "id": "Q52", "type": "scale", "text": "Le respect entre collègues est la norme dans mon équipe.", "scale": "1-5", "dimension": "climat_respect", "required": true },
+              { "id": "Q53", "type": "scale", "text": "Je n'ai jamais été témoin de comportements irrespectueux.", "scale": "1-5", "dimension": "climat_respect", "required": true },
+              { "id": "Q54", "type": "scale", "text": "J'ai accès aux formations dont j'ai besoin.", "scale": "1-5", "dimension": "competences", "required": true },
+              { "id": "Q55", "type": "scale", "text": "Mon entreprise investit dans le développement de mes compétences.", "scale": "1-5", "dimension": "competences", "required": true },
+              {
+                "id": "Q56",
+                "type": "single_choice",
+                "text": "Parmi ces 8 dimensions, laquelle est la plus CRITIQUE pour vous?",
+                "required": true,
+                "is_rps_priority": true,
+                "options": [
+                  { "value": "charge_travail", "label": "Charge de travail" },
+                  { "value": "clarte_role", "label": "Clarté du rôle" },
+                  { "value": "reconnaissance", "label": "Reconnaissance" },
+                  { "value": "autonomie", "label": "Autonomie" },
+                  { "value": "soutien_social", "label": "Soutien social" },
+                  { "value": "equilibre", "label": "Équilibre vie pro/perso" },
+                  { "value": "climat_respect", "label": "Climat de respect" },
+                  { "value": "competences", "label": "Développement compétences" }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "MOD_HEALTH",
+        "title": "Santé et Présentéisme",
+        "activation": "OPT_IN_STRICT",
+        "intro_text": "Les questions suivantes portent sur votre santé au travail. Vos réponses sont strictement anonymes et agrégées (seuil minimum 30 répondants).\n\nToutes les questions sont facultatives.",
+        "sections": [
+          {
+            "id": "SEC_HEALTH_PERCEIVED",
+            "title": "Santé perçue",
+            "questions": [
+              {
+                "id": "Q57",
+                "type": "scale",
+                "text": "Comment évaluez-vous votre état de santé général?",
+                "scale": "1-5",
+                "labels": { "1": "Très mauvais", "3": "Moyen", "5": "Excellent" },
+                "required": false,
+                "allow_skip": true
+              },
+              {
+                "id": "Q58",
+                "type": "scale",
+                "text": "Pensez-vous que votre travail a un impact négatif sur votre santé?",
+                "scale": "1-5",
+                "labels": { "1": "Pas du tout", "3": "Modérément", "5": "Très fortement" },
+                "required": false,
+                "valence": "negative",
+                "allow_skip": true
+              },
+              {
+                "id": "Q59",
+                "type": "single_choice",
+                "text": "Au cours des 12 derniers mois, avez-vous consulté un professionnel de santé pour des problèmes liés au travail?",
+                "required": false,
+                "allow_skip": true,
+                "options": [
+                  { "value": "NEVER", "label": "Non, jamais" },
+                  { "value": "ONCE", "label": "Oui, une fois" },
+                  { "value": "MULTIPLE", "label": "Oui, plusieurs fois" },
+                  { "value": "REGULAR", "label": "Oui, régulièrement" }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "SEC_PRESENTEEISM",
+            "title": "Présentéisme",
+            "questions": [
+              {
+                "id": "Q60",
+                "type": "single_choice",
+                "text": "Au cours du dernier mois, combien de jours êtes-vous venu(e) travailler alors que votre état de santé aurait justifié un arrêt?",
+                "required": false,
+                "allow_skip": true,
+                "options": [
+                  { "value": "NEVER", "label": "Jamais", "days_per_month": 0 },
+                  { "value": "1-2", "label": "1-2 fois", "days_per_month": 1.5 },
+                  { "value": "3-4", "label": "3-4 fois", "days_per_month": 3.5 },
+                  { "value": "5-6", "label": "5-6 fois", "days_per_month": 5.5 },
+                  { "value": ">6", "label": "Plus de 6 fois", "days_per_month": 8 }
+                ]
+              },
+              {
+                "id": "Q61",
+                "type": "scale",
+                "text": "Lors de ces journées, avez-vous eu des difficultés à vous concentrer?",
+                "scale": "1-5",
+                "labels": { "1": "Aucune difficulté", "5": "Grandes difficultés" },
+                "required": false,
+                "condition": "Q60 != 'NEVER'",
+                "allow_skip": true
+              },
+              {
+                "id": "Q62",
+                "type": "scale",
+                "text": "Lors de ces journées, à quel niveau estimez-vous votre efficacité par rapport à votre niveau habituel?",
+                "scale": "0-10",
+                "labels": { "0": "0% - Inefficace", "5": "50% - Moitié de ma capacité", "10": "100% - Pleine efficacité" },
+                "required": false,
+                "condition": "Q60 != 'NEVER'",
+                "allow_skip": true
+              },
+              {
+                "id": "Q63",
+                "type": "multiple_choice",
+                "text": "Quelles sont les principales raisons qui vous ont poussé(e) à venir travailler malgré votre état?",
+                "required": false,
+                "max_choices": 3,
+                "condition": "Q60 != 'NEVER'",
+                "allow_skip": true,
+                "options": [
+                  { "value": "WORKLOAD", "label": "Charge de travail trop importante" },
+                  { "value": "PRESSURE", "label": "Pression managériale" },
+                  { "value": "NO_REPLACEMENT", "label": "Pas de remplaçant possible" },
+                  { "value": "JOB_FEAR", "label": "Crainte pour mon poste" },
+                  { "value": "CULTURE", "label": "Culture d'entreprise (on ne s'arrête pas)" },
+                  { "value": "FINANCIAL", "label": "Enjeux financiers personnels" },
+                  { "value": "PROJECT", "label": "Projet critique en cours" }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "SEC_TMS",
+            "title": "TMS et douleurs",
+            "questions": [
+              {
+                "id": "Q64",
+                "type": "multiple_choice",
+                "text": "Au cours des 12 derniers mois, avez-vous ressenti des douleurs régulières dans les zones suivantes?",
+                "required": false,
+                "allow_skip": true,
+                "options": [
+                  { "value": "NECK", "label": "Nuque / Cou" },
+                  { "value": "SHOULDERS", "label": "Épaules" },
+                  { "value": "UPPER_BACK", "label": "Haut du dos" },
+                  { "value": "LOWER_BACK", "label": "Bas du dos / Lombaires" },
+                  { "value": "WRISTS", "label": "Poignets / Mains" },
+                  { "value": "LEGS", "label": "Jambes / Pieds" },
+                  { "value": "NONE", "label": "Aucune douleur" }
+                ]
+              },
+              {
+                "id": "Q65",
+                "type": "scale",
+                "text": "Ces douleurs ont-elles un impact sur votre travail?",
+                "scale": "1-5",
+                "labels": { "1": "Aucun impact", "5": "Impact très important" },
+                "required": false,
+                "condition": "Q64 != ['NONE']",
+                "allow_skip": true
+              }
+            ]
+          },
+          {
+            "id": "SEC_DISTRESS",
+            "title": "Stress et détresse",
+            "questions": [
+              {
+                "id": "Q66",
+                "type": "scale",
+                "text": "Sur une échelle de 0 à 10, comment évaluez-vous votre niveau de stress actuel lié au travail?",
+                "scale": "0-10",
+                "labels": { "0": "Aucun stress", "5": "Stress modéré", "10": "Stress extrême" },
+                "required": false,
+                "allow_skip": true
+              },
+              {
+                "id": "Q67",
+                "type": "scale",
+                "text": "Au cours des 4 dernières semaines, avez-vous ressenti des signes de détresse (anxiété, découragement, irritabilité)?",
+                "scale": "1-5",
+                "labels": { "1": "Jamais", "2": "Rarement", "3": "Parfois", "4": "Souvent", "5": "Très souvent" },
+                "required": false,
+                "allow_skip": true
+              }
+            ]
+          },
+          {
+            "id": "SEC_HEALTH_RESOURCES",
+            "title": "Ressources santé",
+            "type": "info",
+            "content": {
+              "title": "Besoin d'aide?",
+              "message": "Si vous ressentez une détresse importante, n'hésitez pas à en parler :\n\n- Médecine du travail de votre entreprise\n- Votre médecin traitant\n- Numéro national de prévention du suicide : 3114 (gratuit, 24h/24)",
+              "is_prevention_message": true
+            }
+          }
+        ]
+      }
+    ]
+  },
+
+  "calculation_engine": {
+    "module1_scoring": {
+      "method": "sphere_average",
+      "formula": "(Moyenne_Items / 10) × 100",
+      "normalization": "0-100",
+      "negative_valence_questions": ["Q9"],
+      "thresholds": {
+        "red": { "max": 40, "label": "Zone rouge - Priorité critique" },
+        "orange": { "max": 65, "label": "Zone orange - Attention requise" },
+        "green": { "max": 80, "label": "Zone verte - Satisfaisant" },
+        "gold": { "min": 80, "label": "Excellence" }
+      }
+    },
+    "criticality_index": {
+      "formula": "(100 - Score_Sphère) × (% priorité) / 100",
+      "description": "Plus l'indice est élevé, plus l'action est urgente"
+    },
+    "module2_scoring": {
+      "method": "dimension_average",
+      "formula": "((Moyenne_2_Items - 1) / 4) × 100",
+      "scale": "1-5",
+      "normalization": "0-100"
+    },
+    "module3_presenteeism": {
+      "rate_formula": "(Σ jours présentéisme) / (Effectif × Jours_Travaillés)",
+      "productivity_loss_formula": "1 - (Efficacité_Moyenne / 10)",
+      "cost_formula": "Effectif × Salaire_Chargé × Taux_Présentéisme × Coefficient_Perte",
+      "roi_estimate": "Coût × 0.5"
+    },
+    "module3_distress": {
+      "criteria": "Q66 >= 7/10 OU Q67 >= 4/5",
+      "thresholds": {
+        "green": { "max": 15, "label": "Normal" },
+        "yellow": { "max": 25, "label": "Surveillance" },
+        "orange": { "max": 40, "label": "Alerte" },
+        "red": { "min": 40, "label": "Crise" }
+      }
+    },
+    "confidentiality": {
+      "module1_threshold": 5,
+      "module2_threshold": 5,
+      "module3_threshold": 30,
+      "subgroup_threshold": 15,
+      "aggregation_policy": "Si N < seuil, agrégation au niveau supérieur"
+    }
+  },
+
+  "output_engine": {
+    "deliverables": [
+      {
+        "id": "full_report",
+        "type": "pdf",
+        "title": "Rapport QVCT Complet",
+        "pages": "15-25",
+        "sections": [
+          "Page de garde",
+          "Synthèse exécutive",
+          "Résultats par sphère BNQ (4 pages)",
+          "Priorisation stratégique",
+          "Module 2: Dimensions RPS (si activé)",
+          "Module 3: Santé (si activé)",
+          "Benchmark sectoriel",
+          "Plan d'action recommandé",
+          "Annexes"
+        ]
+      },
+      {
+        "id": "executive_summary",
+        "type": "pdf",
+        "title": "Synthèse Exécutive",
+        "pages": "2-3",
+        "target": "COMEX"
+      }
+    ],
+    "visualizations": [
+      {
+        "id": "radar_4_spheres",
+        "type": "radar",
+        "data": "sphereScores",
+        "description": "Graphique radar des 4 sphères BNQ"
+      },
+      {
+        "id": "criticality_matrix",
+        "type": "bubble",
+        "data": "priorityMatrix",
+        "axes": { "x": "score", "y": "priorityRate", "size": "criticalityIndex" }
+      },
+      {
+        "id": "radar_8_rps",
+        "type": "radar",
+        "data": "rpsScores",
+        "condition": "module2_active"
+      },
+      {
+        "id": "presenteeism_kpi",
+        "type": "kpi_card",
+        "data": "presenteeism",
+        "condition": "module3_active"
+      }
+    ]
+  }
+}

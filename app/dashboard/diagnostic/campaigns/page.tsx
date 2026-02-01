@@ -20,6 +20,7 @@ import {
   Trash2,
   Eye,
   RefreshCw,
+  Settings,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -65,9 +66,10 @@ interface Campaign {
   closedAt: string | null;
   createdAt: string;
   company: { id: string; name: string };
-  surveyType: { id: string; typeId: string; name: string; category: string; estimatedDuration: number };
+  surveyType: { id: string; typeId: string; name: string; category: string; estimatedDuration: number; isModular?: boolean };
   _count: { responses: number };
   result: { responseCount: number; participationRate: number | null; calculatedAt: string } | null;
+  moduleConfig?: { needsFullConfig?: boolean };
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
@@ -279,6 +281,18 @@ export default function CampaignsPage() {
                             <Eye className="h-4 w-4 mr-2" />
                             Voir détails
                           </DropdownMenuItem>
+                          {/* Configure button for BNQ Ultimate campaigns */}
+                          {(campaign.surveyType.typeId === 'BNQ_ULTIMATE' || campaign.surveyType.isModular) &&
+                           campaign.status !== 'LAUNCHED' && campaign.status !== 'COMPLETED' &&
+                           ['SUPER_ADMIN', 'EXPERT'].includes(userRole) && (
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/dashboard/diagnostic/campaigns/${campaign.id}/configure`);
+                            }}>
+                              <Settings className="h-4 w-4 mr-2" />
+                              Configurer BNQ
+                            </DropdownMenuItem>
+                          )}
                           {campaign.status === 'ACTIVE' && (
                             <DropdownMenuItem onClick={(e) => {
                               e.stopPropagation();

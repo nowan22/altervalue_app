@@ -193,16 +193,76 @@ export async function GET(
 
     // Extract questionnaire from definition
     const definition = campaign.surveyType.definition as any;
-    const questionnaire = definition?.questionnaire_structure || {};
+    let questionnaire = definition?.questionnaire_structure || {};
     const metadata = definition?.survey_metadata || {};
     const dataGovernance = definition?.data_governance || {};
+
+    // Filter modules based on campaign configuration (activeModules)
+    const activeModules = campaign.activeModules as number[] | null;
+    if (activeModules && Array.isArray(activeModules) && questionnaire.modules) {
+      // Get the module definitions from the survey type
+      const modularStructure = definition?.modular_structure?.modules || [];
+      
+      // Build a map of module_id -> module code
+      const moduleCodeMap: Record<number, string> = {};
+      modularStructure.forEach((mod: any) => {
+        moduleCodeMap[mod.module_id] = mod.code;
+      });
+
+      // Filter questionnaire modules to only include active ones
+      const activeModuleCodes = activeModules.map(id => moduleCodeMap[id]).filter(Boolean);
+      questionnaire = {
+        ...questionnaire,
+        modules: questionnaire.modules.filter((mod: any) => {
+          // Always include MOD_CONSENT (module 0)
+          if (mod.id === 'MOD_CONSENT') return true;
+          // Include if module code is in active modules
+          return activeModuleCodes.includes(mod.id);
+        }),
+      };
+    }
+
+    // Inject custom services for Q4 (department question) if configured
+    const customServices = campaign.customServices as any[] | null;
+    if (customServices && Array.isArray(customServices) && customServices.length > 0 && questionnaire.modules) {
+      questionnaire.modules = questionnaire.modules.map((mod: any) => {
+        if (!mod.sections) return mod;
+        return {
+          ...mod,
+          sections: mod.sections.map((sec: any) => {
+            if (!sec.questions) return sec;
+            return {
+              ...sec,
+              questions: sec.questions.map((q: any) => {
+                // Look for Q4 (service/department question)
+                if (q.id === 'Q4' && q.type === 'single_choice') {
+                  return {
+                    ...q,
+                    options: customServices.map(s => ({
+                      value: s.code,
+                      label: s.label,
+                    })),
+                  };
+                }
+                return q;
+              }),
+            };
+          }),
+        };
+      });
+    }
+
+    // Calculate estimated duration based on active modules
+    let estimatedDuration = 8; // Base duration for modules 0+1
+    if (activeModules?.includes(2)) estimatedDuration += 5;
+    if (activeModules?.includes(3)) estimatedDuration += 5;
 
     return NextResponse.json({
       campaignName: campaign.name,
       companyName: campaign.company.name,
       surveyTypeName: campaign.surveyType.name,
-      estimatedDuration: campaign.surveyType.estimatedDuration,
-      anonymityThreshold: campaign.surveyType.anonymityThreshold,
+      estimatedDuration: estimatedDuration,
+      anonymityThreshold: campaign.anonymityThreshold || campaign.surveyType.anonymityThreshold,
       questionnaire,
       metadata: {
         name: metadata.name,
@@ -210,11 +270,15 @@ export async function GET(
         primary_objective: metadata.primary_objective,
       },
       dataGovernance: {
-        anonymity_threshold: dataGovernance.anonymity_threshold,
+        anonymity_threshold: campaign.anonymityThreshold || dataGovernance.anonymity_threshold,
         rgpd_compliant: dataGovernance.rgpd_compliant,
       },
       currentResponses: campaign._count.responses,
       endDate: campaign.scheduledEndDate,
+      // Module configuration info
+      activeModules: activeModules,
+      module3Enabled: campaign.module3Enabled,
+      customServices: customServices,
     });
   } catch (error) {
     console.error('Error fetching questionnaire:', error);

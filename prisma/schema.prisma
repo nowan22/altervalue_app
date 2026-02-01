@@ -69,6 +69,8 @@ model Company {
   surveyCampaigns         SurveyCampaign[]
   // v4.0-epsilon: Mission assignments for Pilotes/Observateurs
   missionAssignments      MissionAssignment[]
+  // v4.2: Departments for BNQ surveys
+  departments             Department[]
 }
 
 // v4.0-epsilon: Assignment table for linking missions to Pilotes/Observateurs
@@ -668,8 +670,10 @@ model ActivityLog {
 enum SurveyTypeCategory {
   PRESENTEEISM     // Diagnostic présentéisme
   QVCT             // Qualité de Vie et Conditions de Travail
+  QVCT_BNQ         // v4.2: Questionnaire BNQ Ultimate (Core + Modules)
   RPS              // Risques Psycho-Sociaux
   CLIMATE          // Climat social
+  PULSE            // v5.0: Enquête Pulse (suivi 6 mois)
   CUSTOM           // Type personnalisé
 }
 
@@ -682,17 +686,26 @@ enum CampaignStatus {
   ARCHIVED         // Archivée
 }
 
+// v4.2: BNQ Ultimate Module activation status
+enum ModuleActivation {
+  MANDATORY        // Module obligatoire (M0, M1)
+  OPT_IN           // Module optionnel activé par Expert (M2)
+  OPT_IN_STRICT    // Module avec conditions strictes (M3)
+  DISABLED         // Module désactivé
+}
+
 // Types d'enquêtes (définitions JSON réutilisables)
 model SurveyType {
   id                  String              @id @default(cuid())
-  typeId              String              @unique  // "PRESENTEEISM_DIAGNOSTIC", "RADAR_QVCT_FLASH"
-  name                String              // "Diagnostic Présentéisme & Coûts Cachés"
+  typeId              String              @unique  // "PRESENTEEISM_DIAGNOSTIC", "BNQ_ULTIMATE"
+  name                String              // "Questionnaire QVCT BNQ Ultimate"
   description         String?
   version             String              @default("1.0")
   category            SurveyTypeCategory
   definition          Json                // Structure complète JSON du questionnaire
   isActive            Boolean             @default(true)
   isSystem            Boolean             @default(false)  // Types système non modifiables
+  isModular           Boolean             @default(false)  // v4.2: Support des modules
   estimatedDuration   Int                 @default(10)     // Minutes
   anonymityThreshold  Int                 @default(15)     // Seuil d'anonymat
   dataRetentionDays   Int                 @default(730)    // 2 ans par défaut
@@ -703,6 +716,63 @@ model SurveyType {
 
   @@index([category])
   @@index([isActive])
+}
+
+// =====================================================
+// v4.2 - DEPARTMENT (Services personnalisables)
+// =====================================================
+
+model Department {
+  id                  String              @id @default(cuid())
+  companyId           String
+  company             Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  code                String              // "R&D", "COMMERCIAL", "PRODUCTION"
+  name                String              // "Recherche & Développement"
+  headcount           Int?                // Effectif optionnel
+  sortOrder           Int                 @default(0)
+  isActive            Boolean             @default(true)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@unique([companyId, code])
+  @@index([companyId])
+}
+
+// =====================================================
+// v4.2 - QVCT BENCHMARK (Benchmarks sectoriels BNQ)
+// =====================================================
+
+model QVCTBenchmark {
+  id                    String              @id @default(cuid())
+  sector                String              // Secteur d'activité
+  sizeRange             String              @default("ALL")  // "10-49", "50-249", "250-999", "1000+"
+  // Scores moyens par sphère BNQ (0-100)
+  sphere1HabitudesVie     Float?            // Habitudes de vie
+  sphere2Conciliation     Float?            // Conciliation vie pro/perso
+  sphere3Environnement    Float?            // Environnement de travail
+  sphere4Pratiques        Float?            // Pratiques de gestion
+  // Module 2: RPS dimensions (0-100)
+  rpsChargeTravail        Float?
+  rpsClarteRole           Float?
+  rpsReconnaissance       Float?
+  rpsAutonomie            Float?
+  rpsSoutienSocial        Float?
+  rpsEquilibre            Float?
+  rpsClimatRespect        Float?
+  rpsCompetences          Float?
+  // Module 3: Indicateurs santé
+  presenteeismRateAvg     Float?            // Taux présentéisme moyen
+  tmsPrevalenceAvg        Float?            // Prévalence TMS
+  distressRateAvg         Float?            // Taux de détresse
+  // Méta
+  sampleSize              Int               @default(0)      // Nombre d'entreprises
+  responseCount           Int               @default(0)      // Nombre de répondants
+  lastUpdatedAt           DateTime          @default(now())
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  @@unique([sector, sizeRange])
+  @@index([sector])
 }
 
 // Campagnes d'enquête (instances lancées)
@@ -719,6 +789,13 @@ model SurveyCampaign {
   targetPopulation    Int?                // Nombre de personnes ciblées
   minRespondents      Int                 @default(15)  // Minimum requis
   maxRespondents      Int?                // Maximum (null = illimité)
+  // v4.2: BNQ Ultimate module configuration
+  activeModules       Json?               // [0, 1, 2, 3] - indices des modules activés
+  moduleConfig        Json?               // Configuration spécifique par module
+  customServices      Json?               // Liste des services personnalisés pour Q4
+  anonymityThreshold  Int                 @default(15)  // Seuil par défaut, 30 pour Module 3
+  module3Enabled      Boolean             @default(false)  // Flag spécifique Module 3 (conditions strictes)
+  module3Consent      Boolean             @default(false)  // Consentement DRH pour Module 3
   // Dates
   scheduledStartDate  DateTime?
   scheduledEndDate    DateTime?
@@ -762,10 +839,29 @@ model CampaignResult {
   campaign            SurveyCampaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   responseCount       Int                 @default(0)
   participationRate   Float?              // % de participation
+  avgDuration         Int?                // Durée moyenne en secondes
+  completionRate      Float?              // % de complétion
+  // v4.2: Scores détaillés BNQ Ultimate
   scores              Json                // { "GESTION": 6.5, "CONCILIATION": 7.2 }
+  sphereScores        Json?               // { "sphere1": 58, "sphere2": 52, "sphere3": 61, "sphere4": 48 }
+  priorityMatrix      Json?               // Matrice de priorisation avec indices de criticité
+  topLevers           Json?               // Top 3 leviers par sphère
+  // Module 2: RPS
+  rpsScores           Json?               // Scores 8 dimensions RPS
+  rpsCriticalDimension String?            // Dimension la plus critique
+  // Module 3: Santé & Présentéisme
+  presenteeismRate    Float?              // Taux de présentéisme
+  presenteeismCost    Float?              // Coût annuel estimé
+  productivityLoss    Float?              // Coefficient de perte productivité
+  tmsPrevalence       Float?              // % salariés avec TMS
+  distressRate        Float?              // % salariés en détresse
+  // Indicateurs critiques
   criticalIndicators  Json?               // { "high_presenteeism": { triggered: true, severity: "high" } }
   financialMetrics    Json?               // { "hidden_cost": 125000, "roi_estimate": 87500 }
   qualitativeInsights Json?               // Verbatims, ranking agrégés
+  // Benchmark
+  benchmarkComparison Json?               // Comparaison avec benchmark sectoriel
+  // Narrative
   narrative           String?             // Texte narratif généré
   calculatedAt        DateTime?
   createdAt           DateTime            @default(now())
