@@ -625,6 +625,8 @@ enum ActivityType {
   // Settings
   SETTINGS_UPDATED
   COEFFICIENT_UPDATED
+  // Demo mode (v4.2)
+  DEMO_DATA_GENERATED
   // System
   SYSTEM_NOTIFICATION
   CUSTOM
@@ -827,6 +829,8 @@ model CampaignResponse {
   submittedAt         DateTime            @default(now())
   isComplete          Boolean             @default(true)
   userAgent           String?             // Pour détection fraude
+  // v4.2: Flag for synthetic/demo data
+  isSynthetic         Boolean             @default(false)
 
   @@unique([campaignId, respondentHash])
   @@index([campaignId])

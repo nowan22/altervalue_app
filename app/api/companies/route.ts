@@ -76,6 +76,7 @@ export async function POST(request: Request) {
       avgGrossSalary,
       employerContributionRate,
       absenteeismRate,
+      isDemo,
     } = body;
 
     if (!name || !sector || !employeesCount || !avgGrossSalary || !employerContributionRate || absenteeismRate === undefined) {
@@ -87,8 +88,12 @@ export async function POST(request: Request) {
 
     const userId = (session.user as any).id;
 
-    // Get full user for logging
+    // Get full user for logging and role check
     const user = await prisma.user.findUnique({ where: { id: userId } });
+    
+    // v4.2: Only SUPER_ADMIN can create demo missions
+    const canSetDemo = user?.role === 'SUPER_ADMIN';
+    const isDemoValue = canSetDemo && isDemo === true;
     
     // Default departments for new companies
     const defaultDepartments = [
@@ -110,6 +115,8 @@ export async function POST(request: Request) {
         employerContributionRate: parseFloat(employerContributionRate),
         absenteeismRate: parseFloat(absenteeismRate),
         userId,
+        // v4.2: Demo flag (only SUPER_ADMIN can set)
+        isDemo: isDemoValue,
         // Initialize BNQ progress for new companies
         bnqProgress: {
           create: {
@@ -136,8 +143,8 @@ export async function POST(request: Request) {
         userName: user.name || user.email,
         userRole: user.role,
         type: 'MISSION_CREATED',
-        action: `Création de la mission "${name}"`,
-        description: `Secteur: ${sector}, ${employeesCount} employés`,
+        action: `Création de la mission "${name}"${isDemoValue ? ' (DÉMO)' : ''}`,
+        description: `Secteur: ${sector}, ${employeesCount} employés${isDemoValue ? ', Mission de démonstration' : ''}`,
         companyId: company.id,
         companyName: company.name,
         entityType: 'company',

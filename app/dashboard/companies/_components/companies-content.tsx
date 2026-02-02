@@ -217,7 +217,9 @@ export default function CompaniesContent({ companies, settings }: CompaniesConte
                         </div>
                       </div>
                       {company?.isDemo && (
-                        <Badge variant="secondary">Démo</Badge>
+                        <Badge className="bg-amber-500 hover:bg-amber-600 text-white border-0">
+                          🎲 DÉMO
+                        </Badge>
                       )}
                     </div>
                   </CardHeader>

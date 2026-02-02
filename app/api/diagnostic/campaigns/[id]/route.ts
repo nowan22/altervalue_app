@@ -26,6 +26,7 @@ export async function GET(
             employerContributionRate: true,
             hoursPerYear: true,
             annualValueAdded: true,
+            isDemo: true,
           },
         },
         surveyType: true,

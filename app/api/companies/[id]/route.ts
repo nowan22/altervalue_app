@@ -55,6 +55,10 @@ export async function PUT(
     const body = await request.json();
     const userId = (session.user as any).id;
 
+    // Get user for role check
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+
     const existingCompany = await prisma.company.findUnique({
       where: { id: params.id },
     });
@@ -67,30 +71,40 @@ export async function PUT(
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
     }
 
+    // v4.2: Build update data - only SUPER_ADMIN can modify isDemo
+    const updateData: any = {
+      name: body.name,
+      sector: body.sector,
+      country: body.country,
+      employeesCount: parseInt(body.employeesCount),
+      avgGrossSalary: parseFloat(body.avgGrossSalary),
+      employerContributionRate: parseFloat(body.employerContributionRate),
+      absenteeismRate: parseFloat(body.absenteeismRate),
+    };
+
+    // Only SUPER_ADMIN can change isDemo flag
+    if (isSuperAdmin && body.isDemo !== undefined) {
+      updateData.isDemo = body.isDemo === true;
+    }
+
     const company = await prisma.company.update({
       where: { id: params.id },
-      data: {
-        name: body.name,
-        sector: body.sector,
-        country: body.country,
-        employeesCount: parseInt(body.employeesCount),
-        avgGrossSalary: parseFloat(body.avgGrossSalary),
-        employerContributionRate: parseFloat(body.employerContributionRate),
-        absenteeismRate: parseFloat(body.absenteeismRate),
-      },
+      data: updateData,
     });
 
     // Log activity
-    const user = await prisma.user.findUnique({ where: { id: userId } });
     if (user) {
+      const demoChanged = isSuperAdmin && body.isDemo !== undefined && existingCompany.isDemo !== company.isDemo;
       await logActivityServer(prisma, {
         userId: user.id,
         userEmail: user.email,
         userName: user.name || user.email,
         userRole: user.role,
         type: 'MISSION_UPDATED',
-        action: `Modification de la mission "${company.name}"`,
-        description: `Mise à jour des informations`,
+        action: `Modification de la mission "${company.name}"${company.isDemo ? ' (DÉMO)' : ''}`,
+        description: demoChanged 
+          ? `Statut démo: ${existingCompany.isDemo ? 'Désactivé' : 'Activé'}`
+          : `Mise à jour des informations`,
         companyId: company.id,
         companyName: company.name,
         entityType: 'company',

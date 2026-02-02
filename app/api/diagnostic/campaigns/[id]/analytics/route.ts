@@ -83,11 +83,14 @@ export async function GET(
         name: campaign.name,
         status: campaign.status,
         companyName: campaign.company.name,
+        companyId: campaign.company.id,
         surveyTypeName: campaign.surveyType.name,
         launchedAt: campaign.launchedAt,
         closedAt: campaign.closedAt,
         scheduledEndDate: campaign.scheduledEndDate,
       },
+      // v4.2: Demo mode flag
+      isDemo: campaign.company.isDemo,
       participation: {
         totalResponses,
         targetPopulation,

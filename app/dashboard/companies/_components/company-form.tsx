@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import {
   Building2,
@@ -11,11 +12,14 @@ import {
   Euro,
   Percent,
   Info,
+  Dices,
+  AlertTriangle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -35,7 +39,11 @@ interface CompanyFormProps {
 export default function CompanyForm({ company, isEdit = false }: CompanyFormProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const { data: session } = useSession() || {};
   const [loading, setLoading] = useState(false);
+
+  // v4.2: Check if user is SUPER_ADMIN for demo mode checkbox
+  const isSuperAdmin = (session?.user as any)?.role === 'SUPER_ADMIN';
 
   const [formData, setFormData] = useState({
     name: company?.name ?? "",
@@ -46,6 +54,9 @@ export default function CompanyForm({ company, isEdit = false }: CompanyFormProp
     employerContributionRate: ((company?.employerContributionRate ?? 0.45) * 100).toString(),
     absenteeismRate: company?.absenteeismRate?.toString?.() ?? "",
   });
+
+  // v4.2: Demo mode state (only for SUPER_ADMIN)
+  const [isDemo, setIsDemo] = useState(company?.isDemo ?? false);
 
   // Auto-fill sector defaults
   useEffect(() => {
@@ -69,7 +80,7 @@ export default function CompanyForm({ company, isEdit = false }: CompanyFormProp
     setLoading(true);
 
     try {
-      const payload = {
+      const payload: any = {
         name: formData.name,
         sector: formData.sector,
         country: formData.country,
@@ -78,6 +89,11 @@ export default function CompanyForm({ company, isEdit = false }: CompanyFormProp
         employerContributionRate: parseFloat(formData.employerContributionRate) / 100,
         absenteeismRate: parseFloat(formData.absenteeismRate),
       };
+
+      // v4.2: Include isDemo only if SUPER_ADMIN
+      if (isSuperAdmin) {
+        payload.isDemo = isDemo;
+      }
 
       const url = isEdit ? `/api/companies/${company?.id ?? ''}` : '/api/companies';
       const method = isEdit ? 'PUT' : 'POST';
@@ -298,9 +314,9 @@ export default function CompanyForm({ company, isEdit = false }: CompanyFormProp
               </div>
 
               {formData.sector && SECTOR_DEFAULTS[formData.sector] && (
-                <div className="p-4 bg-blue-50 rounded-lg flex items-start gap-3">
+                <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg flex items-start gap-3">
                   <Info className="h-5 w-5 text-blue-500 mt-0.5" />
-                  <div className="text-sm text-blue-700">
+                  <div className="text-sm text-blue-700 dark:text-blue-400">
                     <p className="font-medium">Valeurs de référence pour ce secteur :</p>
                     <ul className="mt-1 space-y-1">
                       <li>Absentéisme moyen : {SECTOR_DEFAULTS[formData.sector].absenteeismRate}%</li>
@@ -311,6 +327,44 @@ export default function CompanyForm({ company, isEdit = false }: CompanyFormProp
                 </div>
               )}
             </div>
+
+            {/* v4.2: Demo Mode - Only for SUPER_ADMIN */}
+            {isSuperAdmin && (
+              <div className="space-y-4 pt-4 border-t border-amber-500/30">
+                <h3 className="font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                  <Dices className="h-4 w-4" />
+                  Mode Démonstration
+                </h3>
+
+                <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg space-y-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-amber-700 dark:text-amber-300">
+                      <p className="font-medium">Option réservée aux Super-Administrateurs</p>
+                      <p className="mt-1 text-amber-600 dark:text-amber-400">
+                        Les missions démo permettent de tester les fonctionnalités avec des données fictives. 
+                        Elles sont exclues des statistiques et benchmarks globaux.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      id="isDemo"
+                      checked={isDemo}
+                      onCheckedChange={(checked) => setIsDemo(checked === true)}
+                      className="border-amber-500 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
+                    />
+                    <Label 
+                      htmlFor="isDemo" 
+                      className="text-sm font-medium text-amber-700 dark:text-amber-300 cursor-pointer"
+                    >
+                      Mission de démonstration (données fictives à des fins de test/démo)
+                    </Label>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Submit */}
             <div className="flex justify-end gap-3 pt-4 border-t">

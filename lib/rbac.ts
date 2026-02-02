@@ -335,6 +335,18 @@ export const MENU_ITEMS: MenuItem[] = [
           OBSERVATEUR: 'hidden',
         },
       },
+      {
+        id: 'demo-missions',
+        label: 'Données de démo',
+        icon: 'Dices',
+        href: '/dashboard/admin/demo-missions',
+        access: {
+          SUPER_ADMIN: 'full',
+          EXPERT: 'hidden',
+          PILOTE_QVCT: 'hidden',
+          OBSERVATEUR: 'hidden',
+        },
+      },
     ],
   },
 ];

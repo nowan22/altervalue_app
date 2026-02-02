@@ -28,6 +28,7 @@ import {
   SlidersHorizontal,
   Info,
   Activity,
+  Dices,
   LucideIcon,
 } from "lucide-react";
 
@@ -119,6 +120,7 @@ export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
   ALERT_RESOLVED: "Alerte résolue",
   SETTINGS_UPDATED: "Paramètres modifiés",
   COEFFICIENT_UPDATED: "Coefficients modifiés",
+  DEMO_DATA_GENERATED: "Données démo générées",
   SYSTEM_NOTIFICATION: "Notification système",
   CUSTOM: "Action personnalisée",
 };
@@ -150,6 +152,7 @@ export const ACTIVITY_TYPE_ICONS: Record<ActivityType, LucideIcon> = {
   ALERT_RESOLVED: BellOff,
   SETTINGS_UPDATED: Settings,
   COEFFICIENT_UPDATED: SlidersHorizontal,
+  DEMO_DATA_GENERATED: Dices,
   SYSTEM_NOTIFICATION: Info,
   CUSTOM: Activity,
 };
@@ -181,6 +184,7 @@ export const ACTIVITY_TYPE_COLORS: Record<ActivityType, string> = {
   ALERT_RESOLVED: "text-success",
   SETTINGS_UPDATED: "text-muted-foreground",
   COEFFICIENT_UPDATED: "text-muted-foreground",
+  DEMO_DATA_GENERATED: "text-amber-500",
   SYSTEM_NOTIFICATION: "text-info",
   CUSTOM: "text-muted-foreground",
 };

@@ -22,6 +22,7 @@ import {
   Target,
   Download,
   Loader2,
+  Dices,
 } from 'lucide-react';
 import { RadarChart, ScoreBars, ScoreGauge } from './_components/radar-chart';
 import { Button } from '@/components/ui/button';
@@ -42,6 +43,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useSession } from 'next-auth/react';
 import { QRCode } from '@/components/ui/qr-code';
+import DemoDataDialog from '@/app/dashboard/_components/demo-data-dialog';
 
 interface Campaign {
   id: string;
@@ -62,6 +64,7 @@ interface Campaign {
     employeesCount: number;
     avgGrossSalary: number;
     employerContributionRate: number;
+    isDemo?: boolean;
   };
   surveyType: {
     id: string;
@@ -237,9 +240,23 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
     : null;
   const meetsThreshold = campaign._count.responses >= campaign.minRespondents;
   const canEdit = userRole !== 'OBSERVATEUR';
+  
+  // v4.2: Demo mode checks
+  const companyIsDemo = campaign.company.isDemo === true;
+  const userIsSuperAdmin = userRole === 'SUPER_ADMIN';
 
   return (
     <div className="space-y-6">
+      {/* v4.2: Demo Mode Banner */}
+      {companyIsDemo && (
+        <div className="flex items-center justify-center gap-3 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+          <Dices className="h-5 w-5 text-amber-500" />
+          <span className="text-amber-700 dark:text-amber-300 font-medium">
+            🎲 MODE DÉMO — Données de simulation, non issues d'une enquête réelle
+          </span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div className="flex items-start gap-4">
@@ -252,6 +269,11 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-display font-bold">{campaign.name}</h1>
               <Badge className={`${statusConfig.color} border`}>{statusConfig.label}</Badge>
+              {companyIsDemo && (
+                <Badge className="bg-amber-500 hover:bg-amber-600 text-white border-0">
+                  🎲 DÉMO
+                </Badge>
+              )}
             </div>
             <p className="text-muted-foreground mt-1">
               {campaign.surveyType.name} • {campaign.company.name}
@@ -260,7 +282,16 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
         </div>
         
         {canEdit && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            {/* v4.2: Demo data generation button */}
+            {companyIsDemo && userIsSuperAdmin && (campaign.status === 'DRAFT' || campaign.status === 'ACTIVE') && (
+              <DemoDataDialog
+                campaignId={campaign.id}
+                campaignName={campaign.name}
+                companyIsDemo={companyIsDemo}
+                userIsSuperAdmin={userIsSuperAdmin}
+              />
+            )}
             {campaign.status === 'DRAFT' && (
               <Button onClick={() => setShowLaunchDialog(true)} className="bg-gradient-gold text-primary-foreground">
                 <Play className="h-4 w-4 mr-2" />

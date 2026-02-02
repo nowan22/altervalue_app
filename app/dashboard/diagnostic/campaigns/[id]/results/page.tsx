@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -20,6 +21,7 @@ import {
   RefreshCw,
   CheckCircle,
   XCircle,
+  Dices,
 } from 'lucide-react';
 import {
   RadarChart as RechartsRadar,
@@ -45,6 +47,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import DemoDataDialog from '@/app/dashboard/_components/demo-data-dialog';
 
 // Types
 interface SphereScore {
@@ -78,11 +81,13 @@ interface AnalyticsData {
     name: string;
     status: string;
     companyName: string;
+    companyId: string;
     surveyTypeName: string;
     launchedAt: string | null;
     closedAt: string | null;
     scheduledEndDate: string | null;
   };
+  isDemo: boolean;
   participation: {
     totalResponses: number;
     targetPopulation: number;
@@ -175,9 +180,13 @@ function PriorityBadge({ priority }: { priority: 'HIGH' | 'MEDIUM' | 'LOW' }) {
 export default function CampaignResultsPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { toast } = useToast();
+  const { data: session } = useSession() || {};
 
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // v4.2: Check if user is SUPER_ADMIN for demo features
+  const userIsSuperAdmin = (session?.user as any)?.role === 'SUPER_ADMIN';
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [isMounted, setIsMounted] = useState(false);
 
@@ -273,23 +282,49 @@ export default function CampaignResultsPage({ params }: { params: { id: string }
 
   return (
     <div className="space-y-6 p-6">
+      {/* v4.2: Demo Mode Banner */}
+      {data.isDemo && (
+        <div className="flex items-center justify-center gap-3 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+          <Dices className="h-5 w-5 text-amber-500" />
+          <span className="text-amber-700 dark:text-amber-300 font-medium">
+            🎲 MODE DÉMO — Données de simulation, non issues d'une enquête réelle
+          </span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.back()}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">{data.campaign.name}</h1>
-            <p className="text-muted-foreground">
-              {data.campaign.companyName} • {data.campaign.surveyTypeName}
-            </p>
+          <div className="flex items-center gap-3">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">{data.campaign.name}</h1>
+              <p className="text-muted-foreground">
+                {data.campaign.companyName} • {data.campaign.surveyTypeName}
+              </p>
+            </div>
+            {data.isDemo && (
+              <Badge className="bg-amber-500 hover:bg-amber-600 text-white border-0">
+                🎲 DÉMO
+              </Badge>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-3">
           <Badge variant="outline">
             {data.participation.totalResponses} réponses
           </Badge>
+          {/* v4.2: Demo data generation button */}
+          {data.isDemo && userIsSuperAdmin && (
+            <DemoDataDialog
+              campaignId={data.campaign.id}
+              campaignName={data.campaign.name}
+              companyIsDemo={data.isDemo}
+              userIsSuperAdmin={userIsSuperAdmin}
+            />
+          )}
           <Button variant="outline" onClick={fetchData}>
             <RefreshCw className="h-4 w-4 mr-2" /> Actualiser
           </Button>

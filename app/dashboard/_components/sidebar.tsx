@@ -42,6 +42,7 @@ import {
   PieChart,
   Upload,
   UserCheck,
+  Dices,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -96,6 +97,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   PieChart,
   Upload,
   UserCheck,
+  Dices,
 };
 
 interface SidebarProps {
