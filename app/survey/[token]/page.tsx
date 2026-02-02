@@ -141,7 +141,7 @@ function LikertScale({ value, onChange, min = 0, max = 10, labels }: LikertScale
   
   return (
     <div className="space-y-4">
-      {/* Number buttons grid - Mobile optimized */}
+      {/* Number buttons grid - Mobile optimized - NO individual animations */}
       <div className="grid grid-cols-6 sm:grid-cols-11 gap-1.5 sm:gap-2">
         {numbers.map((num) => (
           <button
@@ -149,38 +149,26 @@ function LikertScale({ value, onChange, min = 0, max = 10, labels }: LikertScale
             type="button"
             onClick={() => onChange(num)}
             className={cn(
-              "relative h-12 sm:h-14 rounded-xl font-semibold text-lg transition-all duration-200",
+              "relative h-12 sm:h-14 rounded-xl font-semibold text-lg transition-colors duration-150",
               "border-2 focus:outline-none focus:ring-2 focus:ring-primary/50",
               "active:scale-95 touch-manipulation",
               value === num
-                ? "bg-gradient-to-br from-amber-500 to-amber-600 border-amber-400 text-white shadow-lg shadow-amber-500/30 scale-105"
+                ? "bg-gradient-to-br from-amber-500 to-amber-600 border-amber-400 text-white shadow-lg shadow-amber-500/30"
                 : "bg-card/50 border-border/50 text-muted-foreground hover:border-primary/50 hover:bg-primary/5"
             )}
           >
             {num}
-            {value === num && (
-              <motion.div
-                layoutId="selected"
-                className="absolute inset-0 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 -z-10"
-                initial={false}
-                transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
-              />
-            )}
           </button>
         ))}
       </div>
       
-      {/* Labels */}
+      {/* Labels - Static rendering, no animations */}
       <div className="flex justify-between text-xs sm:text-sm text-muted-foreground px-1">
         <span className="max-w-[40%] text-left">{labels?.['0'] || 'Pas du tout'}</span>
         {value !== undefined && (
-          <motion.span
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-2xl font-bold text-gradient-gold"
-          >
+          <span className="text-2xl font-bold text-gradient-gold">
             {value}
-          </motion.span>
+          </span>
         )}
         <span className="max-w-[40%] text-right">{labels?.['10'] || 'Tout à fait'}</span>
       </div>
@@ -678,10 +666,10 @@ export default function SurveyPage({ params }: { params: { token: string } }) {
           <AnimatePresence mode="wait">
             <motion.div
               key={currentModuleIndex}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.25 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15, ease: "linear" }}
             >
               <Card className="border-border/50 bg-card/80 backdrop-blur overflow-hidden">
                 {/* Module header with gradient */}
@@ -707,13 +695,10 @@ export default function SurveyPage({ params }: { params: { token: string } }) {
                     </div>
                   )}
                   
-                  {/* Questions */}
+                  {/* Questions - Static rendering, no staggered animations */}
                   {currentQuestions.map((question, qIndex) => (
-                    <motion.div
+                    <div
                       key={question.id}
-                      initial={{ opacity: 0, y: 15 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: qIndex * 0.08 }}
                       className="space-y-4"
                     >
                       {/* Question number & text */}
@@ -905,7 +890,7 @@ export default function SurveyPage({ params }: { params: { token: string } }) {
                           </button>
                         )}
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
                 </CardContent>
               </Card>

@@ -223,8 +223,43 @@ export async function GET(
     }
 
     // Inject custom services for Q4 (department question) if configured
+    // First, try to load from campaign.customServices, then from company.departments, then use defaults
+    let servicesForQ4: { code: string; label: string }[] = [];
+    
     const customServices = campaign.customServices as any[] | null;
-    if (customServices && Array.isArray(customServices) && customServices.length > 0 && questionnaire.modules) {
+    if (customServices && Array.isArray(customServices) && customServices.length > 0) {
+      servicesForQ4 = customServices.map(s => ({
+        code: s.code || s.value,
+        label: s.label || s.name,
+      }));
+    } else {
+      // Try to load from company departments
+      const departments = await prisma.department.findMany({
+        where: { companyId: campaign.companyId, isActive: true },
+        orderBy: { sortOrder: 'asc' },
+      });
+      
+      if (departments.length > 0) {
+        servicesForQ4 = departments.map(d => ({
+          code: d.code,
+          label: d.name,
+        }));
+      } else {
+        // Use default services
+        servicesForQ4 = [
+          { code: 'DIRECTION', label: 'Direction / Support' },
+          { code: 'RH', label: 'Ressources Humaines' },
+          { code: 'FINANCE', label: 'Finance / Comptabilité' },
+          { code: 'COMMERCIAL', label: 'Commercial / Ventes' },
+          { code: 'IT', label: 'IT / Informatique' },
+          { code: 'PRODUCTION', label: 'Production / Opérations' },
+          { code: 'AUTRE', label: 'Autre' },
+        ];
+      }
+    }
+    
+    // Inject services into Q4 question (handles both dropdown and single_choice types)
+    if (servicesForQ4.length > 0 && questionnaire.modules) {
       questionnaire.modules = questionnaire.modules.map((mod: any) => {
         if (!mod.sections) return mod;
         return {
@@ -234,11 +269,12 @@ export async function GET(
             return {
               ...sec,
               questions: sec.questions.map((q: any) => {
-                // Look for Q4 (service/department question)
-                if (q.id === 'Q4' && q.type === 'single_choice') {
+                // Look for Q4 (service/department question) - can be dropdown or single_choice
+                if (q.id === 'Q4' && (q.type === 'single_choice' || q.type === 'dropdown')) {
                   return {
                     ...q,
-                    options: customServices.map(s => ({
+                    type: 'single_choice', // Normalize to single_choice for consistent rendering
+                    options: servicesForQ4.map(s => ({
                       value: s.code,
                       label: s.label,
                     })),

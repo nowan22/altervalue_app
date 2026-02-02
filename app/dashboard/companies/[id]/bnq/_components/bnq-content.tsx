@@ -140,7 +140,7 @@ export function BnqContent({ company, documentTypes }: BnqContentProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href={`/dashboard/companies/${company.id}`}>
+          <Link href="/dashboard/my-mission">
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-5 w-5" />
             </Button>

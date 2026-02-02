@@ -89,12 +89,12 @@ export default function CompanyForm({ company, isEdit = false }: CompanyFormProp
       });
 
       if (response.ok) {
-        const data = await response.json();
         toast({
           title: "Succès",
           description: isEdit ? "Dossier mis à jour" : "Dossier créé avec succès",
         });
-        router.push(`/dashboard/companies/${data?.id ?? ''}`);
+        // Redirect to my-mission for new companies, or back to list for edits
+        router.push(isEdit ? '/dashboard/companies' : '/dashboard/my-mission');
         router.refresh();
       } else {
         const error = await response.json();

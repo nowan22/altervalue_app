@@ -3,19 +3,22 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, Reorder } from 'framer-motion';
 import {
   ArrowLeft,
   ArrowRight,
   Check,
   Settings,
-  Users,
   Calculator,
   Shield,
   Building2,
   AlertTriangle,
   Info,
   Loader2,
+  Plus,
+  Trash2,
+  GripVertical,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +29,25 @@ import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useSession } from 'next-auth/react';
+
+// Default departments for new companies
+const DEFAULT_DEPARTMENTS = [
+  { code: 'DIRECTION', name: 'Direction', headcount: null },
+  { code: 'RH', name: 'Ressources Humaines', headcount: null },
+  { code: 'FINANCE', name: 'Finance / Comptabilité', headcount: null },
+  { code: 'COMMERCIAL', name: 'Commercial / Ventes', headcount: null },
+  { code: 'IT', name: 'IT / Informatique', headcount: null },
+  { code: 'PRODUCTION', name: 'Production / Opérations', headcount: null },
+];
+
+interface Department {
+  id?: string;
+  code: string;
+  name: string;
+  headcount: number | null;
+  isActive?: boolean;
+  isNew?: boolean;
+}
 
 interface Campaign {
   id: string;
@@ -84,11 +106,18 @@ export default function ConfigureWizardPage() {
   const [module3Consent, setModule3Consent] = useState(false);
   const [averageDailyRate, setAverageDailyRate] = useState('');
   const [anonymityThreshold, setAnonymityThreshold] = useState(15);
-  const [customServices, setCustomServices] = useState<Array<{ code: string; label: string; headcount?: number }>>([]);
+  const [customServices, setCustomServices] = useState<Array<{ code: string; label: string; headcount?: number | null }>>([]);
   const [scheduledStartDate, setScheduledStartDate] = useState('');
   const [scheduledEndDate, setScheduledEndDate] = useState('');
   const [targetPopulation, setTargetPopulation] = useState('');
   const [minRespondents, setMinRespondents] = useState('15');
+
+  // Department management state
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [departmentsLoading, setDepartmentsLoading] = useState(false);
+  const [departmentsSaving, setDepartmentsSaving] = useState(false);
+  const [newDeptName, setNewDeptName] = useState('');
+  const [newDeptHeadcount, setNewDeptHeadcount] = useState('');
 
   useEffect(() => {
     const fetchCampaign = async () => {
@@ -132,6 +161,149 @@ export default function ConfigureWizardPage() {
     };
     if (campaignId) fetchCampaign();
   }, [campaignId]);
+
+  // Fetch departments when campaign is loaded
+  useEffect(() => {
+    if (campaign?.company?.id) {
+      fetchDepartments();
+    }
+  }, [campaign?.company?.id]);
+
+  const fetchDepartments = async () => {
+    if (!campaign?.company?.id) return;
+    setDepartmentsLoading(true);
+    try {
+      const res = await fetch(`/api/companies/${campaign.company.id}/departments`);
+      if (res.ok) {
+        const data = await res.json();
+        setDepartments(data);
+        // Also update customServices for the campaign
+        if (data.length > 0) {
+          setCustomServices(data.map((d: Department) => ({
+            code: d.code,
+            label: d.name,
+            headcount: d.headcount,
+          })));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+    } finally {
+      setDepartmentsLoading(false);
+    }
+  };
+
+  const handleAddDepartment = async () => {
+    if (!newDeptName.trim() || !campaign?.company?.id) return;
+
+    const code = newDeptName.toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, '');
+    
+    // Check if code already exists
+    if (departments.some(d => d.code === code)) {
+      toast({ title: 'Erreur', description: 'Un service avec ce code existe déjà', variant: 'destructive' });
+      return;
+    }
+
+    setDepartmentsSaving(true);
+    try {
+      const res = await fetch(`/api/companies/${campaign.company.id}/departments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code,
+          name: newDeptName.trim(),
+          headcount: newDeptHeadcount ? parseInt(newDeptHeadcount) : null,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Erreur');
+      }
+
+      toast({ title: 'Succès', description: 'Service ajouté' });
+      setNewDeptName('');
+      setNewDeptHeadcount('');
+      fetchDepartments();
+    } catch (error: any) {
+      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+    } finally {
+      setDepartmentsSaving(false);
+    }
+  };
+
+  const handleDeleteDepartment = async (deptId: string) => {
+    if (!campaign?.company?.id) return;
+
+    setDepartmentsSaving(true);
+    try {
+      const res = await fetch(`/api/companies/${campaign.company.id}/departments?departmentId=${deptId}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) throw new Error('Erreur');
+
+      toast({ title: 'Succès', description: 'Service supprimé' });
+      fetchDepartments();
+    } catch (error) {
+      toast({ title: 'Erreur', description: 'Impossible de supprimer le service', variant: 'destructive' });
+    } finally {
+      setDepartmentsSaving(false);
+    }
+  };
+
+  const handleReorderDepartments = async (newOrder: Department[]) => {
+    setDepartments(newOrder);
+    // Update customServices in sync
+    setCustomServices(newOrder.map(d => ({
+      code: d.code,
+      label: d.name,
+      headcount: d.headcount,
+    })));
+  };
+
+  const handleSaveDepartmentOrder = async () => {
+    if (!campaign?.company?.id) return;
+
+    setDepartmentsSaving(true);
+    try {
+      const res = await fetch(`/api/companies/${campaign.company.id}/departments`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ departments }),
+      });
+
+      if (!res.ok) throw new Error('Erreur');
+
+      toast({ title: 'Succès', description: 'Ordre sauvegardé' });
+    } catch (error) {
+      toast({ title: 'Erreur', description: 'Impossible de sauvegarder', variant: 'destructive' });
+    } finally {
+      setDepartmentsSaving(false);
+    }
+  };
+
+  const handleInitializeDefaultDepartments = async () => {
+    if (!campaign?.company?.id) return;
+
+    setDepartmentsSaving(true);
+    try {
+      const res = await fetch(`/api/companies/${campaign.company.id}/departments`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ departments: DEFAULT_DEPARTMENTS }),
+      });
+
+      if (!res.ok) throw new Error('Erreur');
+
+      toast({ title: 'Succès', description: 'Services par défaut initialisés' });
+      fetchDepartments();
+    } catch (error) {
+      toast({ title: 'Erreur', description: 'Impossible d\'initialiser les services', variant: 'destructive' });
+    } finally {
+      setDepartmentsSaving(false);
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -374,37 +546,149 @@ export default function ConfigureWizardPage() {
         {currentStep === 1 && (
           <Card className="border-border bg-card">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-primary" />
-                Services / Départements
-              </CardTitle>
-              <CardDescription>Personnalisez les services pour l'analyse par segments</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5 text-primary" />
+                    Services / Départements
+                  </CardTitle>
+                  <CardDescription>Personnalisez les services pour l'analyse par segments (Q4 du questionnaire)</CardDescription>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={fetchDepartments}
+                  disabled={departmentsLoading}
+                  title="Rafraîchir"
+                >
+                  <RefreshCw className={`h-4 w-4 ${departmentsLoading ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {customServices.length === 0 ? (
+            <CardContent className="space-y-6">
+              {/* Add new department form */}
+              <div className="p-4 bg-muted/30 rounded-lg border border-dashed border-border">
+                <p className="text-sm font-medium mb-3">Ajouter un service</p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex-1">
+                    <Input
+                      placeholder="Nom du service (ex: Marketing)"
+                      value={newDeptName}
+                      onChange={e => setNewDeptName(e.target.value)}
+                      className="bg-input border-border"
+                    />
+                  </div>
+                  <div className="w-32">
+                    <Input
+                      type="number"
+                      min={0}
+                      placeholder="Effectif"
+                      value={newDeptHeadcount}
+                      onChange={e => setNewDeptHeadcount(e.target.value)}
+                      className="bg-input border-border"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleAddDepartment}
+                    disabled={!newDeptName.trim() || departmentsSaving}
+                  >
+                    {departmentsSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Department list */}
+              {departmentsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : departments.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>Aucun service configuré.</p>
-                  <p className="text-sm mt-2">Les services peuvent être ajoutés depuis la page de la mission.</p>
-                  <Button variant="outline" className="mt-4" asChild>
-                    <Link href={`/dashboard/companies/${campaign.company.id}`}>Gérer les services</Link>
+                  <p className="text-sm mt-2 mb-4">
+                    Ajoutez des services manuellement ou initialisez les services par défaut.
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={handleInitializeDefaultDepartments}
+                    disabled={departmentsSaving}
+                  >
+                    {departmentsSaving ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4 mr-2" />
+                    )}
+                    Initialiser services par défaut
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {customServices.map((service, index) => (
-                    <div key={service.code} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                      <div>
-                        <p className="font-medium">{service.label}</p>
-                        <p className="text-xs text-muted-foreground">Code: {service.code}</p>
-                      </div>
-                      {service.headcount && (
-                        <Badge variant="outline">{service.headcount} personnes</Badge>
+                <>
+                  <Reorder.Group
+                    axis="y"
+                    values={departments}
+                    onReorder={handleReorderDepartments}
+                    className="space-y-2"
+                  >
+                    {departments.map((dept) => (
+                      <Reorder.Item
+                        key={dept.id || dept.code}
+                        value={dept}
+                        className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/50 transition-colors cursor-grab active:cursor-grabbing"
+                      >
+                        <div className="flex items-center gap-3">
+                          <GripVertical className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <p className="font-medium">{dept.name}</p>
+                            <p className="text-xs text-muted-foreground">Code: {dept.code}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {dept.headcount && (
+                            <Badge variant="outline">{dept.headcount} pers.</Badge>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => dept.id && handleDeleteDepartment(dept.id)}
+                            disabled={departmentsSaving || !dept.id}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </Reorder.Item>
+                    ))}
+                  </Reorder.Group>
+
+                  <div className="flex justify-between items-center pt-4 border-t border-border">
+                    <p className="text-sm text-muted-foreground">
+                      {departments.length} service{departments.length > 1 ? 's' : ''} configuré{departments.length > 1 ? 's' : ''}
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSaveDepartmentOrder}
+                      disabled={departmentsSaving}
+                    >
+                      {departmentsSaving ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Check className="h-4 w-4 mr-2" />
                       )}
-                    </div>
-                  ))}
-                </div>
+                      Sauvegarder l'ordre
+                    </Button>
+                  </div>
+                </>
               )}
+
+              {/* Info box */}
+              <Alert className="bg-primary/5 border-primary/20">
+                <Info className="h-4 w-4" />
+                <AlertDescription className="text-sm">
+                  Ces services apparaîtront dans la question Q4 du questionnaire BNQ et seront utilisés pour l'analyse par segments dans le dashboard.
+                </AlertDescription>
+              </Alert>
             </CardContent>
           </Card>
         )}

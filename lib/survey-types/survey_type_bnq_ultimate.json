@@ -526,15 +526,16 @@
             "questions": [
               {
                 "id": "Q38",
-                "type": "ranking",
+                "type": "single_choice",
+                "renderType": "vertical_cards",
                 "text": "Si vous ne deviez choisir qu'UNE SEULE priorité d'amélioration pour votre entreprise, laquelle serait-ce?",
                 "required": true,
                 "is_global_priority": true,
                 "options": [
-                  { "value": "1", "label": "Habitudes de vie (santé, sport, alimentation)" },
-                  { "value": "2", "label": "Conciliation vie pro/perso (équilibre, flexibilité)" },
-                  { "value": "3", "label": "Environnement de travail (locaux, équipements)" },
-                  { "value": "4", "label": "Pratiques de gestion (management, reconnaissance)" }
+                  { "value": "SPHERE_1", "label": "Habitudes de vie (santé, sport, alimentation)" },
+                  { "value": "SPHERE_2", "label": "Conciliation vie pro/perso (équilibre, flexibilité)" },
+                  { "value": "SPHERE_3", "label": "Environnement de travail (locaux, équipements)" },
+                  { "value": "SPHERE_4", "label": "Pratiques de gestion (management, reconnaissance)" }
                 ]
               },
               {

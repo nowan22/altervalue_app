@@ -151,20 +151,28 @@ export default function CompanyDetail({ company, settings, benchmarks }: Company
       <div className="p-4 bg-warning/10 border border-warning/30 rounded-lg">
         <div className="flex items-start gap-3">
           <AlertTriangle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
-          <div>
+          <div className="flex-1">
             <p className="text-sm font-medium text-warning">
-              Cette page est dépréciée
+              Page dépréciée — Veuillez utiliser "Ma Mission"
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              Utilisez désormais la page{' '}
+              Cette ancienne page sera supprimée prochainement. Toutes les fonctionnalités sont maintenant disponibles sur la page{' '}
               <button
                 onClick={() => router.push('/dashboard/my-mission')}
                 className="text-primary hover:underline font-medium"
               >
                 Ma Mission
               </button>
-              {' '}pour consulter les informations de cette entreprise, y compris l'historique des indicateurs et les boutons d'export.
+              {' '}(KPIs, exports, historique).
             </p>
+            <div className="mt-3">
+              <button
+                onClick={() => router.push('/dashboard/my-mission')}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                Aller à Ma Mission →
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -285,6 +285,12 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
                   <RefreshCw className={`h-4 w-4 mr-2 ${actionLoading ? 'animate-spin' : ''}`} />
                   Recalculer
                 </Button>
+                <Link href={`/dashboard/diagnostic/campaigns/${campaign.id}/results`}>
+                  <Button variant="outline">
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Dashboard Expert
+                  </Button>
+                </Link>
                 <Button 
                   onClick={downloadPdf} 
                   disabled={pdfLoading}

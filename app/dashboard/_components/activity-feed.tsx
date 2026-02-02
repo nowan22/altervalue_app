@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Activity,
@@ -23,6 +23,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+
+// Hook to detect client-side mounting (prevents hydration mismatch for dynamic content)
+function useIsMounted() {
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  return isMounted;
+}
 
 interface ActivityLog {
   id: string;
@@ -78,6 +87,7 @@ interface ActivityFeedProps {
 export default function ActivityFeed({ initialLogs = [], limit = 8, showHeader = true }: ActivityFeedProps) {
   const [logs, setLogs] = useState<ActivityLog[]>(initialLogs);
   const [isLoading, setIsLoading] = useState(!initialLogs.length);
+  const isMounted = useIsMounted();
 
   useEffect(() => {
     if (!initialLogs.length) {
@@ -159,14 +169,49 @@ export default function ActivityFeed({ initialLogs = [], limit = 8, showHeader =
           </div>
         ) : (
           <div className="space-y-1">
-            <AnimatePresence>
-              {logs.slice(0, limit).map((log, index) => (
-                <motion.div
+            {/* Defer AnimatePresence until after hydration to avoid visual jumps */}
+            {isMounted ? (
+              <AnimatePresence>
+                {logs.slice(0, limit).map((log, index) => (
+                  <motion.div
+                    key={log.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
+                  >
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${getColorClass(log.type)}`}>
+                    {getIcon(log.type)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {log.action}
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                      {log.userName && <span>{log.userName}</span>}
+                      {log.companyName && (
+                        <>
+                          <span>•</span>
+                          <span className="truncate">{log.companyName}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <span 
+                    className="text-xs text-muted-foreground whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity"
+                    suppressHydrationWarning
+                  >
+                    {isMounted ? formatTime(log.createdAt) : ''}
+                  </span>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            ) : (
+              // Static rendering for SSR (no animations to avoid hydration mismatch)
+              logs.slice(0, limit).map((log) => (
+                <div
                   key={log.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 10 }}
-                  transition={{ delay: index * 0.05 }}
                   className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
                 >
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${getColorClass(log.type)}`}>
@@ -187,11 +232,11 @@ export default function ActivityFeed({ initialLogs = [], limit = 8, showHeader =
                     </div>
                   </div>
                   <span className="text-xs text-muted-foreground whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                    {formatTime(log.createdAt)}
+                    {/* Empty on SSR to avoid hydration mismatch */}
                   </span>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                </div>
+              ))
+            )}
           </div>
         )}
       </CardContent>

@@ -90,6 +90,16 @@ export async function POST(request: Request) {
     // Get full user for logging
     const user = await prisma.user.findUnique({ where: { id: userId } });
     
+    // Default departments for new companies
+    const defaultDepartments = [
+      { code: 'DIRECTION', name: 'Direction', sortOrder: 0 },
+      { code: 'RH', name: 'Ressources Humaines', sortOrder: 1 },
+      { code: 'FINANCE', name: 'Finance / Comptabilité', sortOrder: 2 },
+      { code: 'COMMERCIAL', name: 'Commercial / Ventes', sortOrder: 3 },
+      { code: 'IT', name: 'IT / Informatique', sortOrder: 4 },
+      { code: 'PRODUCTION', name: 'Production / Opérations', sortOrder: 5 },
+    ];
+
     const company = await prisma.company.create({
       data: {
         name,
@@ -110,6 +120,10 @@ export async function POST(request: Request) {
             checklistProgress: 0,
             actionsProgress: 0,
           },
+        },
+        // Initialize default departments
+        departments: {
+          create: defaultDepartments,
         },
       },
     });
