@@ -29,6 +29,10 @@ export async function GET(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
+    // v4.3: Support department filter query parameter
+    const { searchParams } = new URL(request.url);
+    const departmentFilter = searchParams.get('department');
+
     const campaign = await prisma.surveyCampaign.findUnique({
       where: { id: params.id },
       include: {
@@ -50,27 +54,49 @@ export async function GET(
       return NextResponse.json({ error: 'Campagne non trouvée' }, { status: 404 });
     }
 
-    const responses = campaign.responses || [];
+    const allResponses = campaign.responses || [];
+    const totalResponsesAll = allResponses.length;
+    
+    // v4.3: Filter responses by department if specified
+    let responses = allResponses;
+    if (departmentFilter && departmentFilter !== 'all') {
+      responses = allResponses.filter((r: any) => {
+        const data = r.responses as Record<string, any>;
+        return data?.Q4 === departmentFilter;
+      });
+    }
+    
     const totalResponses = responses.length;
     const targetPopulation = campaign.targetPopulation || campaign.company.employeesCount || 0;
-    const participationRate = targetPopulation > 0 ? Math.round((totalResponses / targetPopulation) * 100) : 0;
+    const participationRate = targetPopulation > 0 ? Math.round((totalResponsesAll / targetPopulation) * 100) : 0;
     const anonymityThreshold = campaign.anonymityThreshold || campaign.surveyType.anonymityThreshold || 15;
 
-    // Calculate sphere scores from responses
+    // Calculate sphere scores from filtered responses
     const sphereScores = calculateSphereScores(responses);
 
-    // Calculate priority matrix (Q38 data + scores)
+    // Calculate priority matrix (Q38 data + scores) from filtered responses
     const priorityMatrix = calculatePriorityMatrix(responses, sphereScores);
 
-    // Calculate department breakdown
+    // Calculate department breakdown from ALL responses (for dropdown)
     const departments = campaign.company.departments || [];
-    const departmentBreakdown = calculateDepartmentBreakdown(responses, departments, anonymityThreshold);
+    const departmentBreakdown = calculateDepartmentBreakdown(allResponses, departments, anonymityThreshold);
 
-    // Calculate financial metrics (ROI)
+    // Calculate financial metrics from filtered responses
+    // Adjust target population if filtering by department
+    let adjustedTargetPop = targetPopulation;
+    if (departmentFilter && departmentFilter !== 'all') {
+      const deptBreakdown = departmentBreakdown.find(d => d.code === departmentFilter);
+      if (deptBreakdown) {
+        // Estimate department's share of population based on response ratio
+        const deptRatio = totalResponsesAll > 0 ? deptBreakdown.responseCount / totalResponsesAll : 0;
+        adjustedTargetPop = Math.round(targetPopulation * deptRatio);
+      }
+    }
+    
     const avgDailyRate = campaign.moduleConfig ? (campaign.moduleConfig as any).averageDailyRate : null;
     const financialMetrics = calculateFinancialMetrics(
       responses,
-      targetPopulation,
+      adjustedTargetPop,
       avgDailyRate || Math.round((campaign.company.avgGrossSalary * (1 + campaign.company.employerContributionRate / 100)) / 220)
     );
 
@@ -91,8 +117,11 @@ export async function GET(
       },
       // v4.2: Demo mode flag
       isDemo: campaign.company.isDemo,
+      // v4.3: Current filter info
+      currentFilter: departmentFilter || 'all',
       participation: {
-        totalResponses,
+        totalResponses: totalResponsesAll, // Always show total for participation
+        filteredResponses: totalResponses,  // Show filtered count
         targetPopulation,
         participationRate,
         minRespondents: campaign.minRespondents || anonymityThreshold,

@@ -217,8 +217,8 @@ export default function CompaniesContent({ companies, settings }: CompaniesConte
                         </div>
                       </div>
                       {company?.isDemo && (
-                        <Badge className="bg-amber-500 hover:bg-amber-600 text-white border-0">
-                          🎲 DÉMO
+                        <Badge variant="outline" className="text-zinc-500 dark:text-zinc-400 border-zinc-300 dark:border-zinc-600 text-[10px] px-1.5">
+                          DÉMO
                         </Badge>
                       )}
                     </div>

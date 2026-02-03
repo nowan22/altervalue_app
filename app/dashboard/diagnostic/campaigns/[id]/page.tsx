@@ -23,13 +23,14 @@ import {
   Download,
   Loader2,
   Dices,
+  ArrowRight,
+  Gauge,
+  Euro,
 } from 'lucide-react';
-import { RadarChart, ScoreBars, ScoreGauge } from './_components/radar-chart';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -110,6 +111,14 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
   const [pdfLoading, setPdfLoading] = useState(false);
   const [showLaunchDialog, setShowLaunchDialog] = useState(false);
   const [showCloseDialog, setShowCloseDialog] = useState(false);
+  
+  // v4.3: Analytics summary for Executive Summary Card
+  const [analyticsSummary, setAnalyticsSummary] = useState<{
+    globalScore: number | null;
+    participationRate: number | null;
+    presenteeismCost: number | null;
+    loading: boolean;
+  }>({ globalScore: null, participationRate: null, presenteeismCost: null, loading: false });
 
   const fetchCampaign = async () => {
     try {
@@ -123,10 +132,46 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
       setLoading(false);
     }
   };
+  
+  // v4.3: Fetch analytics summary for closed/completed campaigns
+  const fetchAnalyticsSummary = async () => {
+    if (!campaign || (campaign.status !== 'CLOSED' && campaign.status !== 'COMPLETED')) return;
+    if (campaign._count.responses < campaign.minRespondents) return;
+    
+    setAnalyticsSummary(prev => ({ ...prev, loading: true }));
+    try {
+      const res = await fetch(`/api/diagnostic/campaigns/${params.id}/analytics`);
+      if (!res.ok) throw new Error('Erreur');
+      const data = await res.json();
+      
+      // Extract key KPIs from analytics data
+      const sphereScores = data.sphereScores || {};
+      const sphereValues = Object.values(sphereScores).filter((v): v is number => typeof v === 'number');
+      const globalScore = sphereValues.length > 0 
+        ? Math.round(sphereValues.reduce((a, b) => a + b, 0) / sphereValues.length)
+        : null;
+      
+      setAnalyticsSummary({
+        globalScore,
+        participationRate: data.participationRate ?? null,
+        presenteeismCost: data.financialMetrics?.estimatedAnnualCost ?? null,
+        loading: false,
+      });
+    } catch (error) {
+      setAnalyticsSummary(prev => ({ ...prev, loading: false }));
+    }
+  };
 
   useEffect(() => {
     fetchCampaign();
   }, [params.id]);
+  
+  // Fetch analytics when campaign is loaded and closed/completed
+  useEffect(() => {
+    if (campaign && (campaign.status === 'CLOSED' || campaign.status === 'COMPLETED')) {
+      fetchAnalyticsSummary();
+    }
+  }, [campaign?.id, campaign?.status]);
 
   const handleLaunch = async () => {
     setActionLoading(true);
@@ -247,13 +292,11 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
 
   return (
     <div className="space-y-6">
-      {/* v4.2: Demo Mode Banner */}
+      {/* v4.2: Demo Mode Banner - Discrete version */}
       {companyIsDemo && (
-        <div className="flex items-center justify-center gap-3 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
-          <Dices className="h-5 w-5 text-amber-500" />
-          <span className="text-amber-700 dark:text-amber-300 font-medium">
-            🎲 MODE DÉMO — Données de simulation, non issues d'une enquête réelle
-          </span>
+        <div className="flex items-center justify-center gap-2 px-3 py-1.5 bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded text-xs text-zinc-500 dark:text-zinc-400">
+          <Dices className="h-3.5 w-3.5" />
+          <span>Mission de démonstration — Données non issues d'une enquête réelle</span>
         </div>
       )}
 
@@ -270,8 +313,8 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
               <h1 className="text-2xl font-display font-bold">{campaign.name}</h1>
               <Badge className={`${statusConfig.color} border`}>{statusConfig.label}</Badge>
               {companyIsDemo && (
-                <Badge className="bg-amber-500 hover:bg-amber-600 text-white border-0">
-                  🎲 DÉMO
+                <Badge variant="outline" className="text-zinc-500 dark:text-zinc-400 border-zinc-300 dark:border-zinc-600 text-[10px] px-1.5">
+                  DÉMO
                 </Badge>
               )}
             </div>
@@ -283,13 +326,14 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
         
         {canEdit && (
           <div className="flex flex-wrap gap-2">
-            {/* v4.2: Demo data generation button */}
+            {/* v4.2: Demo data generation dropdown (discrete) */}
             {companyIsDemo && userIsSuperAdmin && (campaign.status === 'DRAFT' || campaign.status === 'ACTIVE') && (
               <DemoDataDialog
                 campaignId={campaign.id}
                 campaignName={campaign.name}
                 companyIsDemo={companyIsDemo}
                 userIsSuperAdmin={userIsSuperAdmin}
+                responseCount={campaign._count.responses}
               />
             )}
             {campaign.status === 'DRAFT' && (
@@ -449,218 +493,111 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
         </Card>
       )}
 
-      {/* Results Tabs */}
-      {campaign.result && meetsThreshold && (
-        <Tabs defaultValue="radar" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="radar">
-              <Target className="h-4 w-4 mr-2" />
-              Radar
-            </TabsTrigger>
-            <TabsTrigger value="scores">
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Détails
-            </TabsTrigger>
-            <TabsTrigger value="indicators">
-              <AlertTriangle className="h-4 w-4 mr-2" />
-              Alertes
-            </TabsTrigger>
-            <TabsTrigger value="financial">
-              <TrendingUp className="h-4 w-4 mr-2" />
-              Financier
-            </TabsTrigger>
-            <TabsTrigger value="narrative">
-              <FileText className="h-4 w-4 mr-2" />
-              Synthèse
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Radar Tab */}
-          <TabsContent value="radar">
-            <div className="grid gap-6 lg:grid-cols-2">
-              <Card className="border-border bg-card">
-                <CardHeader>
-                  <CardTitle>Vue Radar</CardTitle>
-                  <CardDescription>
-                    Visualisation multidimensionnelle des résultats
+      {/* v4.3: Executive Summary Card - Replaces obsolete tabs */}
+      {(campaign.status === 'CLOSED' || campaign.status === 'COMPLETED') && meetsThreshold && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/5">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-primary" />
+                    Aperçu des résultats
+                  </CardTitle>
+                  <CardDescription className="mt-1">
+                    {campaign._count.responses} réponses analysées — Données calculées par le moteur BNQ Ultimate
                   </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <RadarChart 
-                    scores={campaign.result.scores} 
-                    maxScore={10}
-                    height={350}
-                  />
-                </CardContent>
-              </Card>
-
-              <Card className="border-border bg-card">
-                <CardHeader>
-                  <CardTitle>Scores clés</CardTitle>
-                  <CardDescription>
-                    {campaign.result.responseCount} réponses analysées
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {/* Display top 3 scores as gauges */}
-                  {(() => {
-                    const sortedScores = Object.entries(campaign.result!.scores)
-                      .filter(([_, v]) => typeof v === 'number')
-                      .sort((a, b) => (b[1] as number) - (a[1] as number));
-                    
-                    const topScores = sortedScores.slice(0, 3);
-                    const bottomScores = sortedScores.slice(-3).reverse();
-                    
-                    return (
-                      <div className="space-y-6">
-                        {/* Top performers */}
-                        <div>
-                          <h4 className="text-sm font-medium text-success mb-4 flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4" />
-                            Points forts
-                          </h4>
-                          <div className="flex justify-around">
-                            {topScores.map(([key, value]) => (
-                              <ScoreGauge 
-                                key={key}
-                                score={value as number}
-                                maxScore={10}
-                                label={key.replace(/_/g, ' ').substring(0, 15)}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        
-                        {/* Areas of improvement */}
-                        {bottomScores.length > 0 && bottomScores[0][1] < 6 && (
-                          <div>
-                            <h4 className="text-sm font-medium text-warning mb-4 flex items-center gap-2">
-                              <AlertTriangle className="h-4 w-4" />
-                              Axes d'amélioration
-                            </h4>
-                            <div className="flex justify-around">
-                              {bottomScores.filter(([_, v]) => (v as number) < 6).slice(0, 3).map(([key, value]) => (
-                                <ScoreGauge 
-                                  key={key}
-                                  score={value as number}
-                                  maxScore={10}
-                                  label={key.replace(/_/g, ' ').substring(0, 15)}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* Scores Detail Tab */}
-          <TabsContent value="scores">
-            <Card className="border-border bg-card">
-              <CardHeader>
-                <CardTitle>Scores par dimension</CardTitle>
-                <CardDescription>Résultats calculés sur {campaign.result.responseCount} réponses</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ScoreBars scores={campaign.result.scores} maxScore={10} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="indicators">
-            <Card className="border-border bg-card">
-              <CardHeader>
-                <CardTitle>Indicateurs critiques</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {Object.keys(campaign.result.criticalIndicators || {}).length === 0 ? (
-                  <div className="flex items-center gap-3 p-4 bg-success/10 rounded-lg">
-                    <CheckCircle className="h-6 w-6 text-success" />
-                    <div>
-                      <p className="font-medium">Aucune alerte détectée</p>
-                      <p className="text-sm text-muted-foreground">Tous les indicateurs sont dans les seuils acceptables</p>
-                    </div>
+                </div>
+                <Badge variant="outline" className="text-success border-success/30 bg-success/10">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Résultats disponibles
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-4">
+              {/* 3 Key KPIs */}
+              <div className="grid gap-4 md:grid-cols-3 mb-6">
+                {/* Global Score */}
+                <div className="flex items-center gap-4 p-4 rounded-lg bg-background/60 border border-border/50">
+                  <div className="p-3 rounded-full bg-primary/10">
+                    <Gauge className="h-6 w-6 text-primary" />
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {Object.entries(campaign.result.criticalIndicators).map(([key, indicator]: [string, any]) => (
-                      <div
-                        key={key}
-                        className={`p-4 rounded-lg border ${
-                          indicator.severity === 'critical' ? 'bg-destructive/10 border-destructive/20' :
-                          indicator.severity === 'high' ? 'bg-warning/10 border-warning/20' :
-                          'bg-muted/50 border-border'
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <AlertTriangle className={`h-5 w-5 mt-0.5 ${
-                            indicator.severity === 'critical' ? 'text-destructive' :
-                            indicator.severity === 'high' ? 'text-warning' : 'text-muted-foreground'
-                          }`} />
-                          <div>
-                            <p className="font-medium">{indicator.message}</p>
-                            {indicator.recommendation && (
-                              <p className="text-sm text-muted-foreground mt-1">{indicator.recommendation}</p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                  <div>
+                    <p className="text-sm text-muted-foreground">Score Global QVCT</p>
+                    {analyticsSummary.loading ? (
+                      <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+                    ) : analyticsSummary.globalScore !== null ? (
+                      <p className="text-2xl font-bold">
+                        {analyticsSummary.globalScore}
+                        <span className="text-lg text-muted-foreground">/100</span>
+                      </p>
+                    ) : (
+                      <p className="text-lg text-muted-foreground">—</p>
+                    )}
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                </div>
 
-          <TabsContent value="financial">
-            <Card className="border-border bg-card">
-              <CardHeader>
-                <CardTitle>Métriques financières</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {campaign.result.financialMetrics ? (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {Object.entries(campaign.result.financialMetrics).map(([key, value]) => (
-                      <div key={key} className="p-4 bg-muted/30 rounded-lg">
-                        <p className="text-sm text-muted-foreground">{key.replace(/_/g, ' ')}</p>
-                        <p className="text-2xl font-bold text-primary">
-                          {typeof value === 'number' 
-                            ? value >= 1000 
-                              ? `${Math.round(value).toLocaleString('fr-FR')}€`
-                              : value.toFixed(2)
-                            : value}
-                        </p>
-                      </div>
-                    ))}
+                {/* Participation Rate */}
+                <div className="flex items-center gap-4 p-4 rounded-lg bg-background/60 border border-border/50">
+                  <div className="p-3 rounded-full bg-success/10">
+                    <Users className="h-6 w-6 text-success" />
                   </div>
-                ) : (
-                  <p className="text-muted-foreground">Aucune métrique financière disponible pour ce type d'enquête</p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Taux de participation</p>
+                    {analyticsSummary.loading ? (
+                      <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+                    ) : analyticsSummary.participationRate !== null ? (
+                      <p className="text-2xl font-bold">
+                        {analyticsSummary.participationRate}
+                        <span className="text-lg text-muted-foreground">%</span>
+                      </p>
+                    ) : (
+                      <p className="text-lg text-muted-foreground">—</p>
+                    )}
+                  </div>
+                </div>
 
-          <TabsContent value="narrative">
-            <Card className="border-border bg-card">
-              <CardHeader>
-                <CardTitle>Synthèse narrative</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {campaign.result.narrative ? (
-                  <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                    {campaign.result.narrative}
-                  </p>
-                ) : (
-                  <p className="text-muted-foreground">Aucune synthèse générée</p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                {/* Presenteeism Cost */}
+                <div className="flex items-center gap-4 p-4 rounded-lg bg-background/60 border border-border/50">
+                  <div className="p-3 rounded-full bg-warning/10">
+                    <Euro className="h-6 w-6 text-warning" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Coût du présentéisme</p>
+                    {analyticsSummary.loading ? (
+                      <div className="h-8 w-20 bg-muted animate-pulse rounded" />
+                    ) : analyticsSummary.presenteeismCost !== null ? (
+                      <p className="text-2xl font-bold">
+                        {Math.round(analyticsSummary.presenteeismCost).toLocaleString('fr-FR')}
+                        <span className="text-lg text-muted-foreground">€/an</span>
+                      </p>
+                    ) : (
+                      <p className="text-lg text-muted-foreground">—</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* CTA Button */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-border/50">
+                <p className="text-sm text-muted-foreground">
+                  Accédez au dashboard complet pour explorer les résultats par sphère, département, et visualiser la matrice des priorités.
+                </p>
+                <Link href={`/dashboard/diagnostic/campaigns/${campaign.id}/results`}>
+                  <Button size="lg" className="bg-gradient-gold text-primary-foreground gap-2 whitespace-nowrap">
+                    <BarChart3 className="h-5 w-5" />
+                    Accéder au Dashboard complet
+                    <ArrowRight className="h-5 w-5" />
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
 
       {/* Not enough responses warning */}

@@ -88,8 +88,10 @@ interface AnalyticsData {
     scheduledEndDate: string | null;
   };
   isDemo: boolean;
+  currentFilter: string;
   participation: {
     totalResponses: number;
+    filteredResponses: number;
     targetPopulation: number;
     participationRate: number;
     minRespondents: number;
@@ -190,14 +192,14 @@ export default function CampaignResultsPage({ params }: { params: { id: string }
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [isMounted, setIsMounted] = useState(false);
 
-  useEffect(() => {
-    setIsMounted(true);
-    fetchData();
-  }, [params.id]);
-
-  const fetchData = async () => {
+  // v4.3: Fetch data with department filter
+  const fetchData = async (departmentFilter: string = 'all') => {
     try {
-      const res = await fetch(`/api/diagnostic/campaigns/${params.id}/analytics`);
+      setLoading(true);
+      const url = departmentFilter && departmentFilter !== 'all'
+        ? `/api/diagnostic/campaigns/${params.id}/analytics?department=${encodeURIComponent(departmentFilter)}`
+        : `/api/diagnostic/campaigns/${params.id}/analytics`;
+      const res = await fetch(url);
       if (!res.ok) throw new Error('Erreur');
       const result = await res.json();
       setData(result);
@@ -208,28 +210,27 @@ export default function CampaignResultsPage({ params }: { params: { id: string }
     }
   };
 
-  // Get filtered sphere scores based on department selection
-  const filteredSphereScores = useMemo(() => {
-    if (!data) return [];
-    if (selectedDepartment === 'all') return data.sphereScores;
-    
-    const deptData = data.departmentBreakdown.find(d => d.code === selectedDepartment);
-    if (!deptData || deptData.isAnonymous || !deptData.sphereScores) return [];
-    return deptData.sphereScores;
-  }, [data, selectedDepartment]);
+  useEffect(() => {
+    setIsMounted(true);
+    fetchData(selectedDepartment);
+  }, [params.id]);
+
+  // v4.3: Refetch when department filter changes
+  const handleDepartmentChange = (newDepartment: string) => {
+    setSelectedDepartment(newDepartment);
+    fetchData(newDepartment);
+  };
 
   // Check if current filter meets anonymity threshold
   const filterMeetsThreshold = useMemo(() => {
     if (!data) return false;
-    if (selectedDepartment === 'all') return data.participation.meetsThreshold;
-    const deptData = data.departmentBreakdown.find(d => d.code === selectedDepartment);
-    return deptData ? !deptData.isAnonymous : false;
-  }, [data, selectedDepartment]);
+    return data.participation.meetsThreshold;
+  }, [data]);
 
-  // Prepare radar chart data
+  // Prepare radar chart data - now using filtered data from API
   const radarData = useMemo(() => {
-    if (!data || filteredSphereScores.length === 0) return [];
-    return filteredSphereScores.map(s => {
+    if (!data || data.sphereScores.length === 0) return [];
+    return data.sphereScores.map(s => {
       const benchmark = data.benchmarks.find(b => b.sphere === s.sphere)?.benchmark || 60;
       return {
         subject: s.short,
@@ -238,9 +239,9 @@ export default function CampaignResultsPage({ params }: { params: { id: string }
         fullMark: 100,
       };
     });
-  }, [data, filteredSphereScores]);
+  }, [data]);
 
-  // Prepare scatter plot data
+  // Prepare scatter plot data - now using filtered data from API
   const scatterData = useMemo(() => {
     if (!data) return [];
     return data.priorityMatrix.map(item => ({
@@ -282,13 +283,11 @@ export default function CampaignResultsPage({ params }: { params: { id: string }
 
   return (
     <div className="space-y-6 p-6">
-      {/* v4.2: Demo Mode Banner */}
+      {/* v4.2: Demo Mode Banner - Discrete version */}
       {data.isDemo && (
-        <div className="flex items-center justify-center gap-3 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
-          <Dices className="h-5 w-5 text-amber-500" />
-          <span className="text-amber-700 dark:text-amber-300 font-medium">
-            🎲 MODE DÉMO — Données de simulation, non issues d'une enquête réelle
-          </span>
+        <div className="flex items-center justify-center gap-2 px-3 py-1.5 bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded text-xs text-zinc-500 dark:text-zinc-400">
+          <Dices className="h-3.5 w-3.5" />
+          <span>Mission de démonstration — Données non issues d'une enquête réelle</span>
         </div>
       )}
 
@@ -306,8 +305,8 @@ export default function CampaignResultsPage({ params }: { params: { id: string }
               </p>
             </div>
             {data.isDemo && (
-              <Badge className="bg-amber-500 hover:bg-amber-600 text-white border-0">
-                🎲 DÉMO
+              <Badge variant="outline" className="text-zinc-500 dark:text-zinc-400 border-zinc-300 dark:border-zinc-600 text-[10px] px-1.5">
+                DÉMO
               </Badge>
             )}
           </div>
@@ -316,16 +315,17 @@ export default function CampaignResultsPage({ params }: { params: { id: string }
           <Badge variant="outline">
             {data.participation.totalResponses} réponses
           </Badge>
-          {/* v4.2: Demo data generation button */}
+          {/* v4.2: Demo data generation dropdown (discrete) */}
           {data.isDemo && userIsSuperAdmin && (
             <DemoDataDialog
               campaignId={data.campaign.id}
               campaignName={data.campaign.name}
               companyIsDemo={data.isDemo}
               userIsSuperAdmin={userIsSuperAdmin}
+              responseCount={data.participation.totalResponses}
             />
           )}
-          <Button variant="outline" onClick={fetchData}>
+          <Button variant="outline" onClick={() => fetchData(selectedDepartment)}>
             <RefreshCw className="h-4 w-4 mr-2" /> Actualiser
           </Button>
         </div>
@@ -372,9 +372,16 @@ export default function CampaignResultsPage({ params }: { params: { id: string }
               <CardTitle className="text-lg flex items-center gap-2">
                 <Filter className="h-5 w-5" /> Filtres d'analyse
               </CardTitle>
-              <CardDescription>Sélectionnez un département pour affiner l'analyse</CardDescription>
+              <CardDescription>
+                Sélectionnez un département pour affiner l'analyse
+                {selectedDepartment !== 'all' && data.participation.filteredResponses !== undefined && (
+                  <span className="ml-2 text-primary font-medium">
+                    ({data.participation.filteredResponses} réponses filtrées)
+                  </span>
+                )}
+              </CardDescription>
             </div>
-            <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+            <Select value={selectedDepartment} onValueChange={handleDepartmentChange}>
               <SelectTrigger className="w-[250px]">
                 <SelectValue placeholder="Tous les départements" />
               </SelectTrigger>
