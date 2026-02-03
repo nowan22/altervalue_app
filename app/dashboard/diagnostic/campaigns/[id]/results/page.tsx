@@ -186,6 +186,7 @@ export default function CampaignResultsPage({ params }: { params: { id: string }
 
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pdfLoading, setPdfLoading] = useState(false);
   
   // v4.2: Check if user is SUPER_ADMIN for demo features
   const userIsSuperAdmin = (session?.user as any)?.role === 'SUPER_ADMIN';
@@ -207,6 +208,34 @@ export default function CampaignResultsPage({ params }: { params: { id: string }
       toast({ title: 'Erreur', description: 'Impossible de charger les résultats', variant: 'destructive' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // v4.4 Phase Zeta: Download strategic PDF report
+  const handleDownloadPDF = async () => {
+    setPdfLoading(true);
+    try {
+      const res = await fetch(`/api/diagnostic/campaigns/${params.id}/strategic-report`);
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ error: 'Erreur' }));
+        throw new Error(errData.error || 'Erreur lors de la génération');
+      }
+      
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `rapport_strategique_${data?.campaign.name.replace(/[^a-zA-Z0-9]/g, '_') || 'campagne'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({ title: 'Succès', description: 'Rapport stratégique téléchargé' });
+    } catch (error: any) {
+      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+    } finally {
+      setPdfLoading(false);
     }
   };
 
@@ -327,6 +356,18 @@ export default function CampaignResultsPage({ params }: { params: { id: string }
           )}
           <Button variant="outline" onClick={() => fetchData(selectedDepartment)}>
             <RefreshCw className="h-4 w-4 mr-2" /> Actualiser
+          </Button>
+          <Button 
+            onClick={handleDownloadPDF}
+            disabled={pdfLoading}
+            className="bg-gradient-gold text-primary-foreground"
+          >
+            {pdfLoading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4 mr-2" />
+            )}
+            {pdfLoading ? 'Génération...' : 'Télécharger le Rapport PDF'}
           </Button>
         </div>
       </div>

@@ -145,19 +145,29 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
       const data = await res.json();
       
       // Extract key KPIs from analytics data
-      const sphereScores = data.sphereScores || {};
-      const sphereValues = Object.values(sphereScores).filter((v): v is number => typeof v === 'number');
+      // sphereScores is an array of { sphere, score, name, short, color }
+      const sphereScoresArray = data.sphereScores || [];
+      const sphereValues = sphereScoresArray
+        .map((s: { score: number }) => s.score)
+        .filter((v: number) => typeof v === 'number' && !isNaN(v));
       const globalScore = sphereValues.length > 0 
-        ? Math.round(sphereValues.reduce((a, b) => a + b, 0) / sphereValues.length)
+        ? Math.round(sphereValues.reduce((a: number, b: number) => a + b, 0) / sphereValues.length)
         : null;
+      
+      // participationRate is nested in data.participation
+      const participationRate = data.participation?.participationRate ?? null;
+      
+      // financialMetrics contains estimatedAnnualCost
+      const presenteeismCost = data.financialMetrics?.estimatedAnnualCost ?? null;
       
       setAnalyticsSummary({
         globalScore,
-        participationRate: data.participationRate ?? null,
-        presenteeismCost: data.financialMetrics?.estimatedAnnualCost ?? null,
+        participationRate,
+        presenteeismCost,
         loading: false,
       });
     } catch (error) {
+      console.error('Error fetching analytics summary:', error);
       setAnalyticsSummary(prev => ({ ...prev, loading: false }));
     }
   };
@@ -230,12 +240,13 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
     }
   };
 
+  // BUG #4 FIX: Now uses the same strategic-report endpoint as the results dashboard
   const downloadPdf = async () => {
     if (!campaign) return;
     
     setPdfLoading(true);
     try {
-      const res = await fetch(`/api/diagnostic/campaigns/${campaign.id}/pdf`);
+      const res = await fetch(`/api/diagnostic/campaigns/${campaign.id}/strategic-report`);
       if (!res.ok) {
         const data = await res.json().catch(() => ({ error: 'Erreur' }));
         throw new Error(data.error || 'Erreur lors de la génération');
@@ -245,13 +256,13 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `rapport_${campaign.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+      a.download = `rapport_strategique_${campaign.name.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       
-      toast({ title: 'Succès', description: 'Rapport PDF téléchargé' });
+      toast({ title: 'Succès', description: 'Rapport Stratégique PDF téléchargé' });
     } catch (error: any) {
       toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
     } finally {
